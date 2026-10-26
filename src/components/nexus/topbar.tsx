@@ -1,0 +1,192 @@
+'use client';
+
+import { useMemo } from 'react';
+import {
+  Search, Bell, Sparkles, Flame, Menu, Sun, Moon, MonitorSmartphone,
+  Palette, AlertTriangle, CalendarClock, type LucideIcon,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useNexus, useUI } from '@/lib/nexus/store';
+import type { ThemeId } from '@/lib/nexus/types';
+import { MODULE_NAV } from '@/lib/nexus/constants';
+import { todayKey, fmtDayFull, isOverdue, computeStreak } from '@/lib/nexus/utils';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
+import { NavList } from './sidebar';
+
+const THEME_OPTIONS: { id: ThemeId; label: string; icon: LucideIcon }[] = [
+  { id: 'dark', label: 'Obsidian Dark', icon: Moon },
+  { id: 'light', label: 'Daylight', icon: Sun },
+  { id: 'oled', label: 'OLED Black', icon: MonitorSmartphone },
+  { id: 'cyberpunk', label: 'Cyberpunk', icon: Palette },
+];
+
+type Notification = { id: string; title: string; detail: string; tone: 'danger' | 'warning' | 'info'; module: string };
+
+export default function Topbar() {
+  const profile = useNexus((s) => s.profile);
+  const theme = useNexus((s) => s.settings.theme);
+  const setSetting = useNexus((s) => s.setSetting);
+  const tasks = useNexus((s) => s.tasks);
+  const exams = useNexus((s) => s.exams);
+  const dailyLogs = useNexus((s) => s.dailyLogs);
+  const setActiveModule = useUI((s) => s.setActiveModule);
+  const setPaletteOpen = useUI((s) => s.setPaletteOpen);
+  const setAiOpen = useUI((s) => s.setAiOpen);
+  const mobileNavOpen = useUI((s) => s.mobileNavOpen);
+  const setMobileNavOpen = useUI((s) => s.setMobileNavOpen);
+  const activeModule = useUI((s) => s.activeModule);
+
+  const streakCount = useMemo(() => computeStreak(dailyLogs).current, [dailyLogs]);
+
+  const notifications = useMemo<Notification[]>(() => {
+    const today = todayKey();
+    const list: Notification[] = [];
+    for (const t of tasks) {
+      if (t.status === 'done') continue;
+      if (isOverdue(t)) {
+        list.push({ id: t.id, title: t.title, detail: `Overdue since ${fmtDayFull(t.dueDate!)}`, tone: 'danger', module: 'tasks' });
+      } else if (t.dueDate === today) {
+        list.push({ id: t.id, title: t.title, detail: 'Due today', tone: 'warning', module: 'tasks' });
+      }
+    }
+    const in7 = new Date();
+    in7.setDate(in7.getDate() + 7);
+    for (const e of exams) {
+      if (e.date >= today && e.date <= in7.toISOString().slice(0, 10)) {
+        list.push({ id: e.id, title: e.title, detail: `${e.type === 'exam' ? 'Exam' : 'Deadline'} · ${fmtDayFull(e.date)}`, tone: 'info', module: 'calendar' });
+      }
+    }
+    return list;
+  }, [tasks, exams]);
+
+  const moduleLabel = MODULE_NAV.find((m) => m.id === activeModule)?.label ?? 'Dashboard';
+
+  return (
+    <header className="glass sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-x-0 border-t-0 px-3 md:px-5">
+      {/* Mobile nav */}
+      <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open navigation">
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="glass-strong w-64 p-0">
+          <SheetHeader className="px-4 pb-0 pt-4">
+            <SheetTitle className="text-left text-sm font-bold text-gradient">NEXUS OS</SheetTitle>
+          </SheetHeader>
+          <NavList collapsed={false} onNavigate={() => setMobileNavOpen(false)} />
+        </SheetContent>
+      </Sheet>
+
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold tracking-tight">{moduleLabel}</p>
+        <p className="hidden truncate text-[11px] text-muted-foreground sm:block">{fmtDayFull(todayKey())} · {profile.university}</p>
+      </div>
+
+      {/* Search trigger */}
+      <button
+        onClick={() => setPaletteOpen(true)}
+        className="mx-auto hidden w-full max-w-md items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground sm:flex"
+        aria-label="Open command palette (Cmd+K)"
+      >
+        <Search className="h-3.5 w-3.5" aria-hidden="true" />
+        <span className="flex-1 text-left text-xs">Search modules, tasks, actions…</span>
+        <span className="kbd">⌘K</span>
+      </button>
+      <Button variant="ghost" size="icon" className="ml-auto sm:hidden" onClick={() => setPaletteOpen(true)} aria-label="Search">
+        <Search className="h-4.5 w-4.5" aria-hidden="true" />
+      </Button>
+
+      <div className="ml-auto flex items-center gap-1 sm:ml-0">
+        {/* Streak pill */}
+        <div className="hidden items-center gap-1.5 rounded-xl border border-amber-400/25 bg-amber-400/10 px-2.5 py-1.5 text-xs font-semibold text-amber-400 sm:flex" title="Current study streak">
+          <Flame className="h-3.5 w-3.5" aria-hidden="true" />
+          {streakCount}d
+        </div>
+
+        {/* Notifications */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative" aria-label={`Notifications (${notifications.length})`}>
+              <Bell className="h-4.5 w-4.5" aria-hidden="true" />
+              {notifications.length > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[9px] font-bold text-white">
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="glass-strong w-80 p-2">
+            <p className="px-2 pb-1.5 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Notification center
+            </p>
+            <div className="slim-scroll max-h-80 space-y-1 overflow-y-auto">
+              {notifications.length === 0 && (
+                <p className="px-2 py-6 text-center text-xs text-muted-foreground">All clear — nothing needs attention 🎉</p>
+              )}
+              {notifications.slice(0, 12).map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => setActiveModule(n.module as never)}
+                  className="flex w-full items-start gap-2.5 rounded-lg p-2 text-left transition-colors hover:bg-accent"
+                >
+                  {n.tone === 'danger' ? (
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" aria-hidden="true" />
+                  ) : n.tone === 'warning' ? (
+                    <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+                  ) : (
+                    <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" aria-hidden="true" />
+                  )}
+                  <span className="min-w-0">
+                    <span className="block truncate text-xs font-medium">{n.title}</span>
+                    <span className="block text-[11px] text-muted-foreground">{n.detail}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Theme switcher */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Switch theme">
+              {THEME_OPTIONS.find((t) => t.id === theme)?.icon && (() => {
+                const I = THEME_OPTIONS.find((t) => t.id === theme)!.icon;
+                return <I className="h-4.5 w-4.5" aria-hidden="true" />;
+              })()}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="glass-strong">
+            <DropdownMenuLabel className="text-xs text-muted-foreground">Theme</DropdownMenuLabel>
+            {THEME_OPTIONS.map((t) => (
+              <DropdownMenuItem
+                key={t.id}
+                onClick={() => setSetting({ theme: t.id })}
+                className={cn('gap-2 text-xs', theme === t.id && 'bg-primary/10 text-primary')}
+              >
+                <t.icon className="h-3.5 w-3.5" aria-hidden="true" /> {t.label}
+                {theme === t.id && <Badge variant="secondary" className="ml-auto px-1 py-0 text-[9px]">on</Badge>}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* AI Coach */}
+        <Button
+          size="sm"
+          onClick={() => setAiOpen(true)}
+          className="gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500/90 to-violet-500/90 px-2.5 text-white shadow-md transition-all hover:shadow-[0_0_20px_-4px_rgba(34,211,238,0.5)]"
+          aria-label="Open AI productivity coach"
+        >
+          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="hidden md:inline">AI Coach</span>
+        </Button>
+      </div>
+    </header>
+  );
+}
