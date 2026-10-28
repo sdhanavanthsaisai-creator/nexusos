@@ -99,6 +99,38 @@ export default function DynamicIsland() {
     const id = window.setInterval(() => setMusicPlaying(lofiEngine.isPlaying()), 1000); // safety poll
     return () => window.clearInterval(id);
   }, []);
+  const pomo = useIsland((s) => s.pomo);
+  const timer = useUI((s) => s.timer);
+
+  // Reconcile timestamp-based clocks when the tab becomes visible again —
+  // background tabs throttle interval ticks, so recover on `visibilitychange`.
+  // All clocks use Date.now() deltas, so a single reconcile is self-correcting.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      const { pomo: p } = useIsland.getState();
+      if (p.phase !== 'idle' && p.pausedRemainingMs === null && p.endsAt !== null) {
+        useIsland.getState().completePhaseByClock(Date.now());
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
+  // Keep the document title in sync with the live countdown (works with the
+  // phone screen off / app backgrounded — timestamp math, not interval counts).
+  const titlePomoActive = pomo.phase !== 'idle' && pomo.pausedRemainingMs === null && pomo.endsAt !== null;
+  const titleFreeActive = timer.running && timer.startedAt !== null;
+  const titleNow = useTimerTick(titlePomoActive || titleFreeActive);
+  useEffect(() => {
+    if (titlePomoActive && pomo.endsAt !== null) {
+      document.title = `${fmtIslandClock(titleNow, pomo.endsAt)} focus — NexusOS`;
+    } else if (titleFreeActive) {
+      document.title = `${secondsToClock(timerElapsedMs(timer) / 1000)} focus — NexusOS`;
+    } else {
+      document.title = BASE_TITLE;
+    }
+  }, [titlePomoActive, titleFreeActive, titleNow, timer, pomo]);
 
   if (!mounted) return null; // hydration guard (persisted island/pomo state)
 
@@ -106,12 +138,12 @@ export default function DynamicIsland() {
     <>
       {expanded && (
         <div
-          className="pointer-events-auto fixed inset-0 z-40"
+          className="pointer-events-auto fixed inset-0 bg-black/40 z-40 backdrop-blur-[2px]"
           onClick={() => useIsland.getState().collapse()}
           aria-hidden="true"
         />
       )}
-      <div className="pointer-events-none fixed inset-x-0 top-2.5 z-[60] flex flex-col items-center">
+      <div className="pointer-events-none fixed inset-x-0 top-2.5 z-[60] flex flex-col items-center max-md:top-[calc(env(safe-area-inset-top,0px)+0.4rem)]">
         {expanded ? (
           <ExpandedPanel musicPlaying={musicPlaying} onMusicChange={setMusicPlaying} />
         ) : (
@@ -121,6 +153,10 @@ export default function DynamicIsland() {
     </>
   );
 }
+
+const BASE_TITLE = 'NexusOS — Student Productivity OS';
+const fmtIslandClock = (nowMs: number, endsAt: number) =>
+  `${Math.floor((endsAt - nowMs) / 60000)}:${pad2(Math.max(0, Math.floor((endsAt - nowMs) / 1000) % 60))}`;
 
 // ─── Compact pill ─────────────────────────────────────────────────────────────
 function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
@@ -160,25 +196,22 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
   const contentKey = alert ? 'alert' : timerActive ? 'timer' : pomoActive ? 'pomo' : musicPlaying ? 'music' : 'idle';
 
   return (
-    <motion.button
-      layoutId="island-pod"
-      type="button"
-      onClick={() => useIsland.getState().expand()}
-      animate={pulse}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.97 }}
-      transition={SPRING}
-      className="island-shell pointer-events-auto flex h-9 max-w-[92vw] cursor-pointer items-center gap-2 rounded-full px-3.5 text-foreground"
-      aria-label="Open Dynamic Island"
-    >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={contentKey}
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -5 }}
-          transition={{ duration: 0.14 }}
-          className="flex min-w-0 items-center gap-2"
+    <>
+      {/* Phones: compact tappable capsule, horizontally scrollable metric strip.
+          Shows two metrics at once (timer state + focus minutes), swipe for
+          Pomodoro, habit score and the lo-fi mini player. */}
+      <motion.div
+        layoutId="island-pod"
+        animate={pulse}
+        whileTap={{ scale: 0.97 }}
+        transition={SPRING}
+        className="island-shell pointer-events-auto flex h-11 max-w-[92vw] cursor-pointer items-center overflow-hidden rounded-full pl-3 pr-1 text-foreground md:hidden"
+      >
+        <button
+          type="button"
+          className="pointer-events-auto flex h-full shrink-0 cursor-pointer items-center gap-2 pr-1"
+          onClick={() => useIsland.getState().expand()}
+          aria-label="Open Dynamic Island"
         >
           {alert ? (
             <>
@@ -187,7 +220,7 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
                   alert.tone === 'success' ? 'bg-foreground' : alert.tone === 'warning' ? 'bg-foreground/55' : 'bg-[var(--primary)]'
                 }`}
               />
-              <span className="max-w-[220px] truncate text-xs font-medium">{alert.title}</span>
+              <span className="max-w-[46vw] truncate text-xs font-medium">{alert.title}</span>
             </>
           ) : timerActive ? (
             <>
@@ -197,7 +230,7 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
                 }`}
               />
               <span className="font-mono text-[11px] tabular-nums">{secondsToClock(timerElapsedMs(timer) / 1000)}</span>
-              {subjectLabel && <span className="max-w-[80px] truncate text-[10px] text-white/50">{subjectLabel}</span>}
+              {subjectLabel && <span className="max-w-[72px] truncate text-[10px] text-white/50">{subjectLabel}</span>}
             </>
           ) : pomoActive ? (
             <>
@@ -211,30 +244,142 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
                 {pomo.phase === 'focus' ? 'Focus' : pomo.phase === 'longBreak' ? 'Long break' : 'Break'}
               </span>
             </>
-          ) : musicPlaying ? (
-            <>
-              <span className="island-eq flex h-4 shrink-0 items-center gap-[2.5px]" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-                <span />
-              </span>
-              <span className="max-w-[150px] truncate text-[11px]">{lofiEngine.getTrack().name}</span>
-            </>
           ) : (
             <>
               <Zap className="h-3 w-3 shrink-0 text-[var(--aur-1)]" />
               <span className="font-mono text-[11px] tabular-nums">{minutesToHM(todayMin)}</span>
-              <span className="h-0.5 w-0.5 shrink-0 rounded-full bg-white/30" />
-              <CheckCircle2 className="h-3 w-3 shrink-0 text-foreground" />
-              <span className="font-mono text-[11px] tabular-nums">{habitScore}</span>
             </>
           )}
-        </motion.span>
-      </AnimatePresence>
-      <ChevronDown className="h-3 w-3 shrink-0 text-white/40" />
-    </motion.button>
+        </button>
+        {/* Metric strip — swipeable */}
+        <div
+          className="no-scrollbar flex min-w-0 flex-1 snap-x snap-mandatory items-center gap-1.5 overflow-x-auto overscroll-contain px-1"
+          role="group"
+          aria-label="Live metrics — swipe for more"
+        >
+          <MetricChip label="focus" value={minutesToHM(todayMin)} first />
+          <MetricChip label="pomo" value={pomoActive ? fmtMs(pomoLeft) : 'idle'} />
+          <MetricChip label="habits" value={habitScore} />
+          <div className="shrink-0 snap-start">
+            <button
+              type="button"
+              onClick={() => {
+                if (musicPlaying) lofiEngine.pause();
+                else {
+                  lofiEngine.unlock();
+                  lofiEngine.play();
+                }
+              }}
+              aria-label={musicPlaying ? 'Pause lo-fi music' : 'Play lo-fi music'}
+              className="flex h-8 min-w-16 snap-start items-center justify-center gap-1.5 rounded-full bg-white/[0.08] px-2.5 text-[10px] text-white/85 ring-1 ring-white/10 transition active:scale-95"
+            >
+              {musicPlaying ? (
+                <span className="island-eq flex h-3.5 shrink-0 items-center gap-[2px]" aria-hidden="true">
+                  <span /><span /><span /><span />
+                </span>
+              ) : (
+                <Music className="h-3 w-3 shrink-0" aria-hidden="true" />
+              )}
+              <span className="font-mono tabular-nums">{musicPlaying ? 'on' : 'lo-fi'}</span>
+            </button>
+          </div>
+        </div>
+        <ChevronDown className="mx-1 h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
+      </motion.div>
+
+      {/* Desktop: original glass pill (unchanged behaviour) */}
+      <motion.button
+        layoutId="island-pod"
+        type="button"
+        onClick={() => useIsland.getState().expand()}
+        animate={pulse}
+        whileHover={{ scale: 1.03 }}
+        whileTap={{ scale: 0.97 }}
+        transition={SPRING}
+        className="island-shell pointer-events-auto hidden h-9 max-w-[92vw] cursor-pointer items-center gap-2 rounded-full px-3.5 text-foreground md:flex"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={contentKey}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.14 }}
+            className="flex min-w-0 items-center gap-2"
+          >
+            {alert ? (
+              <>
+                <span
+                  className={`island-live-dot h-1.5 w-1.5 shrink-0 rounded-full ${
+                    alert.tone === 'success' ? 'bg-foreground' : alert.tone === 'warning' ? 'bg-foreground/55' : 'bg-[var(--primary)]'
+                  }`}
+                />
+                <span className="max-w-[220px] truncate text-xs font-medium">{alert.title}</span>
+              </>
+            ) : timerActive ? (
+              <>
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                    timer.running ? 'island-live-dot animate-pulse bg-[var(--primary)]' : 'bg-white/40'
+                  }`}
+                />
+                <span className="font-mono text-[11px] tabular-nums">{secondsToClock(timerElapsedMs(timer) / 1000)}</span>
+                {subjectLabel && <span className="max-w-[80px] truncate text-[10px] text-white/50">{subjectLabel}</span>}
+              </>
+            ) : pomoActive ? (
+              <>
+                <span
+                  className={`island-live-dot animate-pulse h-1.5 w-1.5 shrink-0 rounded-full ${
+                    pomo.phase === 'focus' ? 'bg-foreground' : 'bg-foreground/55'
+                  }`}
+                />
+                <span className="font-mono text-[11px] tabular-nums">{fmtMs(pomoLeft)}</span>
+                <span className="text-[10px] text-white/55">
+                  {pomo.phase === 'focus' ? 'Focus' : pomo.phase === 'longBreak' ? 'Long break' : 'Break'}
+                </span>
+              </>
+            ) : musicPlaying ? (
+              <>
+                <span className="island-eq flex h-4 shrink-0 items-center gap-[2.5px]" aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                <span className="max-w-[150px] truncate text-[11px]">{lofiEngine.getTrack().name}</span>
+              </>
+            ) : (
+              <>
+                <Zap className="h-3 w-3 shrink-0 text-[var(--aur-1)]" />
+                <span className="font-mono text-[11px] tabular-nums">{minutesToHM(todayMin)}</span>
+                <span className="h-0.5 w-0.5 shrink-0 rounded-full bg-white/30" />
+                <CheckCircle2 className="h-3 w-3 shrink-0 text-foreground" />
+                <span className="font-mono text-[11px] tabular-nums">{habitScore}</span>
+              </>
+            )}
+          </motion.span>
+        </AnimatePresence>
+        <ChevronDown className="h-3 w-3 shrink-0 text-white/40" />
+      </motion.button>
+    </>
   );
+}
+
+/** One metric in the mobile swipe strip. */
+function MetricChip({ label, value, first = false }: { label: string; value: string; first?: boolean }) {
+  return (
+    <span
+      className={cnxChip(first)}
+      role="status"
+      aria-label={`${label}: ${value}`}
+    >
+      <span className="text-[9px] uppercase tracking-[0.08em] text-white/45">{label}</span>
+      <span className="font-mono text-[11px] font-semibold tabular-nums text-white/95">{value}</span>
+    </span>
+  );
+}
+function cnxChip(first: boolean) {
+  return `flex h-8 shrink-0 snap-start items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 ring-1 ring-white/10 ${first ? 'ring-white/20' : ''}`;
 }
 
 // ─── Expanded panel ───────────────────────────────────────────────────────────
@@ -247,9 +392,10 @@ function ExpandedPanel({ musicPlaying, onMusicChange }: { musicPlaying: boolean;
       layoutId="island-pod"
       layout
       role="dialog"
+      aria-modal="true"
       aria-label="Dynamic Island"
       transition={SPRING}
-      className="island-shell pointer-events-auto w-[min(380px,calc(100vw-1.5rem))] rounded-[28px] p-4 text-foreground"
+      className="island-shell pointer-events-auto w-[min(380px,calc(100vw-1.5rem))] rounded-[28px] p-4 text-foreground max-md:w-full max-md:rounded-b-none max-md:rounded-t-[26px] max-md:pb-[max(env(safe-area-inset-bottom,0px),1rem)] max-md:pt-5 max-sm:animate-sheet-up"
     >
       <div className="mb-3 flex items-center gap-1">
         <TabButton active={activeModule === 'timer'} onClick={() => setModule('timer')} icon={Timer} label="Timer" />

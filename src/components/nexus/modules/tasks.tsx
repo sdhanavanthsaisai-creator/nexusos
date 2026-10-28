@@ -31,13 +31,17 @@ const VIEWS: { value: ViewKey; label: string }[] = [
   { value: 'focus', label: 'Focus Today' },
 ];
 
+/** Phones default to List (density beats ceremony) — desktop opens on Board. */
+const initialView = (): ViewKey =>
+  typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches ? 'list' : 'board';
+
 const AREAS = Object.entries(AREA_META) as [TaskArea, { label: string; color: string }][];
 const PRIORITIES = Object.entries(PRIORITY_META) as [TaskPriority, { label: string; color: string; rank: number }][];
 
 export default function TasksModule() {
   const tasks = useNexus((s) => s.tasks);
 
-  const [view, setView] = useState<ViewKey>('board');
+  const [view, setView] = useState<ViewKey>(initialView);
   const [areaFilter, setAreaFilter] = useState<'all' | TaskArea>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | TaskPriority>('all');
   const [search, setSearch] = useState('');

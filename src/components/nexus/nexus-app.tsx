@@ -11,6 +11,7 @@ import DynamicIsland from './dynamic-island';
 import Sidebar from './sidebar';
 import Topbar from './topbar';
 import StatusBar from './status-bar';
+import MobileTabBar from './mobile-tabbar';
 import CommandPalette from './command-palette';
 import AIDrawer from './ai-drawer';
 
@@ -23,6 +24,7 @@ import AnalyticsModule from './modules/analytics';
 import RoadmapModule from './modules/roadmap';
 import DsaModule from './modules/dsa';
 import CalendarModule from './modules/calendar';
+import TimetableModule from './modules/timetable';
 import NotesModule from './modules/notes';
 import ReportsModule from './modules/reports';
 import SettingsModule from './modules/settings';
@@ -37,6 +39,7 @@ const MODULES: Record<ModuleId, ComponentType> = {
   roadmap: RoadmapModule,
   dsa: DsaModule,
   calendar: CalendarModule,
+  timetable: TimetableModule,
   notes: NotesModule,
   reports: ReportsModule,
   settings: SettingsModule,
@@ -109,7 +112,7 @@ export default function NexusApp() {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar />
-          <main id="nexus-main" className="slim-scroll min-h-0 flex-1 overflow-y-auto p-4 pt-14 md:p-6 md:pt-16" tabIndex={-1}>
+          <main id="nexus-main" className="slim-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pt-14 pb-20 [scrollbar-width:thin] md:p-6 md:pt-16 md:pb-6" tabIndex={-1}>
             {/* Spring-physics module transitions */}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
@@ -127,6 +130,8 @@ export default function NexusApp() {
           <StatusBar />
         </div>
       </div>
+
+      <MobileTabBar />
 
       <CommandPalette />
       <AIDrawer />

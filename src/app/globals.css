@@ -614,3 +614,92 @@
   .aurora-blob, .aurora-stars, .aurora-stars-2, .island-eq span { animation: none !important; }
   .aurora-blob { transform: scale(1.05); }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Mobile baseline (≤767px) — glass perf caps, safe areas, motion
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Bottom-sheet entry — transform-only (GPU) keyframes */
+@keyframes nxs-sheet-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-sheet-up { animation: nxs-sheet-up 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (max-width: 767px) {
+  /* Cap stacked backdrop-blurs — one blur layer maximum per surface */
+  .glass,
+  .glass-chip {
+    backdrop-filter: blur(9px) saturate(140%);
+    -webkit-backdrop-filter: blur(9px) saturate(140%);
+  }
+  .glass-strong {
+    backdrop-filter: blur(14px) saturate(150%);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+  }
+  .island-shell {
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+  }
+  /* Cheaper aurora: smaller blur radius, longer cycles = fewer repaints */
+  .aurora-blob { filter: blur(56px); }
+  .aurora-blob-a { animation-duration: 58s; }
+  .aurora-blob-b { animation-duration: 50s; }
+  .aurora-blob-c { animation-duration: 64s; }
+  .aurora-blob-d { animation-duration: 44s; }
+  .aurora-stars-2 { display: none; }
+}
+
+/* Global a11y: honour reduced motion for CSS animations/transitions */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Internal scroll regions never chain-scroll the page on phones */
+.slim-scroll,
+.no-scrollbar {
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+/* Dialogs → bottom sheets on phones (applies to every shadcn dialog via its
+   stable data-slot hook — no per-call-site edits needed). Desktop is untouched. */
+@media (max-width: 767px) {
+  [data-slot='dialog-content'] {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    translate: none;
+    width: 100dvw;
+    max-width: 100dvw;
+    max-height: 92dvh;
+    height: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-bottom: none;
+    border-inline: none;
+    border-radius: 1.25rem 1.25rem 0 0;
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    animation: nxs-sheet-up 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+/* Touch targets: comfortable baseline inside dense glass panels */
+@media (max-width: 767px) {
+  button,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* kills iOS auto-zoom on focus */
+  }
+}

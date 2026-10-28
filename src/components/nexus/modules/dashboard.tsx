@@ -6,7 +6,7 @@
  * streak-milestone celebrations and a widget customizer.
  */
 
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
@@ -85,6 +85,22 @@ export default function DashboardModule() {
   const toggleHabitDate = useNexus((s) => s.toggleHabitDate);
   const celebrate = useNexus((s) => s.celebrate);
   const setActiveModule = useUI((s) => s.setActiveModule);
+
+  // 3D hero is desktop-only & motion-respecting (mobile perf spec #9):
+  // never load three.js on viewports ≤768px or when reduced motion is set.
+  const [allow3d, setAllow3d] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 769px)');
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setAllow3d(mq.matches && !motion.matches);
+    update();
+    mq.addEventListener('change', update);
+    motion.addEventListener('change', update);
+    return () => {
+      mq.removeEventListener('change', update);
+      motion.removeEventListener('change', update);
+    };
+  }, []);
 
   const themeRaw = useChartTheme();
   const theme = useMemo(
@@ -329,7 +345,7 @@ export default function DashboardModule() {
   // ── widget renderers ──
   const renderHero = () => (
     <section className="glass relative h-[300px] overflow-hidden rounded-2xl md:h-[360px]">
-      <Hero3D />
+      {allow3d && <Hero3D />}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-background/25 to-transparent" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-5 md:p-6">
         <div>

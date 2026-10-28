@@ -21,7 +21,7 @@ export default function StatusBar() {
 
   return (
     <footer
-      className="glass sticky bottom-0 z-30 flex h-9 shrink-0 items-center gap-3 overflow-x-auto border-x-0 border-b-0 px-3 pb-[env(safe-area-inset-bottom)] text-[11px] text-muted-foreground no-scrollbar md:px-5"
+      className="glass sticky bottom-0 z-30 hidden h-9 shrink-0 items-center gap-3 overflow-x-auto border-x-0 border-b-0 px-3 pb-[env(safe-area-inset-bottom)] text-[11px] text-muted-foreground no-scrollbar md:flex md:px-5"
       role="contentinfo"
       aria-label="NexusOS status bar"
     >

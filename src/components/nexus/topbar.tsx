@@ -67,7 +67,7 @@ export default function Topbar() {
   const moduleLabel = MODULE_NAV.find((m) => m.id === activeModule)?.label ?? 'Dashboard';
 
   return (
-    <header className="glass sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-x-0 border-t-0 px-3 md:px-5">
+    <header className="glass sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-x-0 border-t-0 px-3 md:px-5 max-md:pt-[env(safe-area-inset-top,0px)]">
       {/* Mobile nav */}
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetTrigger asChild>
@@ -100,11 +100,11 @@ export default function Topbar() {
       </div>
 
       {/* Top center intentionally left empty — the Dynamic Island floats there (fixed, z-60) */}
-      <Button variant="ghost" size="icon" className="ml-auto hidden sm:inline-flex" onClick={() => setPaletteOpen(true)} aria-label="Search">
+      <Button variant="ghost" size="icon" className="ml-auto inline-flex" onClick={() => setPaletteOpen(true)} aria-label="Search and commands">
         <Search className="h-4.5 w-4.5" aria-hidden="true" />
       </Button>
 
-      <div className="ml-auto flex items-center gap-1">
+      <div className="ml-auto flex items-center gap-1 max-sm:hidden">
         {/* Compact glass search trigger (sm+) */}
         <motion.button
           onClick={() => setPaletteOpen(true)}

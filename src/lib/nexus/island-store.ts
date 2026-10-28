@@ -178,6 +178,8 @@ export const useIsland = create<IslandState>()(
             energy: 4,
             tags: ['pomodoro'],
           });
+          // Haptic pattern (mobile browsers) — two short + one long pulse.
+          try { navigator.vibrate?.([110, 60, 110, 60, 220]); } catch { /* unsupported */ }
           const cycles = pomo.cycles + 1;
           const isLong = cycles % 4 === 0;
           if (pomo.autoStartBreak) {
