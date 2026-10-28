@@ -575,6 +575,19 @@
     0 0 40px -18px rgba(255, 255, 255, 0.28),
     inset 0 1px 0 var(--glass-hi);
 }
+/* The compact phone capsule is a single, fixed-width Dynamic Island. Swipe
+   inside it to reveal metrics; the content scrolls but its scrollbar never does. */
+.island-metric-strip {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.island-metric-strip::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
 .island-shell .glass-chip {
   color: #fff;
 }

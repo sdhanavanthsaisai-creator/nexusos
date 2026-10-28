@@ -143,7 +143,7 @@ export default function DynamicIsland() {
           aria-hidden="true"
         />
       )}
-      <div className="pointer-events-none fixed inset-x-0 top-2.5 z-[60] flex flex-col items-center max-md:top-[calc(env(safe-area-inset-top,0px)+0.4rem)]">
+      <div className="pointer-events-none fixed inset-x-0 top-2.5 z-[60] flex flex-col items-center max-md:top-[calc(env(safe-area-inset-top,0px)+3.5rem)]">
         {expanded ? (
           <ExpandedPanel musicPlaying={musicPlaying} onMusicChange={setMusicPlaying} />
         ) : (
@@ -205,11 +205,11 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
         animate={pulse}
         whileTap={{ scale: 0.97 }}
         transition={SPRING}
-        className="island-shell pointer-events-auto flex h-11 max-w-[92vw] cursor-pointer items-center overflow-hidden rounded-full pl-3 pr-1 text-foreground md:hidden"
+        className="island-shell pointer-events-auto flex h-11 w-[min(288px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] cursor-pointer items-center overflow-hidden rounded-full pl-3 pr-1 text-foreground md:hidden"
       >
         <button
           type="button"
-          className="pointer-events-auto flex h-full shrink-0 cursor-pointer items-center gap-2 pr-1"
+          className="pointer-events-auto flex h-full max-w-[44%] shrink-0 cursor-pointer items-center gap-2 overflow-hidden pr-1"
           onClick={() => useIsland.getState().expand()}
           aria-label="Open Dynamic Island"
         >
@@ -220,7 +220,7 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
                   alert.tone === 'success' ? 'bg-foreground' : alert.tone === 'warning' ? 'bg-foreground/55' : 'bg-[var(--primary)]'
                 }`}
               />
-              <span className="max-w-[46vw] truncate text-xs font-medium">{alert.title}</span>
+              <span className="truncate text-xs font-medium">{alert.title}</span>
             </>
           ) : timerActive ? (
             <>
@@ -246,14 +246,14 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
             </>
           ) : (
             <>
-              <Zap className="h-3 w-3 shrink-0 text-[var(--aur-1)]" />
+              <Zap className="h-3 w-3 shrink-0 text-[var(--aur-1)]" aria-hidden="true" />
               <span className="font-mono text-[11px] tabular-nums">{minutesToHM(todayMin)}</span>
             </>
           )}
         </button>
         {/* Metric strip — swipeable */}
         <div
-          className="no-scrollbar flex min-w-0 flex-1 snap-x snap-mandatory items-center gap-1.5 overflow-x-auto overscroll-contain px-1"
+          className="island-metric-strip flex min-w-0 flex-1 snap-x snap-mandatory items-center gap-1.5 overflow-x-auto overscroll-contain px-1"
           role="group"
           aria-label="Live metrics — swipe for more"
         >
@@ -287,9 +287,9 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
         <ChevronDown className="mx-1 h-4 w-4 shrink-0 text-white/40" aria-hidden="true" />
       </motion.div>
 
-      {/* Desktop: original glass pill (unchanged behaviour) */}
+      {/* Desktop: original glass pill. Keep it out of the mobile shared-layout
+          transition so the CSS-hidden desktop node cannot paint a ghost box. */}
       <motion.button
-        layoutId="island-pod"
         type="button"
         onClick={() => useIsland.getState().expand()}
         animate={pulse}
@@ -379,7 +379,7 @@ function MetricChip({ label, value, first = false }: { label: string; value: str
   );
 }
 function cnxChip(first: boolean) {
-  return `flex h-8 shrink-0 snap-start items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 ring-1 ring-white/10 ${first ? 'ring-white/20' : ''}`;
+  return `flex h-8 w-[calc(100%+8px)] shrink-0 snap-start items-center justify-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 ring-1 ring-white/10 ${first ? 'ring-white/20' : ''}`;
 }
 
 // ─── Expanded panel ───────────────────────────────────────────────────────────

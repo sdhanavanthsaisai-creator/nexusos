@@ -67,7 +67,7 @@ export default function Topbar() {
   const moduleLabel = MODULE_NAV.find((m) => m.id === activeModule)?.label ?? 'Dashboard';
 
   return (
-    <header className="glass sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-x-0 border-t-0 px-3 md:px-5 max-md:pt-[env(safe-area-inset-top,0px)]">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-0 px-3 md:glass md:border-x-0 md:border-t-0 md:px-5 max-md:pt-[env(safe-area-inset-top,0px)]">
       {/* Mobile nav */}
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetTrigger asChild>
