@@ -94,7 +94,7 @@ export default function Topbar() {
         </SheetContent>
       </Sheet>
 
-      <div className="min-w-0 shrink">
+      <div className="hidden min-w-0 shrink sm:block">
         <p className="max-w-[76px] truncate text-sm font-black tracking-tight sm:max-w-none">{moduleLabel}</p>
         <p className="hidden truncate text-[11px] text-muted-foreground sm:block">{fmtDayFull(todayKey())} · {profile.university}</p>
       </div>

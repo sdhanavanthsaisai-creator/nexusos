@@ -143,7 +143,7 @@ export default function DynamicIsland() {
           aria-hidden="true"
         />
       )}
-      <div className="pointer-events-none fixed inset-x-0 top-2.5 z-[60] flex flex-col items-center max-md:top-[calc(env(safe-area-inset-top,0px)+3.5rem)]">
+      <div className="pointer-events-none fixed inset-x-0 top-2.5 z-[60] flex flex-col items-center max-md:top-[calc(env(safe-area-inset-top,0px)+0.4rem)]">
         {expanded ? (
           <ExpandedPanel musicPlaying={musicPlaying} onMusicChange={setMusicPlaying} />
         ) : (
@@ -205,7 +205,7 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
         animate={pulse}
         whileTap={{ scale: 0.97 }}
         transition={SPRING}
-        className="island-shell pointer-events-auto flex h-11 w-[min(288px,calc(100vw-2rem))] max-w-[calc(100vw-2rem)] cursor-pointer items-center overflow-hidden rounded-full pl-3 pr-1 text-foreground md:hidden"
+        className="island-shell pointer-events-auto flex h-11 w-[min(288px,calc(100vw-8rem))] max-w-[calc(100vw-8rem)] cursor-pointer items-center overflow-hidden rounded-full pl-3 pr-1 text-foreground md:hidden"
       >
         <button
           type="button"
