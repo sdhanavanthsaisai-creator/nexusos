@@ -181,3 +181,20 @@ Stage Summary:
 - Window manager, island, dock, spotlight, sound, music engine all real and wired.
 - APP COMPONENT CONTRACT for subagents: export function XApp({ win }: { win: WinState }). Apps must use stores from @/lib/glassos/store, sfx from @/lib/glassos/sound, icons via APP_ICONS/AppIconTile. Design tokens: classes glass, glass-deep, glass-chip, glass-hover, g-text-1/2/3, g-accent, g-grad-text, g-scroll, g-input, g-md (markdown). NO blue/indigo default accents — use var(--g-accent), var(--g-accent-2).
 - Pending: Tasks 3-a/3-b (apps), album covers, integration + verification.
+
+---
+Task ID: 4
+Agent: lead (Z.ai Code orchestrator)
+Task: REVERT — user stopped the GlassOS pivot and requested the study planner (NexusOS) back
+
+Work Log:
+- Halted the GlassOS build before any native app was implemented (subagent Task 3-a cancelled before writing files; only lead's foundation existed).
+- Restored src/app/page.tsx to render the NexusOS app (dynamic import of @/components/nexus/nexus-app with splash).
+- Restored src/app/layout.tsx metadata to NexusOS (title/description/OG tags).
+- Truncated src/app/globals.css back to its original 315 lines (removed the appended "GlassOS — Design System" section; NexusOS styles untouched).
+- Deleted all GlassOS artifacts: src/components/glassos/, src/lib/glassos/, src/app/api/glass-ai/, src/app/api/glass-browse/, public/covers/.
+- All NexusOS files were never modified or deleted, so the study planner is fully intact.
+
+Stage Summary:
+- Project state = NexusOS study planner, exactly as it was before the GlassOS attempt (Task IDs 1..N of the original build preserved).
+- GlassOS is fully removed from the codebase; nothing imports it anymore.

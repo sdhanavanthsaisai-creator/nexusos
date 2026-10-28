@@ -13,18 +13,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GlassOS — a glass desktop in your browser",
+  title: "NexusOS — Student Productivity & Coding OS",
   description:
-    "GlassOS: an ultra-aesthetic web operating system with a spring-physics window manager, Dynamic Island, magnetic dock, live generative music, spotlight search and native glass apps.",
-  keywords: ["GlassOS", "web desktop", "glassmorphism", "dynamic island", "window manager", "web audio"],
-  authors: [{ name: "GlassOS" }],
+    "Personal student productivity, coding mastery and habit tracking operating system: 3D dashboard, 20+ analytics charts, tasks, habits, AI coach and more.",
+  keywords: ["NexusOS", "student productivity", "study tracker", "habit tracker", "coding roadmap", "analytics", "AI coach"],
+  authors: [{ name: "NexusOS" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "GlassOS — a glass desktop in your browser",
-    description: "Spring-physics windows, a living Dynamic Island, generative music and beautiful glass apps.",
-    siteName: "GlassOS",
+    title: "NexusOS — Student Productivity & Coding OS",
+    description: "Study tracking, habits, tasks, analytics and an AI coach in one immersive dashboard.",
+    siteName: "NexusOS",
     type: "website",
   },
 };
