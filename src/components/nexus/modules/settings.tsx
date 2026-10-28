@@ -31,10 +31,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 // ─── Theme previews (swatch hexes hardcoded per spec) ─────────────────────────
 const THEME_PREVIEWS: { id: ThemeId; label: string; swatches: string[] }[] = [
-  { id: 'dark', label: 'Obsidian Dark', swatches: ['#09090b', '#22d3ee', '#a78bfa'] },
-  { id: 'light', label: 'Daylight', swatches: ['#f4f5f7', '#0891b2', '#7c3aed'] },
-  { id: 'oled', label: 'OLED Black', swatches: ['#000000', '#00e5ff', '#b18cff'] },
-  { id: 'cyberpunk', label: 'Cyberpunk', swatches: ['#0b0312', '#e879f9', '#22d3ee'] },
+  { id: 'dark', label: 'Obsidian Cyber Glass', swatches: ['#05070d', '#22d3ee', '#a78bfa'] },
+  { id: 'light', label: 'Frost Light', swatches: ['#eef2f9', '#0891b2', '#7c3aed'] },
+  { id: 'oled', label: 'OLED Void', swatches: ['#000000', '#00e5ff', '#b18cff'] },
+  { id: 'cyberpunk', label: 'Neon Cyberpunk', swatches: ['#0b0312', '#e879f9', '#22d3ee'] },
 ];
 
 function CardShell({ icon: Icon, title, hint, children, className }: {

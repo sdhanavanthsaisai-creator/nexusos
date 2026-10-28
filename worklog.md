@@ -198,3 +198,83 @@ Work Log:
 Stage Summary:
 - Project state = NexusOS study planner, exactly as it was before the GlassOS attempt (Task IDs 1..N of the original build preserved).
 - GlassOS is fully removed from the codebase; nothing imports it anymore.
+
+---
+Task ID: 2-b
+Agent: shell-polish agent (sidebar/topbar/status-bar Glass OS pass)
+Task: Re-skinned the app shell (sidebar.tsx, topbar.tsx, status-bar.tsx) to the Glass OS theme with Framer Motion spring physics; cleared the topbar center for the Dynamic Island.
+
+Work Log:
+- Read worklog (NexusOS build + GlassOS pivot/revert) and the 3 target files; verified globals.css tokens exist (.glass-chip, .glass-strong, .text-gradient, .animate-pulse-glow, --aur-1..4) and framer-motion ^12.23.2 in package.json.
+- sidebar.tsx:
+  - Nav item <button> → <motion.button> with whileHover={{ x: 3 }}, whileTap={{ scale: 0.97 }}, spring transition (stiffness 400, damping 25); added `will-change-transform`; all existing classes/store wiring/badge/Lock/tooltips kept (TooltipTrigger asChild still wraps motion.button — ref forwarding OK).
+  - Active indicator span → motion.span with layoutId="nav-active-glow" (rendered only in the active item; framer springs it across items on module switch). Note: Tailwind's -translate-y-1/2 uses the CSS `translate` property which composes with framer's transform, so centering is preserved during the layout morph.
+  - Brand: Hexagon block <span> → motion.div with infinite subtle float animate={{ rotate: [0, 8, -8, 0] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}; wordmark still .text-gradient.
+  - Collapse/expand footer buttons → motion.button with whileHover={{ rotate: 6 }} + whileTap={{ scale: 0.9 }} (spring).
+  - aside untouched otherwise: `glass`, md:flex hidden, w-60/w-[4.25rem], transition-[width], aria-label="Primary sidebar" preserved.
+- topbar.tsx:
+  - REMOVED the centered search button block ('Search modules, tasks, actions…' + ⌘K) — top center is now empty for the Dynamic Island (z-60, top-2.5); left a comment marking the reserved zone.
+  - Right cluster class changed from `ml-auto … sm:ml-0` → `ml-auto` (was only correct when the centered search absorbed space; now the cluster right-aligns on all breakpoints).
+  - Added compact search trigger (before streak pill): motion.button `glass-chip hidden … sm:flex` rounded-xl px-2.5 py-1.5 text-xs text-muted-foreground, Search icon + .kbd ⌘K, whileHover 1.04 / whileTap 0.96 spring, aria-label="Open command palette (Cmd+K)".
+  - Streak pill: `border-amber-400/25 bg-amber-400/10` replaced by `.glass-chip` (frosted pill) keeping rounded-xl px-2.5 py-1.5 text-amber-400 + Flame + title tooltip.
+  - Theme labels renamed: Obsidian Cyber Glass / Frost Light / OLED Void / Neon Cyberpunk (icons + setSetting wiring unchanged).
+  - AI Coach: wrapped in motion.div — infinite glow pulse animate boxShadow cyan→violet→cyan keyframes (duration 3.2, ease easeInOut), whileHover 1.04 / whileTap 0.96 with per-gesture spring overrides (avoids inheriting the 3.2s infinite repeat); dropped the old static shadow-md/hover:shadow classes (glow now owns the elevation); gradient from-cyan-500/90 to-violet-500/90 kept.
+  - Notifications bell: PopoverTrigger asChild now wraps the Button in motion.div whileTap={{ scale: 0.9 }} (spring); popover content/badge logic identical; aria-label preserved.
+  - Header element, mobile Sheet nav, module title/date block untouched.
+- status-bar.tsx:
+  - Timer pill <span> → motion.span pop-in initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} spring (400/25); classes switched from border-cyan-400/30 bg-cyan-400/10 to `.glass-chip` keeping rounded-full px-2 py-0.5 text-cyan-300; mounts only when timerActive so it springs in on start/resume.
+  - Removed pre-existing unused import `timerElapsedMs` (no behavior change).
+  - Footer `glass sticky bottom-0 z-30 h-9` + safe-area padding, today minutes, streak, shortcut hints, local-sync dot (animate-pulse-glow) all kept as-is.
+- Verification: bunx eslint (3 files, --fix then plain) → 0 problems; bunx tsc --noEmit → 0 errors under src/ (remaining output only pre-existing errors in examples/websocket + skills/*, not app code). No dev server started; no other files touched.
+
+Stage Summary:
+- Shell is now Glass OS: frosted .glass-chip pills (search trigger, streak, timer), spring-physics nav (x:3 hover, 0.97 tap, layoutId active-glow morph), breathing Hexagon brand, pulsing cyan→violet AI Coach glow, tap-scale bell, Dynamic-Island-safe empty topbar center.
+- THEME_OPTIONS labels changed → command palette + settings theme previews that read labels elsewhere may show the new names (labels were only defined in topbar.tsx; settings.tsx has its own hardcoded label list — lead may want to align it).
+- Zero API/signature changes: NavList props still {collapsed, onNavigate}; all store handlers intact. Safe for parallel agents.
+
+---
+Task ID: 2-a
+Agent: dynamic-island agent (Z.ai Code subagent)
+Task: Dynamic Island system — procedural lo-fi engine, island+pomodoro store, DynamicIsland component
+
+Work Log:
+- Read worklog + prior sources (store.ts, utils.ts, types.ts, globals.css island tokens, shadcn select/slider/switch/button APIs) before writing any file. Only created the 3 assigned files; touched nothing else.
+- Created src/lib/nexus/lofi.ts — singleton `lofiEngine`, pure Web Audio, zero assets, SSR-guarded (no window access at module scope; every method guarded). 4 generative tracks (TRACKS export = {name,artist,bpm,key}[]): Aurora Drift (Am7–Fmaj7–Cmaj7–G6, 66bpm, triangle, hat 0.30), Glass Ribbons (Dm7–Bbmaj7–Fmaj7–Cmaj9, 72bpm, sine, hat 0.22), Midnight Lagoon (Cmaj7–Am7–Fmaj7–G6, 62bpm, triangle, hat 0.16), Neon Rain (Em7–Cmaj7–G6–D6, 70bpm, sine, hat 0.42). Chain: session bus → master gain → AnalyserNode(2048) → destination. 200ms-interval lookahead scheduler (0.7s): one chord/bar — 2 detuned (±7c) triangle/sine oscs per chord tone → lowpass (per-track cutoff) → slow-attack (~1.6s) / release envelopes; soft sine sub-bass (root −12); sparse hats (noise → highpass 6.5k → 55ms env) at per-track density; looped vinyl-crackle noise → bandpass 4.2k (low gain, per-track multiplier). pause() = stop scheduler + 120ms fade-out + stop all tracked sources after 260ms (context kept). play() resumes suspended ctx; play(i)/next()/prev() hot-swap track while playing; setVolume uses setTargetAtTime; default volume 0.5. waveform(out: Uint8Array) fills from the real AnalyserNode (version-proof cast for TS 5.9 Uint8Array<ArrayBuffer> generic), returns 128-flat when engine not started.
+- Created src/lib/nexus/island-store.ts — `useIsland` (zustand + persist, key `nexusos-island-v1`, createJSONStorage(localStorage), partialize → only {module, pomo} persisted; expanded/alert ephemeral). State: expanded, module, alert{id,title,detail,tone}, pomo{phase,cycles,endsAt,pausedRemainingMs,subjectId,phaseStartedAt,lengths(25/5/15),autoStartBreak(true),autoStartFocus(false)}. Actions: expand(m?), collapse, setModule, notify (stamps id=Date.now()), clearAlert, setPomo, startPomodoro, pausePomodoro (freezes remaining→pausedRemainingMs), resumePomodoro, skipPhase (focus→break w/o logging partial, break→focus), stopPomodoro (full reset, cycles→0), completePhaseByClock(now) — idempotent guard (idle/paused/now<endsAt → no-op). Focus completion: logs real session via useNexus.addSession({subjectId: pomo.subjectId ?? first subject ?? 'general', date: todayKey(), startTime from phaseStartedAt, endTime now, durationMin lengths.focus, concentration 4, energy 4, tags ['pomodoro']}), cycles+1, notify success, then autoStartBreak ? ((cycles%4===0 ? longBreak : break) with fresh endsAt) : idle. Break completion: notify 'Break over' + autoStartFocus ? new focus : idle. Helpers exported: pomoRemainingMs(pomo, now), pomoPhaseDurationMs(pomo).
+- Created src/components/nexus/dynamic-island.tsx — default export `DynamicIsland`, no props, self-mounting fixed. SSR/hydration guard via `useMounted` (useSyncExternalStore noop-subscribe trick — chosen because the new Next 16 `react-hooks/set-state-in-effect` rule rejects the useState-in-effect mounted gate). Compact pill = motion.button layoutId="island-pod" (.island-shell, h-9, rounded-full, max-w-[92vw]) with AnimatePresence crossfade between 5 priorities: alert (tone dot + title, pulse scale [1,1.06,1] via useAnimationControls keyed on alert.id) → free timer (island-live-dot pulsing when running + HH:MM:SS elapsed + subject) → pomodoro (emerald focus/amber break dot + m:ss + label) → music (.island-eq 4 spans + track name) → default (Zap + minutesToHM today · CheckCircle2 + habit done/total) + ChevronDown. Expanded panel = shared layoutId morph (spring 300/28), rounded-[28px], w-[min(380px,calc(100vw-1.5rem))], role="dialog": tab row (Timer/Stats/Music with layoutId="island-tab" glass-chip active pill) + X close. TIMER: active pomodoro → SVG ring (r=44, dashoffset math, emerald/amber stroke), big mono countdown, 4 cycle dots (cycles%4), Pause/Resume · Skip · Stop; idle → 25/50/15 focus-length chips, shared SubjectSelect (shadcn Select, SelectContent z-[70] so it floats above the click-catcher), auto-start Switches, gradient (cyan→violet aurora) Start Pomodoro; divider "or"; free timer idle → SubjectSelect + Start free timer (useUI.startTimer), active → elapsed + Pause/Resume + Stop & log. STATS: 2×2 glass-chip cards (Today focus minutesToHM, Habit score + emerald progress bar, Streak + Flame amber via computeStreak, Due/overdue counts rose) + 7-day sparkline (7 normalized bars, today = var(--primary)). MUSIC: circular play/pause with primary glow (unlock() on first play), prev/next, track meta, "procedural lo-fi" badge, shadcn volume Slider, live waveform canvas (~348×48) drawing lofiEngine.waveform() via rAF only while playing (centered glowing line, --primary read once per play session, shadowBlur 8); music playing state lifted to root + 1s engine poll as safety sync. Outside-click: fixed inset-0 z-40 catcher (below Radix-portal z-50/70, above page content) closes; Escape closes; alert auto-dismiss 4.5s; alert does NOT auto-expand. Subscriptions (single mount effect): useNexus.subscribe → done-task count increase → notify('Task completed','+1 task cleared',success); useUI.subscribe → start-from-idle → notify('Focus started', subject name, info) and full-reset stop → notify('Session logged', '<minutesToHM> focused', success).
+- Verification: `bunx eslint <3 files> --fix` then plain eslint → 0 problems; `bunx tsc --noEmit` → zero errors from my files (pre-existing unrelated errors: examples/websocket/* missing socket.io types, skills/image-edit + skills/stock-analysis type mismatches — not app code). dev.log clean.
+
+Stage Summary:
+- Dynamic Island system complete in 3 self-contained files: lofiEngine (procedural lo-fi w/ live analyser), useIsland store (island state + full pomodoro engine with auto session logging into NexusOS data), DynamicIsland component (no props — shell/lead just renders <DynamicIsland /> once, e.g. in the GlassOS shell; it must be inside the client tree, nothing else needed).
+- Completion detection contract: the island's 1s tick calls useIsland.getState().completePhaseByClock(now) when endsAt passes; store writes the study session + notification itself. Lead integration notes: (1) do not render another element at z-60 top-center; (2) keep page content below z-40 so the outside-click catcher works; (3) stop-notification is intentionally emitted ONLY from the useUI subscription (computes real minutes from prev snapshot) to avoid duplicate alerts with the island's Stop & log handler; (4) MusicModule needs no persistence — engine state resets on reload by design.
+
+---
+Task ID: 3
+Agent: lead (Z.ai Code orchestrator)
+Task: Glass OS integration — aurora backdrop + Dynamic Island mount + spring module transitions
+
+Work Log:
+- Created aurora background system in globals.css: per-theme --aur-1..4 palettes + --glass-* token sets (dark/Frost light/OLED/cyberpunk), .aurora-stage cosmic mesh + 4 drifting blobs + dual twinkling starfields + vignette + SVG grain, upgraded .glass/.glass-strong to blur(22-30px) saturate(160-170%) white/10 borders aurora shadows, added .glass-chip/.glass-hover/.g-grad-text/.island-* classes, prefers-reduced-motion guards.
+- Created src/components/nexus/aurora-background.tsx (fixed z-0 living backdrop, aria-hidden).
+- Rewired nexus-app.tsx: relative root + <AuroraBackground/> (z-0) + content z-10; module switch now AnimatePresence mode="wait" with spring (stiffness 260, damping 26) opacity/y/scale transitions; mounted <DynamicIsland/>; main gets pt-14/md:pt-16 to clear the floating island.
+- Aligned settings.tsx THEME_PREVIEWS labels/swatches with new Glass OS naming (Obsidian Cyber Glass / Frost Light / OLED Void / Neon Cyberpunk).
+- Fixed Frost Light island contrast: pinned .island-shell to permanently obsidian glass (Apple-style) with dark-pinned shadcn token scope (--background/--border/--muted/etc.) so Select/Switch/Slider render dark inside the island in every theme.
+- bunx tsc --noEmit (src) clean; eslint src/components/nexus + src/lib/nexus + src/app → 0 problems.
+
+Stage Summary:
+- Glass OS skin is live: aurora/cosmic animated backdrop, layered frosted glass across all 12 modules (automatic via shared .glass classes), spring module transitions, island mounted. All existing functionality untouched.
+
+---
+Task ID: 4
+Agent: lead (Z.ai Code orchestrator)
+Task: Agent Browser E2E verification of Glass OS + island + fixes
+
+Work Log:
+- Browser-verified at 1440x900: aurora backdrop + starfield render; island compact pill shows today focus + habit score (⚡ 3h 40m · ✓ 9/9); click expands with Timer/Stats/Music tabs (layoutId spring); pomodoro started (24:56 countdown, ring progress, cycle dots, Pause/Skip/Stop); compact pill tracks countdown live; Stats tab (2x2 chips + 7-day sparkline) correct; Music tab plays procedural lo-fi "Aurora Drift" with live cyan oscilloscope waveform from real AnalyserNode; free timer started from island → pill shows 00:00:04 · Maths → Stop & log → session #107 logged with focus-timer tag (verified in localStorage), today total updated to 3h 41m everywhere.
+- Notification trigger: completing a task morphs the pill to "Task completed" with glowing green dot (useNexus subscription), auto-dismisses.
+- Cmd+K palette opens with quick actions; AI Coach glow pulse; Frost Light + OLED Void + Neon Cyberpunk themes verified visually; theme + island state persist across reloads (zustand persist nexusos-island-v1).
+- Mobile 390x844: island overlapped topbar title/theme → fixed: topbar title max-w-[76px] on mobile, theme button hidden sm+ (Settings covers it), search icon relocated into mobile nav sheet as "Search & commands ⌘K" chip; re-verified clean layout; expanded island fits 380px panel; status bar sticks to bottom.
+- Final state: agent-browser errors → none; dev.log clean; eslint 0 problems; tsc clean.
+
+Stage Summary:
+- Nexus Study OS is now fully Glass OS: obsidian cyber glass default, Frost Light, OLED Void, Neon Cyberpunk; functional Dynamic Island (timer/pomodoro/stats/lo-fi music + notification alerts); spring physics across shell; all study-tracking functionality preserved and browser-verified end-to-end.

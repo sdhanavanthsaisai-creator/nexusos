@@ -6,6 +6,7 @@ import {
   Palette, AlertTriangle, CalendarClock, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import { useNexus, useUI } from '@/lib/nexus/store';
 import type { ThemeId } from '@/lib/nexus/types';
 import { MODULE_NAV } from '@/lib/nexus/constants';
@@ -18,10 +19,10 @@ import { Badge } from '@/components/ui/badge';
 import { NavList } from './sidebar';
 
 const THEME_OPTIONS: { id: ThemeId; label: string; icon: LucideIcon }[] = [
-  { id: 'dark', label: 'Obsidian Dark', icon: Moon },
-  { id: 'light', label: 'Daylight', icon: Sun },
-  { id: 'oled', label: 'OLED Black', icon: MonitorSmartphone },
-  { id: 'cyberpunk', label: 'Cyberpunk', icon: Palette },
+  { id: 'dark', label: 'Obsidian Cyber Glass', icon: Moon },
+  { id: 'light', label: 'Frost Light', icon: Sun },
+  { id: 'oled', label: 'OLED Void', icon: MonitorSmartphone },
+  { id: 'cyberpunk', label: 'Neon Cyberpunk', icon: Palette },
 ];
 
 type Notification = { id: string; title: string; detail: string; tone: 'danger' | 'warning' | 'info'; module: string };
@@ -78,32 +79,50 @@ export default function Topbar() {
           <SheetHeader className="px-4 pb-0 pt-4">
             <SheetTitle className="text-left text-sm font-bold text-gradient">NEXUS OS</SheetTitle>
           </SheetHeader>
+          <div className="px-3 pt-2">
+            <button
+              onClick={() => { setMobileNavOpen(false); setPaletteOpen(true); }}
+              className="glass-chip flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Open command palette (Cmd+K)"
+            >
+              <Search className="h-3.5 w-3.5" aria-hidden="true" />
+              <span className="flex-1 text-left">Search & commands</span>
+              <span className="kbd">⌘K</span>
+            </button>
+          </div>
           <NavList collapsed={false} onNavigate={() => setMobileNavOpen(false)} />
         </SheetContent>
       </Sheet>
 
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold tracking-tight">{moduleLabel}</p>
+      <div className="min-w-0 shrink">
+        <p className="max-w-[76px] truncate text-sm font-semibold tracking-tight sm:max-w-none">{moduleLabel}</p>
         <p className="hidden truncate text-[11px] text-muted-foreground sm:block">{fmtDayFull(todayKey())} · {profile.university}</p>
       </div>
 
-      {/* Search trigger */}
-      <button
-        onClick={() => setPaletteOpen(true)}
-        className="mx-auto hidden w-full max-w-md items-center gap-2 rounded-xl border border-border/70 bg-muted/40 px-3 py-1.5 text-sm text-muted-foreground transition-all hover:border-primary/40 hover:text-foreground sm:flex"
-        aria-label="Open command palette (Cmd+K)"
-      >
-        <Search className="h-3.5 w-3.5" aria-hidden="true" />
-        <span className="flex-1 text-left text-xs">Search modules, tasks, actions…</span>
-        <span className="kbd">⌘K</span>
-      </button>
-      <Button variant="ghost" size="icon" className="ml-auto sm:hidden" onClick={() => setPaletteOpen(true)} aria-label="Search">
+      {/* Top center intentionally left empty — the Dynamic Island floats there (fixed, z-60) */}
+      <Button variant="ghost" size="icon" className="ml-auto hidden sm:inline-flex" onClick={() => setPaletteOpen(true)} aria-label="Search">
         <Search className="h-4.5 w-4.5" aria-hidden="true" />
       </Button>
 
-      <div className="ml-auto flex items-center gap-1 sm:ml-0">
+      <div className="ml-auto flex items-center gap-1">
+        {/* Compact glass search trigger (sm+) */}
+        <motion.button
+          onClick={() => setPaletteOpen(true)}
+          className="glass-chip hidden items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs text-muted-foreground sm:flex"
+          aria-label="Open command palette (Cmd+K)"
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        >
+          <Search className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="kbd">⌘K</span>
+        </motion.button>
+
         {/* Streak pill */}
-        <div className="hidden items-center gap-1.5 rounded-xl border border-amber-400/25 bg-amber-400/10 px-2.5 py-1.5 text-xs font-semibold text-amber-400 sm:flex" title="Current study streak">
+        <div
+          className="glass-chip hidden items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-amber-400 sm:flex"
+          title="Current study streak"
+        >
           <Flame className="h-3.5 w-3.5" aria-hidden="true" />
           {streakCount}d
         </div>
@@ -111,14 +130,20 @@ export default function Topbar() {
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative" aria-label={`Notifications (${notifications.length})`}>
-              <Bell className="h-4.5 w-4.5" aria-hidden="true" />
-              {notifications.length > 0 && (
-                <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[9px] font-bold text-white">
-                  {notifications.length > 9 ? '9+' : notifications.length}
-                </span>
-              )}
-            </Button>
+            <motion.div
+              className="inline-flex"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            >
+              <Button variant="ghost" size="icon" className="relative" aria-label={`Notifications (${notifications.length})`}>
+                <Bell className="h-4.5 w-4.5" aria-hidden="true" />
+                {notifications.length > 0 && (
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[9px] font-bold text-white">
+                    {notifications.length > 9 ? '9+' : notifications.length}
+                  </span>
+                )}
+              </Button>
+            </motion.div>
           </PopoverTrigger>
           <PopoverContent align="end" className="glass-strong w-80 p-2">
             <p className="px-2 pb-1.5 pt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -151,10 +176,10 @@ export default function Topbar() {
           </PopoverContent>
         </Popover>
 
-        {/* Theme switcher */}
+        {/* Theme switcher (sm+ — Settings module covers mobile) */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" aria-label="Switch theme">
+            <Button variant="ghost" size="icon" className="hidden sm:inline-flex" aria-label="Switch theme">
               {THEME_OPTIONS.find((t) => t.id === theme)?.icon && (() => {
                 const I = THEME_OPTIONS.find((t) => t.id === theme)!.icon;
                 return <I className="h-4.5 w-4.5" aria-hidden="true" />;
@@ -177,15 +202,29 @@ export default function Topbar() {
         </DropdownMenu>
 
         {/* AI Coach */}
-        <Button
-          size="sm"
-          onClick={() => setAiOpen(true)}
-          className="gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500/90 to-violet-500/90 px-2.5 text-white shadow-md transition-all hover:shadow-[0_0_20px_-4px_rgba(34,211,238,0.5)]"
-          aria-label="Open AI productivity coach"
+        <motion.div
+          className="rounded-xl"
+          whileHover={{ scale: 1.04, transition: { type: 'spring', stiffness: 400, damping: 25 } }}
+          whileTap={{ scale: 0.96, transition: { type: 'spring', stiffness: 400, damping: 25 } }}
+          animate={{
+            boxShadow: [
+              '0 0 20px -4px rgba(34,211,238,0.5)',
+              '0 0 30px -2px rgba(167,139,250,0.55)',
+              '0 0 20px -4px rgba(34,211,238,0.5)',
+            ],
+          }}
+          transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-          <span className="hidden md:inline">AI Coach</span>
-        </Button>
+          <Button
+            size="sm"
+            onClick={() => setAiOpen(true)}
+            className="gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500/90 to-violet-500/90 px-2.5 text-white"
+            aria-label="Open AI productivity coach"
+          >
+            <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+            <span className="hidden md:inline">AI Coach</span>
+          </Button>
+        </motion.div>
       </div>
     </header>
   );

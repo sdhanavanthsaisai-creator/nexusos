@@ -313,3 +313,269 @@
   border-radius: 0.5rem;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   Glass OS — aurora borealis + cosmic mesh design system
+   Layered frosted glass over a living aurora backdrop. 4 theme moods:
+   dark (Obsidian Cyber Glass) · light (Frost) · oled (Void) · cyberpunk (Neon)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* aurora palette */
+  --aur-base: #05070d;
+  --aur-1: #22d3ee; /* cyan   */
+  --aur-2: #8b5cf6; /* violet */
+  --aur-3: #34d399; /* emerald*/
+  --aur-4: #f472b6; /* rose   */
+  --aur-op: 0.4;
+  --star-op: 0.55;
+  /* frosted glass tokens (obsidian cyber glass) */
+  --glass-bg: rgba(255, 255, 255, 0.045);
+  --glass-bg-strong: rgba(12, 15, 24, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-strong: rgba(255, 255, 255, 0.14);
+  --glass-hi: rgba(255, 255, 255, 0.085);
+  --glass-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --glass-shadow-lift: 0 34px 80px -24px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  --background: var(--aur-base);
+}
+
+[data-theme='light'] {
+  /* frost light */
+  --aur-base: #eef2f9;
+  --aur-1: #7dd3fc;
+  --aur-2: #c4b5fd;
+  --aur-3: #6ee7b7;
+  --aur-4: #fda4af;
+  --aur-op: 0.5;
+  --star-op: 0.14;
+  --glass-bg: rgba(255, 255, 255, 0.48);
+  --glass-bg-strong: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-border-strong: rgba(255, 255, 255, 0.75);
+  --glass-hi: rgba(255, 255, 255, 0.9);
+  --glass-shadow: 0 22px 50px -20px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(148, 163, 184, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --glass-shadow-lift: 0 30px 70px -22px rgba(15, 23, 42, 0.28), 0 0 0 1px rgba(148, 163, 184, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --background: var(--aur-base);
+}
+
+[data-theme='oled'] {
+  --aur-base: #000000;
+  --aur-1: #00e5ff;
+  --aur-2: #b18cff;
+  --aur-3: #3ee8a5;
+  --aur-4: #ff7ab8;
+  --aur-op: 0.26;
+  --star-op: 0.7;
+  --glass-bg: rgba(255, 255, 255, 0.035);
+  --glass-bg-strong: rgba(6, 8, 12, 0.78);
+  --background: var(--aur-base);
+}
+
+[data-theme='cyberpunk'] {
+  --aur-base: #0b0312;
+  --aur-1: #e879f9;
+  --aur-2: #22d3ee;
+  --aur-3: #a3e635;
+  --aur-4: #fb7185;
+  --aur-op: 0.5;
+  --star-op: 0.6;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-strong: rgba(20, 8, 32, 0.74);
+  --background: var(--aur-base);
+}
+
+/* ── Aurora stage (fixed living backdrop) ─────────────────────────────────── */
+.aurora-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 720px at 88% -12%, color-mix(in oklab, var(--aur-2) 15%, transparent), transparent 62%),
+    radial-gradient(950px 650px at -8% 24%, color-mix(in oklab, var(--aur-1) 13%, transparent), transparent 58%),
+    radial-gradient(900px 800px at 55% 118%, color-mix(in oklab, var(--aur-3) 11%, transparent), transparent 60%),
+    radial-gradient(700px 500px at 30% 45%, color-mix(in oklab, var(--aur-4) 6%, transparent), transparent 65%),
+    var(--aur-base);
+}
+.aurora-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(85px);
+  opacity: var(--aur-op);
+  will-change: transform;
+  mix-blend-mode: screen;
+}
+[data-theme='light'] .aurora-blob { mix-blend-mode: normal; }
+.aurora-blob-a {
+  width: 46vw; height: 46vw; left: -12vw; top: -14vh;
+  background: radial-gradient(circle at 35% 35%, var(--aur-1), transparent 68%);
+  animation: aur-drift-a 42s ease-in-out infinite alternate;
+}
+.aurora-blob-b {
+  width: 40vw; height: 40vw; right: -10vw; top: 4vh;
+  background: radial-gradient(circle at 60% 40%, var(--aur-2), transparent 68%);
+  animation: aur-drift-b 36s ease-in-out infinite alternate;
+}
+.aurora-blob-c {
+  width: 38vw; height: 38vw; left: 18vw; bottom: -18vh;
+  background: radial-gradient(circle at 45% 55%, var(--aur-3), transparent 68%);
+  animation: aur-drift-c 48s ease-in-out infinite alternate;
+}
+.aurora-blob-d {
+  width: 26vw; height: 26vw; right: 16vw; bottom: -8vh;
+  background: radial-gradient(circle at 50% 50%, var(--aur-4), transparent 70%);
+  animation: aur-drift-d 31s ease-in-out infinite alternate;
+}
+@keyframes aur-drift-a { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(13vw, 11vh, 0) scale(1.28); } }
+@keyframes aur-drift-b { from { transform: translate3d(0, 0, 0) scale(1.1); } to { transform: translate3d(-11vw, 14vh, 0) scale(0.92); } }
+@keyframes aur-drift-c { from { transform: translate3d(0, 0, 0) scale(0.95); } to { transform: translate3d(10vw, -12vh, 0) scale(1.22); } }
+@keyframes aur-drift-d { from { transform: translate3d(0, 0, 0) scale(1); } to { transform: translate3d(-14vw, -9vh, 0) scale(1.18); } }
+
+/* starfield layers */
+.aurora-stars {
+  position: absolute;
+  inset: 0;
+  opacity: var(--star-op);
+  background-image:
+    radial-gradient(1.4px 1.4px at 11% 21%, rgba(255, 255, 255, 0.9), transparent 100%),
+    radial-gradient(1px 1px at 38% 64%, rgba(255, 255, 255, 0.65), transparent 100%),
+    radial-gradient(1.6px 1.6px at 72% 13%, rgba(255, 255, 255, 0.8), transparent 100%),
+    radial-gradient(1px 1px at 87% 47%, rgba(255, 255, 255, 0.55), transparent 100%),
+    radial-gradient(1.2px 1.2px at 55% 85%, rgba(255, 255, 255, 0.7), transparent 100%),
+    radial-gradient(1px 1px at 22% 78%, rgba(255, 255, 255, 0.5), transparent 100%),
+    radial-gradient(1.3px 1.3px at 93% 74%, rgba(255, 255, 255, 0.6), transparent 100%),
+    radial-gradient(1px 1px at 64% 37%, rgba(255, 255, 255, 0.5), transparent 100%);
+  background-size: 620px 620px;
+  animation: aur-twinkle 8s ease-in-out infinite alternate;
+}
+.aurora-stars-2 {
+  background-size: 380px 380px;
+  animation-delay: -4s;
+  opacity: calc(var(--star-op) * 0.6);
+}
+@keyframes aur-twinkle { from { opacity: calc(var(--star-op) * 0.55); } to { opacity: var(--star-op); } }
+
+.aurora-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.38) 100%);
+}
+[data-theme='light'] .aurora-vignette { background: radial-gradient(120% 90% at 50% 40%, transparent 60%, rgba(15, 23, 42, 0.08) 100%); }
+
+.aurora-grain {
+  position: absolute;
+  inset: -50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+}
+
+/* ── Layered frosted glass (upgraded tokens — same class names) ───────────── */
+.glass {
+  background:
+    linear-gradient(160deg, var(--glass-hi), transparent 42%),
+    var(--glass-bg);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (hover: hover) {
+  .glass:hover { border-color: color-mix(in oklab, var(--primary) 26%, var(--glass-border)); }
+}
+.glass-strong {
+  background:
+    linear-gradient(160deg, var(--glass-hi), transparent 45%),
+    var(--glass-bg-strong);
+  backdrop-filter: blur(30px) saturate(170%);
+  -webkit-backdrop-filter: blur(30px) saturate(170%);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--glass-shadow);
+}
+.glass-chip {
+  background: linear-gradient(160deg, var(--glass-hi), transparent 50%), var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.4), inset 0 1px 0 var(--glass-hi);
+}
+.glass-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--glass-shadow-lift);
+}
+
+/* ── Dynamic Island ────────────────────────────────────────────────────────── */
+.island-shell {
+  /* Apple-style: the island stays obsidian in every theme (white-on-dark UI) */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-strong: rgba(10, 12, 20, 0.74);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-strong: rgba(255, 255, 255, 0.14);
+  --glass-hi: rgba(255, 255, 255, 0.085);
+  /* pin shadcn primitives (Select/Switch/Slider) to dark styling inside the island */
+  --background: #0b0e16;
+  --foreground: #e4e4e7;
+  --card: #10131c;
+  --card-foreground: #e4e4e7;
+  --secondary: rgba(255, 255, 255, 0.08);
+  --secondary-foreground: #e4e4e7;
+  --muted: rgba(255, 255, 255, 0.07);
+  --muted-foreground: #9d9da8;
+  --accent: rgba(255, 255, 255, 0.10);
+  --accent-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.12);
+  --input: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  background:
+    linear-gradient(165deg, var(--glass-hi), transparent 46%),
+    var(--glass-bg-strong);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow:
+    0 22px 55px -16px rgba(0, 0, 0, 0.6),
+    0 0 40px -18px color-mix(in oklab, var(--primary) 55%, transparent),
+    inset 0 1px 0 var(--glass-hi);
+}
+.island-shell .glass-chip {
+  color: #fff;
+}
+.island-live-dot {
+  box-shadow: 0 0 10px 2px color-mix(in oklab, var(--primary) 70%, transparent);
+}
+.island-eq span {
+  display: inline-block;
+  width: 2.5px;
+  border-radius: 2px;
+  background: var(--primary);
+  animation: island-eq-b 0.9s ease-in-out infinite;
+}
+.island-eq span:nth-child(2) { animation-delay: 0.15s; }
+.island-eq span:nth-child(3) { animation-delay: 0.3s; }
+.island-eq span:nth-child(4) { animation-delay: 0.45s; }
+@keyframes island-eq-b {
+  0%, 100% { height: 4px; opacity: 0.7; }
+  50% { height: 13px; opacity: 1; }
+}
+
+/* text gradient tuned to aurora */
+.g-grad-text {
+  background: linear-gradient(94deg, var(--aur-1), var(--aur-2) 50%, var(--aur-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* spring-friendly focus ring */
+.g-focus {
+  outline: 2px solid color-mix(in oklab, var(--primary) 60%, transparent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-blob, .aurora-stars, .aurora-stars-2, .island-eq span { animation: none !important; }
+  .aurora-blob { transform: scale(1.05); }
+}
+

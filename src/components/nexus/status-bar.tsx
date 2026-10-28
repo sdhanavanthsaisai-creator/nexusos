@@ -1,8 +1,9 @@
 'use client';
 
 import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Flame, Timer, Command, Database } from 'lucide-react';
-import { useNexus, useUI, timerElapsedMs, useTimerTick } from '@/lib/nexus/store';
+import { useNexus, useUI, useTimerTick } from '@/lib/nexus/store';
 import { todayKey, dayTotalMinutes, minutesToHM, secondsToClock, computeStreak } from '@/lib/nexus/utils';
 
 export default function StatusBar() {
@@ -40,14 +41,17 @@ export default function StatusBar() {
           <b className="font-mono tabular-nums text-foreground/85">{streak}d streak</b>
         </span>
         {timerActive && (
-          <span
-            className="flex items-center gap-1 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-cyan-300"
+          <motion.span
+            initial={{ scale: 0.85, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            className="glass-chip flex items-center gap-1 rounded-full px-2 py-0.5 text-cyan-300"
             title="Focus timer"
           >
             <Timer className={timer.running ? 'h-3 w-3 animate-pulse' : 'h-3 w-3'} aria-hidden="true" />
             <b className="font-mono tabular-nums">{secondsToClock(elapsed)}</b>
             <span className="hidden sm:inline">{timer.running ? 'focus running' : 'paused'}</span>
-          </span>
+          </motion.span>
         )}
       </span>
 

@@ -1,0 +1,201 @@
+     1→# NexusOS — Shared Worklog
+     2→
+     3→Single source of truth for all agents working on NexusOS.
+     4→Read this file BEFORE starting work. Append your section when done (never overwrite).
+     5→
+     6→---
+     7→
+     8→Task ID: 1
+     9→Agent: lead (Z.ai Code orchestrator)
+    10→Task: Foundation — data layer, theme system, app shell, page wiring
+    11→
+    12→Work Log:
+    13→- Installed deps: echarts@6, three@0.186, @react-three/fiber@9.8, @react-three/drei@10.7, canvas-confetti (+types)
+    14→- Created `src/lib/nexus/types.ts` — full domain model (DailyLog, StudySession, Task, Habit, Skill, Project, DsaTopic, ExamEvent, Note, Resource, Settings, NexusData, AiStats)
+    15→- Created `src/lib/nexus/constants.ts` — SUBJECT_SEED (15 subjects), HABIT_SEED (9), DSA_TOPICS_SEED (13), SKILL_SEED (7), CATEGORY/STATUS/PRIORITY/AREA metadata, MODULE_NAV, CHART_PALETTE, STREAK_MILESTONES, DEFAULT_PROFILE
+    16→- Created `src/lib/nexus/utils.ts` — date keys/weeks/ranges (RANGE_KEYS: today|week|lastweek|month|semester|custom), computeStreak, minutesToHM, secondsToClock, timeToMinutes, CSV/download helpers, linearRegression, RingProgress math
+    17→- Created `src/lib/nexus/seed.ts` — deterministic mulberry32(1337) seed: 56 days of logs+sessions, 24 tasks, 9 habits with 35 days of records, 7 skills, 4 projects, 3 notes, 5 resources, 5 exams, 13 DSA topics (locked)
+    18→- Created `src/lib/nexus/store.ts` — `useNexus` (zustand persist, key `nexusos-data-v1`, localStorage) with ALL actions; `useUI` (ephemeral: activeModule, sidebarCollapsed, mobileNavOpen, paletteOpen, aiOpen, timer) with start/pause/resume/stopTimer (stopTimer auto-creates a session + merges minutes into daily log); helpers `timerElapsedMs`, `useTimerTick`
+    19→- Created `src/lib/nexus/ai-context.ts` — buildAiStats(state), buildSystemPrompt(stats), mockCoachReply(question, stats) for offline fallback
+    20→- Created `src/components/nexus/echarts-wrapper.tsx` — `EChart` (init/resize/dispose, notMerge), `useChartTheme()` (text/split/bg/tooltipBg/palette per theme), `baseTooltip(theme)`
+    21→- Created `src/components/nexus/ui-bits.tsx` — ModuleHeader, KpiCard (tones+progress), ChartCard (auto toolbox saveAsImage + CSV export button), EmptyState, Segmented, RangeFilter, RingProgress (SVG), StarRating
+    22→- Created app shell: `nexus-app.tsx` (theme effect data-theme+dark class, hydration guard, global keys ⌘K/N/S, module registry), `sidebar.tsx` (collapsible, groups, tooltips, DSA lock badge, task count badge, mobile NavList export), `topbar.tsx` (search trigger, streak pill, notification center popover w/ overdue+today tasks+7d exams, theme dropdown, AI Coach button, mobile Sheet nav), `status-bar.tsx` (sticky footer: brand, today minutes, streak, live timer, kbd hints, local-sync dot), `command-palette.tsx` (cmdk dialog: actions/navigation/tasks/notes)
+    23→- Rewrote `globals.css`: 4 themes via `[data-theme]` (dark #09090b default, light, oled, cyberpunk) + .glass/.glass-strong/.text-gradient/.glow/.grid-bg/.kbd/.slim-scroll/animations
+    24→- `page.tsx` client-dynamic imports nexus-app with ssr:false + splash; `layout.tsx` metadata → NexusOS
+    25→- Module stubs created for all 12 modules (to be replaced by Tasks 2-a..2-e); ai-drawer + hero-3d stubs in place
+    26→
+    27→Stage Summary:
+    28→- Foundation complete: any module can `import { useNexus, useUI, timerElapsedMs, useTimerTick } from '@/lib/nexus/store'`, types from '@/lib/nexus/types', helpers from '@/lib/nexus/utils', metadata from '@/lib/nexus/constants', chart tools from '@/components/nexus/echarts-wrapper', UI bits from '@/components/nexus/ui-bits'
+    29→- Cross-module events: `window.dispatchEvent(new CustomEvent('nexus:new-task'))` (tasks module opens create dialog), `window.dispatchEvent(new CustomEvent('nexus:toggle-timer'))` / `'nexus:timer-started'` (sessions module handles timer start/pause)
+    30→- AI contract (Task 3): POST /api/ai/coach {messages:[{role,content}], context:AiStats, provider?:'nexus'|'gemini', apiKey?, model?} → {text, provider, mock?}
+    31→- Persistence is fully automatic (zustand persist); seed loads on first run only
+    32→
+    33→---
+    34→
+    35→Task ID: 2-a
+    36→Agent: dashboard-3d-ai agent
+    37→Task: Dashboard module, R3F 3D hero, AI Coach drawer
+    38→Work Log:
+    39→- `src/components/nexus/hero-3d.tsx` — full R3F scene: 700-point fibonacci-sphere BufferGeometry particle field (cyan/violet vertex colors, additive blending, slow rotation), 6 drei-<Float> wireframe icosahedrons in the 5-color palette, pointer-parallax rig (rotation eases toward state.pointer), ambientLight 0.6 + cyan/violet pointLights (intensity 30, distance 20), Canvas dpr [1,1.75] camera [0,0,9] fov 55 alpha canvas. Visibilitychange auto-pause (frameloop 'never' when hidden → 'always' on return); settings.reduce3d → frameloop 'demand' + OneShotFrame invalidate-once, no parallax. Class error boundary renders static grid-bg gradient if WebGL/scene fails.
+    40→- `src/components/nexus/modules/dashboard.tsx` — default export DashboardModule. Widget order/visibility driven by settings.dashboardWidgets with "Customize widgets" Popover (per-widget checkbox + up/down reorder via setSetting). hero: dynamic(ssr:false) Hero3D + overlay (greeting by hour, date, RingProgress today-vs-target, 3 quick actions dispatching nexus:new-task / nexus:timer-started). kpis: 7 KpiCards (today/7d study, tasks done+pending, habit score %, streak w/ best, coding hours vs weekly target, DSA locked-clickable → dsa module / solved count). focus: deduped (due<=today OR critical/important) top-6 sorted by PRIORITY_META.rank then dueDate, Checkbox→completeTask+toast, EmptyState. habits: color chips → toggleHabitDate, x/y badge, once-per-day confetti+toast on all-done (mountedRef skips initial mount). weekly: ChartCard smooth area line, dashed target markLine, CSV [{day,minutes}]. donut: pie ['55%','80%'] by category w/ CATEGORY_META colors + center total-hours title, EmptyState when 0. exams: exams+task dueDates within 14d sorted asc, click → calendar, EmptyState. Streak milestones: effect watches computeStreak().current ∩ STREAK_MILESTONES, fires double-cannon confetti + toast + celebrate() (guarded by persisted celebrated[], no loop).
+    41→- `src/components/nexus/ai-drawer.tsx` — default export AIDrawer; Sheet side right glass-strong w-full sm:w-[420px] controlled by useUI aiOpen. Header: gradient Sparkles avatar, provider label (Nexus AI · built-in / Gemini · model), clear-chat (clearChat+toast). Messages: user right bg-primary/15 border-primary/20 rounded-2xl; assistant left glass bubble; markdown via react-markdown with manual prose utilities ([&_p]/[&_ul]/[&_strong]/[&_code]…); "offline mode" badge on provider mock|offline; typing-dots bubble while loading. Quick prompt chips send immediately; Textarea Enter=send Shift+Enter=newline; send POSTs /api/ai/coach with last-10 messages + buildAiStats(useNexus.getState()) context + provider/apiKey/model; on failure falls back to mockCoachReply with once-per-session offline toast (ref). Bottom-sentinel auto-scroll on chat.length/loading/open.
+    42→- Verified: dev server compiles & GET / → 200 with all three files in the module graph (could not run lint/tsc per instructions; lead to lint after merge).
+    43→Stage Summary:
+    44→- Artifacts: the 3 files above; no shared foundation files touched; no new packages.
+    45→- Gap 1: remark-gfm is NOT in package.json/node_modules (task brief said installed) — GFM tables/strikethrough won't render in coach bubbles; plain markdown (bold/lists/code) works. Lead may add remark-gfm and wire it into the Markdown wrapper later.
+    46→- Note: shadcn SheetContent renders a built-in top-right X (SheetPrimitive.Close) — used it as the close control instead of adding a second SheetClose button; header padded pr-14 to avoid overlap.
+    47→- Note: dashboard uses rolling last-7-days for "Last 7 days" KPI/chart/donut and Monday-based startOfWeek window for the "Coding this week" KPI (matches buildAiStats semantics).
+    48→- AI route /api/ai/coach does not exist yet (Task 3): drawer 404s → offline fallback engages gracefully (toast once/session).
+    49→
+    50→---
+    51→
+    52→Task ID: 2-c
+    53→Agent: tasks-habits agent
+    54→Task: Advanced Task Manager (Kanban/List/Calendar/Focus) + Habit Tracker modules
+    55→
+    56→Work Log:
+    57→- Overwrote `src/components/nexus/modules/tasks.tsx` — default export `TasksModule`: view Segmented [Board|List|Calendar|Focus Today], area/priority Select filters (All + *_META, colored dots), search input (title/description/tags), "New Task" button, `nexus:new-task` window-event listener → opens create dialog, selectedTaskId-based edit dialog wiring, dynamic subtitle (open/overdue counts)
+    58→- Created `modules/tasks/task-dialog.tsx` — create/edit dialog (sm:max-w-lg, max-h-[85vh] slim-scroll): title*, description, status/priority/area Selects with META color dots, dueDate/startDate date inputs, estimatedHours/actualHours number inputs (step 0.5 → null-safe parse), recurrence Select, tags comma-string → string[], local subtask editor (toggle/delete/add, Enter or button, committed via addTask/updateTask on save), Delete (left, AlertDialog confirm) when editing, toast.success on save/delete
+    59→- Created `modules/tasks/board.tsx` — 6-column kanban from STATUS_ORDER (dot + label + count badge), HTML5 drag & drop (dataTransfer 'text/plain', per-card skipClickRef for drag-vs-click disambiguation, dragend 120ms reset), column dragOver highlight (border-primary/50 bg-primary/5), drop → updateTask({status}) + toast; cards: priority dot, line-clamp title (done → line-through opacity-75), area badge + due badge (rose when overdue), subtask mini-progress (n/total + 2px bar), muted tag chips; empty columns show dashed drop hint; columns min-w-[260px] flex-1 in overflow-x-auto slim-scroll for mobile; exports shared `sortTasks` (priority rank → dueDate asc, nulls last → title)
+    60→- Created `modules/tasks/list.tsx` — glass divide-y rows sorted via sortTasks; Checkbox selection (stopPropagation wrapper) with bulk bar: "N selected" + status Select + priority Select (bulkUpdateTasks) + Delete (bulkDeleteTasks via AlertDialog) + Clear; row = priority dot, title (done struck), area/due/subtask/tags meta line, status Badge (outline, META colors); overdue rows get border-l-2 border-l-rose-400; click row → edit dialog; EmptyState when filters match nothing
+    61→- Created `modules/tasks/calendar-view.tsx` — Mon-start 42-cell month grid with prev/Today/next + fmtMonthYear header; today cell ring-2 ring-primary; due-date task chips (max 3 + "+n more", bg PRIORITY_META+'22', done → struck/muted, click stops propagation → edit); cell click → detail strip below (fmtDayFull heading, sorted task buttons, "Add task on this day" → dialog with dueDate prefilled)
+    62→- Created `modules/tasks/focus.tsx` — Overdue / Due Today / High Priority (critical|important, deduped vs first two) groups with count+color headings (PRIORITY_META colors); rows: Checkbox → completeTask + toast, Snooze (CalendarClock, overdue only → dueDate+1 via updateTask), due badge; EmptyState "Nothing due today 🎉" (PartyPopper); confetti fires (respecting settings.confettiEnabled, ref-guarded + re-armed via effect) when the LAST urgent task is completed; recurring respawn handled by store
+    63→- Overwrote `src/components/nexus/modules/habits.tsx` — default export `HabitsModule`: Today strip (habit chips w/ icon + name, done = color border+bg tint+Check, click → toggleHabitDate, "x/y completed", confetti + 'All habits done!' toast when ALL active flip done — once/day guarded via prevDone+day refs, gated on settings.confettiEnabled); grid sm:2/xl:3 of HabitCard + dashed "Add habit" card; shared HabitDialog (name, icon Select with 9 HABIT_ICON_MAP keys + labels, target/week 1–7, 10 CHART_PALETTE swatches ring-selected) → addHabit/updateHabit + toast; EmptyState when no habits; bottom ChartCard "Weekly consistency": horizontal EChart bars, habits × % of last FULL Mon–Sun week (done/target capped 100), per-habit colors, right % labels, CSV export rows {habit,done,target,pct}
+    64→- Created `modules/habits/habit-card.tsx` — exports HABIT_ICON_MAP/HABIT_ICON_LABELS/HABIT_ICON_FALLBACK (Flame) + `habitStreak` (consecutive days ending today/yesterday from habitRecords); card: colored icon circle, name + target, streak badge (Flame + Nd), this-week RingProgress (done/target, habit.color, center x/y), 7 rolling-day toggle squares (done = filled color + Check, weekday initial otherwise, title tooltip), 12-week heatmap (grid-cols-[repeat(12,1fr)] week columns × 7 stacked 2.5 cells, done → color else muted-foreground/20, title tooltips), footer weekly % (last-7-days done/target) + Settings2 edit + Trash2 delete (AlertDialog)
+    65→
+    66→Stage Summary:
+    67→- Artifacts: 8 files — modules/tasks.tsx, modules/tasks/{task-dialog,board,list,calendar-view,focus}.tsx, modules/habits.tsx, modules/habits/habit-card.tsx; both module stubs replaced, default exports unchanged (TasksModule / HabitsModule), 'use client' everywhere, strict TS (no any), no new packages
+    68→- Contracts honored: store actions only (addTask/updateTask/deleteTask/bulk*, completeTask/reopenTask respawn implicit, addSubtask NOT used — dialog manages subtasks locally and commits via patch; addHabit/updateHabit/deleteHabit/toggleHabitDate), utils (todayKey/addDaysKey/isOverdue/isDueToday/fmtDayFull/startOfWeek/uid), constants *_META hexes only (inline hex+'1a'/'22'/'55' tints), ui-bits (ModuleHeader/EmptyState/Segmented/RingProgress/ChartCard), echarts-wrapper (useChartTheme/baseTooltip/EChart via ChartCard)
+    69→- Cross-module: listens for `nexus:new-task` (⌘K palette / N key) to open create dialog; calendar view can prefill dueDate
+    70→- Notes for lead: toolbar filters (area/priority/search) intentionally apply to Board + List only (calendar shows real dates, focus groups by urgency); 'rose-400/rose-500' Tailwind classes used solely for overdue accents as specified; habits chart height scales with habit count; no dev-server verification run per instructions (no lint/tsc/build) — lead to lint
+    71→- FIXUP (post-review): corrected habits.tsx echarts-wrapper import '../../echarts-wrapper' → '../echarts-wrapper' (modules/habits.tsx is one level below nexus/) — this was the dev-server 500 flagged by agent 2-d; all other relative imports re-verified across the 8 files
+    72→
+    73→
+    74→---
+    75→
+    76→Task ID: 2-d
+    77→Agent: tracker-sessions-calendar agent
+    78→Task: Daily Study Tracker + Study Sessions (focus timer) + Unified Calendar modules
+    79→
+    80→Work Log:
+    81→- Rewrote `src/components/nexus/modules/daily-tracker.tsx`: date nav (ChevronLeft/Today/ChevronRight + date Input), auto-saving Day info card (Segmented dayType, sleep Slider 0–12 step .5, energy StarRating, notes Textarea) with "Saved ✓" pulse (timeout ref), Subject quick-log grouped by CATEGORY_META (chip = dot+name+minutes badge; +15/+30/−15 → setDayMinutes clamped 0–600; badge opens Popover with exact-minutes Input+confirm), total focus + RingProgress vs profile.dailyTargetHours*60, CSS-bar "Week at a glance" (Mon→Sun of selected week, today highlighted, bars clickable), future dates → gentle EmptyState + all mutations disabled, "Last updated" from log.updatedAt.
+    82→- Created `src/components/nexus/modules/sessions/session-dialog.tsx`: create/edit form (date max=today, start/end time Inputs, computed duration display with rose "end must be after start" hint, Save disabled when invalid, grouped subject Select, concentration/energy StarRating, comma tags, notes). On save: addSession (store merges minutes into daily log) or updateSession + manual setDayMinutes compensation (subtract old duration from old date/subject, add new to new — keeps tracker/analytics in sync since store's updateSession doesn't adjust logs). Toasts on save.
+    83→- Rewrote `src/components/nexus/modules/sessions.tsx`: gradient-border timer card (subject Select "{name} · {category}", RingProgress 248px vs 50 min around font-mono text-4xl/5xl secondsToClock via useTimerTick, Start/Pause/Resume/Stop buttons; Stop → stopTimer() → toast "Logged N min to {subject}"; select+stop disabled states per spec), window listeners 'nexus:toggle-timer' (stop+toast if running/paused, else startTimer(selected)) and 'nexus:timer-started' (sync select to timer.subjectId), week KpiCard strip (total vs weekly target w/ progress, session count, avg duration, avg concentration ★), "Log session" button → dialog (keyed remount for create/edit), filters (subject Select, category Select, notes/tags search, Segmented 7D/30D/All), glass Table (max-h-96 overflow-auto slim-scroll, min-w for mobile x-scroll; Date/Subject dot/Time/Duration/readonly mini StarRating/≤2 tag badges +n/Pencil→edit dialog, Trash2→AlertDialog→deleteSession+toast), EmptyState w/ CTA when no rows.
+    84→- Rewrote `src/components/nexus/modules/calendar.tsx`: Monday-start 6×7 month matrix via useMemo (cell = min-h-20 md:min-h-24 button; today ring-primary bg-primary/5; other-month opacity-40; up to 3 task chips tinted by PRIORITY_META color w/ line-through+Check when done, 1 exam chip EXAM_TYPE_META color + BookOpen, emerald session pill w/ day total from dailyLogs dayTotalMinutes + Timer icon, amber Flame when ALL active habits done per habitRecords, "+n more" overflow), legend dots in header (Tasks/Exams/Sessions/Habit perfect), month nav + Add event → exam dialog (title/date/type Select/notes → addExam + toast; delete via Trash2 in details panel), click-to-select day → right "Day details" glass card (Tasks due w/ Checkbox completeTask/reopenTask + title→setActiveModule('tasks'); Exams w/ type badge + delete; Sessions list + button→setActiveModule('sessions'); Habits done chips), per-month data maps via useMemo keyed on viewYearMonth.
+    85→- Verified API usage against store/utils/constants/ui-bits/ui sources; strict TS, no `any`, 'use client' everywhere, no new packages, no edits to foundation or other agents' files.
+    86→
+    87→Stage Summary:
+    88→- Artifacts: 4 files — modules/daily-tracker.tsx, modules/sessions.tsx, modules/sessions/session-dialog.tsx (NEW dir), modules/calendar.tsx.
+    89→- Cross-module hooks honored: 'nexus:toggle-timer' / 'nexus:timer-started' handled in sessions; setActiveModule('tasks'|'sessions') jumps wired from calendar.
+    90→- GAP/HEADS-UP for lead: dev-server 500 currently caused by `src/components/nexus/modules/habits.tsx` line 26 — `import { baseTooltip, useChartTheme } from '../../echarts-wrapper'` should be `'../echarts-wrapper'` (habits.tsx is owned by another agent; not touched per hard rule). Blocks page compile until fixed, so 2-d modules couldn't be smoke-rendered; all files were hand-checked against the real APIs instead.
+    91→- Note: store.updateSession does not adjust dailyLogs minutes (only addSession does); session-dialog compensates manually so tracker totals stay consistent after edits.
+    92→---
+    93→Task ID: 2-e
+    94→Agent: roadmap-dsa-notes-reports-settings agent
+    95→Task: Built Roadmap, DSA Plan, Notes & Resources, Reports & Export and Settings modules (full interactive UIs wired to useNexus).
+    96→Work Log:
+    97→- Installed missing dep `remark-gfm@^4` (spec said it was installed; it wasn't in package.json) — no other new packages.
+    98→- `src/components/nexus/modules/roadmap.tsx` — skills grid (sm:2/xl:3 glass cards) with status badges (active=emerald/paused=amber/completed=primary), RingProgress (current/target%, skill.color, center %), target/weekly-goal rows (this-week actual = sum of dailyLogs minutes for subject id == skill id, Mon-start week), milestone+targetDate rows, resource anchor chips; Skill edit dialog (name, status Select, current/target Sliders 0-100, weeklyHoursGoal, nextMilestone, resources textarea one-per-line, notes, targetDate) → updateSkill + toast; ChartCard "Weekly coding hours by skill" stacked bar over last 8 weeks, one series per coding subject (skill.id==subject.id), colors skill.color, CSV rows; Projects section: add/edit dialog (name*, description, repoUrl, liveUrl, techStack comma-sep, status, hoursLogged, dueDate) → addProject/updateProject; project cards with status badges (idea muted/planning amber/in-progress primary/shipped emerald), tech chips, dueDate rose when past & not shipped, repo/live link buttons (target _blank), Delete AlertDialog → deleteProject.
+    99→- `src/components/nexus/modules/dsa.tsx` — locked state: hero glass card with grid-bg + Lock in RingProgress-style glowing ring, "DSA Module — Locked" copy with profile.semester, "What's waiting for you" bullets (problem counters, difficulty split, mastery, streaks), 13-topic curriculum preview chips (difficulty badge, "{n} problems", Lock, opacity-80), unlock Switch card → toggleDsa + toast.success('DSA mode unlocked — welcome to the grind 💪'); active state: RingProgress overall (solved/total), KpiCards (Solved/Total/Avg mastery), Deactivate ghost button, difficulty donut ChartCard (emerald/amber/rose, legend "{solved}/{total}") + topic cards grid (difficulty badge, mono solved/total, mastery progress bar, Minus/Plus bumpDsaProblem with bounds, Complete → updateDsaTopic + toast), empty-state safe at 0 totals.
+   100→- `src/components/nexus/modules/notes.tsx` — Tabs [Notes|Resources]; notes two-column lg:[320px_1fr]: search, New Note (header + list), sorted list (pinned first, updatedAt desc, pin icon, tag chips ≤2, selected bg-primary/10); editor: title Input, Pin toggle, tags comma-sep Input, mini Tabs Write/Preview (Textarea min-h-420 font-mono / ReactMarkdown+remarkGfm with specified utility classes), autosave via updateNote on every change, footer "Edited {relative time}" + Delete AlertDialog → deleteNote with next-note selection; resources: Add dialog (title*, url*, category, notes) → addResource, cards grid with category badge, truncated link, notes, Trash2 + AlertDialog; EmptyStates everywhere.
+   101→- `src/components/nexus/modules/reports.tsx` — Segmented Weekly/Monthly; useMemo report (weekly = Mon-start week, monthly = month-to-date): totalMinutes vs dailyTarget, codingMinutes vs weeklyTarget×weeks, sessions count, tasks completed (completedAt in window), habit consistency % (done/slots), computeStreak, avg sleep/energy, top-5 subjects, category allocation; glass document card "NexusOS Productivity Report — {period}" + generated timestamp: KPI Table with colored deltas, horizontal top-subjects bar + category donut ChartCards (CSV), habit consistency mini progress bars, highlights (best day, most consistent habit, streak, overdue warning); actions: Copy as Markdown (clipboard + toast 'Copied'), Report .md (downloadFile), JSON backup via useNexus.getState() minus _hydrated/setHydrated (void'd) → downloadJSON(`nexusos-backup-{todayKey()}`); Data portability card: Sessions/Tasks/Daily logs (per-subject columns)/Habits (long format) CSV via downloadCSV, Import JSON (hidden file input → FileReader → importData → toast ok/error); EmptyState when window has no data, exports always available.
+   102→- `src/components/nexus/modules/settings.tsx` — Profile card (name/university/degree, semester 1-8, dailyTargetHours Slider 1-10 step .5, weeklyCodingTargetHours Slider 5-40) auto-saving via setProfile; Appearance: 4 theme previews (hardcoded swatch hexes, labels Obsidian Dark/Daylight/OLED Black/Cyberpunk, selected ring-2 ring-primary) → setSetting({theme}); Preferences: confettiEnabled + reduce3d Switches; AI card: RadioGroup nexus/gemini, geminiKey password input with eye toggle, geminiModel input, "Test connection" → POST /api/ai/coach (handles !res.ok with toast.error('Route unavailable yet'), shows response text in muted box), all changes setSetting; Subjects manager (color dot, name, category badge, edit/delete): add/edit dialog (name, category Select over 6 CATEGORY_META, CHART_PALETTE swatches) → addSubject/updateSubject, delete AlertDialog warning → deleteSubject; DSA card Switch → toggleDsa; Danger zone (border-rose-400/30): ~KB storage line (JSON.stringify of store minus _hydrated/setHydrated), Reset to sample data AlertDialog → resetToSeed, Wipe all data destructive AlertDialog → clearAllData, with toasts.
+   103→- Verified: root page returns 200 on dev server :3000, no module errors in dev.log; unused-import static check clean across all five files.
+   104→Stage Summary:
+   105→- Artifacts: 5 modules fully implemented and wired to the foundation store — roadmap (skills/projects CRUD + 8-week stacked chart), dsa (locked/active dual state), notes (markdown editor + resources), reports (weekly/monthly report + md/json/csv export + import), settings (profile/themes/prefs/AI/subjects/DSA/danger).
+   106→- Deps note for lead: added `remark-gfm@^4.0.1` to package.json (required by notes preview per spec).
+   107→- Notes for other agents: only my 5 module files + worklog were touched; no shared/foundation files modified. Notes tab keeps Write/Preview mode in local state (resets on tab switch — intentional). Reports monthly window is month-to-date so targets stay fair.
+   108→- Gaps: none known; /api/ai/coach route may not exist yet (Task 3) — Settings AI test handles it gracefully.
+   109→
+   110→---
+   111→
+   112→Task ID: 2-b
+   113→Agent: analytics agent
+   114→Task: Analytics Suite — 22 interactive charts with range filter, KPI strip and CSV exports
+   115→Work Log:
+   116→- Read worklog Task 1 section + foundation APIs (types, store, utils, constants, ui-bits, echarts-wrapper, analytics stub) before coding
+   117→- Created `src/components/nexus/modules/analytics/helpers.ts` — shared pure derivations: RangeWindow/ChartProps types, lastNWeeks/weekDaysOf (Mon-based ISO weeks), dailyMinutes/totalMinutesInDays/sessionsInDays, topSubjectsByMinutes, weeklySubjectMap, categoryMinutesPerDay/categoryTotals (+CATEGORY_ORDER), habitDoneDays/habitWeekPct, buildForecast (linearRegression +14d), extendDayKeys, areaGradient (LinearGradient factory), dataZoomStyled (inside+slider, cyan filler, transparent border), asNum
+   118→- Created `analytics/charts-time.tsx` (8): DailyMinutesChart (area line + dashed target markLine + dataZoom when >31 days), WeeklyTotalsChart (12w bars, rounded), CollegeVsCodingChart (stacked area, college/coding/other), StudyHeatmapChart (calendar 16w, cellSize 14 + borderWidth 3 gap, visualMap transparent→cyan→violet, xl:col-span-2), WeeklyFocusByCategoryChart (stacked week × category, CATEGORY_META colors), CumulativeHoursChart, ForecastTrackingChart (Actual/Forecast/Target legend, regression +14d, col-span-2), EnergyTrendChart (y 0-5)
+   119→- Created `analytics/charts-subjects.tsx` (8): SubjectDistributionChart (12w stacked, top-8 subjects, subject colors, legend right), CodingHoursChart (8w stacked hours), SubjectBalanceRadarChart (top subjects 28d, areaStyle 0.25), TimeAllocationChart (donut 45/70, center total-hours title, "{b}\\n{x}h" labels), ConcentrationVsDurationChart (scatter colored per category), CollegeVsWeekendChart (avg bars + sample-count subtitle), TopTagsChart (inverse horizontal top-10), BiologicalPrimeTimeChart (polar 24h bars, max hour highlighted violet, col-span-2)
+   120→- Created `analytics/charts-habits-tasks.tsx` (4): TaskCompletionTrendChart (completedAt per week), HabitConsistencyHeatmapChart (habits × 10 weeks % of target, green visualMap, detail tooltip, col-span-2), TaskBurndownChart (open tasks at week end), SemesterGoalProgress custom widget (RingProgress vs 84-day goal + 3 custom progress bars: daily adherence / coding weekly / habit score; own CSV button via downloadCSV)
+   121→- Created `analytics/charts-advanced.tsx` (2): SleepVsStudyChart (scatter, symbolSize 6+energy*2, date tooltip), SessionDurationChart (7-bin histogram 0–15…120+)
+   122→- Rewrote `modules/analytics.tsx` default export AnalyticsModule: ModuleHeader (BarChart3, "22 interactive visualizations") + RangeFilter (default 'semester', custom defaults = 14 days ago → today) + 5 KpiCards (Total Focus / Sessions / Avg per Session / Avg Energy / Best Day) + responsive grid `grid-cols-1 xl:grid-cols-2` with all 22 ChartCards
+   123→- Every chart: useMemo-derived option typed EChartsOption, baseTooltip(theme), axis labels theme.subtext fontSize 11, splitLine theme.split, legend textStyle theme.text, smooth lines width 2 symbol none, LinearGradient area fills, borderRadius on bars, csv={{name, rows}} with real derived rows (≥2 cols); guarded empty ranges (win falls back to 'today' if start > end)
+   124→Stage Summary:
+   125→- Artifacts: analytics/helpers.ts, analytics/charts-time.tsx, analytics/charts-subjects.tsx, analytics/charts-habits-tasks.tsx, analytics/charts-advanced.tsx, modules/analytics.tsx (stub replaced). No shared/foundation files touched; no new packages; dev server compiled page OK
+   126→- Store API gaps: none — used profile.dailyTargetHours/weeklyCodingTargetHours, dayType, sessions.tags/startTime/createdAt/completedAt as documented. Note: completedAt/createdAt are ISO timestamps — converted via new Date() to local time for week bucketing
+   127→- Consistency choice: range-window charts take `{ range: RangeWindow }`; fixed-window charts (12w/8w/16w) and SemesterGoalProgress take no props (widget uses its own fixed 84-day window per spec)
+   128→- Notes for lead: single-point scatter edge case (range='today') renders empty line (symbol none) — acceptable; 'Other' group in College-vs-Coding = language+music+fitness+dsa minutes; unattributed subjectIds (deleted subjects) are ignored in category rolls; lead should run lint/tsc over the new analytics/* files
+   129→
+   130→---
+   131→Task ID: 3
+   132→Agent: lead (Z.ai Code orchestrator)
+   133→Task: AI coach backend + integration fixes
+   134→
+   135→Work Log:
+   136→- Created src/app/api/ai/coach/route.ts: POST handler — (1) provider 'gemini' + apiKey → REST proxy to generativelanguage.googleapis.com with systemInstruction; (2) default → z-ai-web-dev-sdk chat.completions (system prompt as 'assistant' role, thinking disabled, last 12 messages, AiStats context embedded); (3) any failure → mockCoachReply deterministic fallback. Returns {text, provider, mock, error?}. runtime nodejs, dynamic force-dynamic.
+   137→- Integration fixes across agent code: added missing weeklySubjectMap import (charts-time), number-typed axis formatter (dashboard), DragEvent<HTMLElement> handlers (board), react-compiler lint compliance: render-time adjustment / remount-key patterns (task-dialog split into wrapper+TaskDialogInner with keyed remount; notes NoteEditor keyed by note.id; sessions derives effectiveSubject from timer instead of syncing effect; palette query reset via onOpenChange; echarts clickRef via effect; cumulative chart via slice/reduce; reports doneTotal two-pass + markdown IIFE), removed stale eslint-disable directives.
+   138→- Verified: bunx tsc --noEmit clean (src), eslint src → 0 problems, POST /api/ai/coach returns real LLM coaching text with stats context.
+   139→
+   140→Stage Summary:
+   141→- All 12 modules + shell + backend compile clean and serve HTTP 200. AI contract honored: {messages, context, provider, apiKey, model} → {text, provider, mock}.
+   142→- Next: Task 4 browser E2E verification.
+   143→
+   144→---
+   145→Task ID: 4
+   146→Agent: lead (Z.ai Code orchestrator)
+   147→Task: Agent Browser end-to-end verification + final fixes
+   148→
+   149→Work Log:
+   150→- Fixed runtime infinite loop: command-palette useNexus selector returned a fresh array each snapshot (zustand v5 getSnapshot caching) → replaced with stable `tasks` selector + useMemo.
+   151→- Browser-verified all 12 modules at 1440×900: Dashboard (3D hero renders w/ particles+icosahedra, 7 KPIs live, habit chips toggle, charts+CSV, upcoming list), Daily Tracker (sliders/stars/quick-log/RingProgress/week bars), Sessions (timer start→ticked 9s→stop logged session #12, status-bar pill synced, filters+table), Tasks (kanban 6 cols w/ badges & overdue styling, created task via dialog end-to-end), Habits (toggled Gym, streaks/heatmaps/rings render), Analytics (22 charts incl. calendar heatmap, polar prime-time, forecast; range filter switch verified; 22 CSV buttons present), Roadmap (7 skill rings + projects), DSA (locked state → unlock switch → active mode w/ donut + topic steppers + toast), Calendar (month grid, day details, exams), Notes (markdown editor + resources), Reports (weekly KPI table + charts + exports), Settings (profile/theme/AI/subjects/danger zone).
+   152→- Command palette ⌘K: actions + navigate groups work via keyboard (typed "Daylight" + Enter).
+   153→- AI Coach drawer: real z-ai LLM response with markdown, analyzing live stats (streak, neglected subjects, coding target gap); quick-prompt chips work.
+   154→- Themes: Daylight + Obsidian Dark applied via palette; glass/token system adapts correctly.
+   155→- Mobile 390×844: hamburger sheet nav w/ all modules, single-column layouts, footer sticks to bottom at top and bottom scroll; internal-scroll OS layout confirmed.
+   156→- Notifications popover: due-today (amber), overdue (rose), deadlines (cyan) computed live.
+   157→- Persistence: localStorage nexusos-data-v1 → 25 tasks / 42 daily logs / 87 sessions after interactions.
+   158→- Final state: eslint src → 0 problems; tsc --noEmit (src) → clean; dev.log clean of runtime errors (only historical Fast-Refresh note from the mid-session fix).
+   159→
+   160→Stage Summary:
+   161→- NexusOS is complete and browser-verified: every module interactive, zero console/page errors, responsive on mobile + desktop, sticky footer behavior confirmed, data persists across reloads, AI coach live with deterministic offline fallback.
+   162→
+   163→---
+   164→Task ID: 2
+   165→Agent: lead (Z.ai Code orchestrator)
+   166→Task: GlassOS pivot — foundation of the web OS (replaces NexusOS as the active / route)
+   167→
+   168→Work Log:
+   169→- User pivoted: NexusOS → GlassOS (ultra-aesthetic glass web OS). All NexusOS files remain on disk but are no longer routed.
+   170→- Appended GlassOS design system to src/app/globals.css: 4 themes via [data-glass-theme] (dark-glass, frost-light, aurora, midnight-cyber), .glass/.glass-deep/.glass-chip surfaces driven by --g-blur/--g-tint-a CSS vars, aurora blob keyframes (g-blob-a/b/c), island/dock/grain/scrollbar/markdown styles, reduced-motion support.
+   171→- Created src/lib/glassos/types.ts — AppId, WinState, Settings, VFile, NoteDoc, Track, BrowserTab, IslandAlert, etc.
+   172→- Created src/lib/glassos/app-meta.ts — APP_META (name, default/min sizes, dock order).
+   173→- Created src/lib/glassos/sound.ts — Web Audio SFX engine (click/pop/open/close/toggle/notify/error/tick) w/ unlockAudio + configureSfx.
+   174→- Created src/lib/glassos/music.ts — procedural music engine: 4 generative ambient tracks (Aurora Drift, Glass Ribbons, Midnight Lagoon, Neon Comet), chord-progression scheduler, pads/bass/pluck/hats, real AnalyserNode → musicEngine.waveform(); play/pause/resume/seek/setVolume/getPosition/isPlaying; auto-advance via setEndedCallback.
+   175→- Created src/lib/glassos/store.ts — zustand stores: useSettings (persisted), useOS (windows/z/focus/snap/spotlight/launchpad/contextMenu/boot, persisted layout), useIsland (module/expanded/alerts/timer), useMusicStore (persisted), useFiles (virtual FS w/ seed, persisted), useNotes (3 seed notes, persisted), useBrowserStore (tabs/bookmarks, persisted), useSticky (persisted). All persist to localStorage via safeStorage (quota-safe).
+   176→- Created components: wallpaper.tsx (5 animated presets + custom upload), window-frame.tsx (motion springs 300/30, drag w/ dragControls, 8-way resize, edge snap hints left/right/max, traffic lights, double-click max), app-icons.tsx (APP_ICONS + AppIconTile), top-bar.tsx (clock, battery API, control center: brightness/volume/blur sliders, theme swatches, wallpaper shuffle, sfx toggle), dynamic-island.tsx (compact pill + expanded modules: NowPlaying w/ LiveWaveform canvas, Timer w/ ring + presets, AI mini-chat w/ typewriter, alerts w/ auto-dismiss; module switcher), waveform.tsx (LiveWaveform rAF canvas), music-hooks.ts (useMusicControls), dock.tsx (magnetic magnification, tooltips, badges, running dots), spotlight.tsx (⌘K search apps/actions/notes/files), desktop-extras.tsx (Launchpad, DesktopContextMenu, DesktopWidgets: clock/system/sticky, BootScreen), app-registry.tsx (APP_COMPONENTS map + WindowLayer), glass-os.tsx (root: theme vars wiring, viewport tracking, shortcuts ⌘K/⌘M/⌘W/Esc, music auto-advance, brightness overlay, boot flow, hint chip).
+   177→- Routes: src/app/page.tsx renders GlassOS (dynamic ssr:false). API: /api/glass-ai (z-ai-web-dev-sdk, returns text + parsed actions [open:x][timer:n][theme:next]), /api/glass-browse?url= (reader-mode proxy for Prism browser).
+   178→- Stub apps created at src/components/glassos/apps/{finder,browser,notes,music-player,settings-app}.tsx — to be replaced by Tasks 3-a/3-b.
+   179→
+   180→Stage Summary:
+   181→- Window manager, island, dock, spotlight, sound, music engine all real and wired.
+   182→- APP COMPONENT CONTRACT for subagents: export function XApp({ win }: { win: WinState }). Apps must use stores from @/lib/glassos/store, sfx from @/lib/glassos/sound, icons via APP_ICONS/AppIconTile. Design tokens: classes glass, glass-deep, glass-chip, glass-hover, g-text-1/2/3, g-accent, g-grad-text, g-scroll, g-input, g-md (markdown). NO blue/indigo default accents — use var(--g-accent), var(--g-accent-2).
+   183→- Pending: Tasks 3-a/3-b (apps), album covers, integration + verification.
+   184→
+   185→---
+   186→Task ID: 4
+   187→Agent: lead (Z.ai Code orchestrator)
+   188→Task: REVERT — user stopped the GlassOS pivot and requested the study planner (NexusOS) back
+   189→
+   190→Work Log:
+   191→- Halted the GlassOS build before any native app was implemented (subagent Task 3-a cancelled before writing files; only lead's foundation existed).
+   192→- Restored src/app/page.tsx to render the NexusOS app (dynamic import of @/components/nexus/nexus-app with splash).
+   193→- Restored src/app/layout.tsx metadata to NexusOS (title/description/OG tags).
+   194→- Truncated src/app/globals.css back to its original 315 lines (removed the appended "GlassOS — Design System" section; NexusOS styles untouched).
+   195→- Deleted all GlassOS artifacts: src/components/glassos/, src/lib/glassos/, src/app/api/glass-ai/, src/app/api/glass-browse/, public/covers/.
+   196→- All NexusOS files were never modified or deleted, so the study planner is fully intact.
+   197→
+   198→Stage Summary:
+   199→- Project state = NexusOS study planner, exactly as it was before the GlassOS attempt (Task IDs 1..N of the original build preserved).
+   200→- GlassOS is fully removed from the codebase; nothing imports it anymore.
+   201→

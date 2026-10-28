@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo } from 'react';
 import type { ComponentType } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'sonner';
 import { useNexus, useUI } from '@/lib/nexus/store';
 import type { ModuleId } from '@/lib/nexus/types';
+import AuroraBackground from './aurora-background';
+import DynamicIsland from './dynamic-island';
 import Sidebar from './sidebar';
 import Topbar from './topbar';
 import StatusBar from './status-bar';
@@ -98,21 +101,36 @@ export default function NexusApp() {
   if (!hydrated) return <BootScreen />;
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
-      <div className="flex min-h-0 flex-1">
+    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
+      {/* GlassOS living aurora backdrop (fixed, z-0) */}
+      <AuroraBackground />
+
+      <div className="relative z-10 flex min-h-0 flex-1">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar />
-          <main id="nexus-main" className="slim-scroll grid-bg min-h-0 flex-1 overflow-y-auto p-4 md:p-6" tabIndex={-1}>
-            <div key={active} className="nxs-fade-in mx-auto w-full max-w-7xl">
-              <ActiveModule />
-            </div>
+          <main id="nexus-main" className="slim-scroll min-h-0 flex-1 overflow-y-auto p-4 pt-14 md:p-6 md:pt-16" tabIndex={-1}>
+            {/* Spring-physics module transitions */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, y: 16, scale: 0.985 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.99 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 0.9 }}
+                className="mx-auto w-full max-w-7xl"
+              >
+                <ActiveModule />
+              </motion.div>
+            </AnimatePresence>
           </main>
           <StatusBar />
         </div>
       </div>
+
       <CommandPalette />
       <AIDrawer />
+      <DynamicIsland />
       <Toaster position="bottom-right" richColors closeButton theme={DARK_THEMES.includes(theme) ? 'dark' : 'light'} />
     </div>
   );
