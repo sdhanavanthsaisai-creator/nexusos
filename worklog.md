@@ -159,3 +159,25 @@ Work Log:
 
 Stage Summary:
 - NexusOS is complete and browser-verified: every module interactive, zero console/page errors, responsive on mobile + desktop, sticky footer behavior confirmed, data persists across reloads, AI coach live with deterministic offline fallback.
+
+---
+Task ID: 2
+Agent: lead (Z.ai Code orchestrator)
+Task: GlassOS pivot — foundation of the web OS (replaces NexusOS as the active / route)
+
+Work Log:
+- User pivoted: NexusOS → GlassOS (ultra-aesthetic glass web OS). All NexusOS files remain on disk but are no longer routed.
+- Appended GlassOS design system to src/app/globals.css: 4 themes via [data-glass-theme] (dark-glass, frost-light, aurora, midnight-cyber), .glass/.glass-deep/.glass-chip surfaces driven by --g-blur/--g-tint-a CSS vars, aurora blob keyframes (g-blob-a/b/c), island/dock/grain/scrollbar/markdown styles, reduced-motion support.
+- Created src/lib/glassos/types.ts — AppId, WinState, Settings, VFile, NoteDoc, Track, BrowserTab, IslandAlert, etc.
+- Created src/lib/glassos/app-meta.ts — APP_META (name, default/min sizes, dock order).
+- Created src/lib/glassos/sound.ts — Web Audio SFX engine (click/pop/open/close/toggle/notify/error/tick) w/ unlockAudio + configureSfx.
+- Created src/lib/glassos/music.ts — procedural music engine: 4 generative ambient tracks (Aurora Drift, Glass Ribbons, Midnight Lagoon, Neon Comet), chord-progression scheduler, pads/bass/pluck/hats, real AnalyserNode → musicEngine.waveform(); play/pause/resume/seek/setVolume/getPosition/isPlaying; auto-advance via setEndedCallback.
+- Created src/lib/glassos/store.ts — zustand stores: useSettings (persisted), useOS (windows/z/focus/snap/spotlight/launchpad/contextMenu/boot, persisted layout), useIsland (module/expanded/alerts/timer), useMusicStore (persisted), useFiles (virtual FS w/ seed, persisted), useNotes (3 seed notes, persisted), useBrowserStore (tabs/bookmarks, persisted), useSticky (persisted). All persist to localStorage via safeStorage (quota-safe).
+- Created components: wallpaper.tsx (5 animated presets + custom upload), window-frame.tsx (motion springs 300/30, drag w/ dragControls, 8-way resize, edge snap hints left/right/max, traffic lights, double-click max), app-icons.tsx (APP_ICONS + AppIconTile), top-bar.tsx (clock, battery API, control center: brightness/volume/blur sliders, theme swatches, wallpaper shuffle, sfx toggle), dynamic-island.tsx (compact pill + expanded modules: NowPlaying w/ LiveWaveform canvas, Timer w/ ring + presets, AI mini-chat w/ typewriter, alerts w/ auto-dismiss; module switcher), waveform.tsx (LiveWaveform rAF canvas), music-hooks.ts (useMusicControls), dock.tsx (magnetic magnification, tooltips, badges, running dots), spotlight.tsx (⌘K search apps/actions/notes/files), desktop-extras.tsx (Launchpad, DesktopContextMenu, DesktopWidgets: clock/system/sticky, BootScreen), app-registry.tsx (APP_COMPONENTS map + WindowLayer), glass-os.tsx (root: theme vars wiring, viewport tracking, shortcuts ⌘K/⌘M/⌘W/Esc, music auto-advance, brightness overlay, boot flow, hint chip).
+- Routes: src/app/page.tsx renders GlassOS (dynamic ssr:false). API: /api/glass-ai (z-ai-web-dev-sdk, returns text + parsed actions [open:x][timer:n][theme:next]), /api/glass-browse?url= (reader-mode proxy for Prism browser).
+- Stub apps created at src/components/glassos/apps/{finder,browser,notes,music-player,settings-app}.tsx — to be replaced by Tasks 3-a/3-b.
+
+Stage Summary:
+- Window manager, island, dock, spotlight, sound, music engine all real and wired.
+- APP COMPONENT CONTRACT for subagents: export function XApp({ win }: { win: WinState }). Apps must use stores from @/lib/glassos/store, sfx from @/lib/glassos/sound, icons via APP_ICONS/AppIconTile. Design tokens: classes glass, glass-deep, glass-chip, glass-hover, g-text-1/2/3, g-accent, g-grad-text, g-scroll, g-input, g-md (markdown). NO blue/indigo default accents — use var(--g-accent), var(--g-accent-2).
+- Pending: Tasks 3-a/3-b (apps), album covers, integration + verification.
