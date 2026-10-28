@@ -4,7 +4,7 @@ export type ID = string;
 export type ThemeId = 'dark' | 'light' | 'oled' | 'cyberpunk';
 export type ModuleId =
   | 'dashboard' | 'tracker' | 'sessions' | 'tasks' | 'habits' | 'analytics'
-  | 'roadmap' | 'dsa' | 'calendar' | 'notes' | 'reports' | 'settings';
+  | 'roadmap' | 'dsa' | 'calendar' | 'timetable' | 'notes' | 'reports' | 'settings';
 
 export type DayType = 'college' | 'weekend';
 export type SubjectCategory = 'college' | 'coding' | 'language' | 'music' | 'fitness' | 'dsa';
@@ -150,6 +150,51 @@ export interface Resource {
   createdAt: string;
 }
 
+// ─── Timetable ────────────────────────────────────────────────────────────────
+export type TimetableStatus = 'scheduled' | 'completed' | 'cancelled' | 'moved';
+
+/** A column in the weekly grid. Users can add, rename, reorder-free remove. */
+export interface TimetableDay {
+  id: ID;
+  label: string; // full name, e.g. "Monday"
+  short: string; // column header, e.g. "Mon"
+}
+
+/** Colour-coded grouping for classes, backed by the monochrome ink ramp. */
+export interface TimetableCategory {
+  id: ID;
+  name: string;
+  color: string; // CSS custom property, e.g. var(--ink-3)
+}
+
+/** One recurring weekly class slot. */
+export interface TimetableEvent {
+  id: ID;
+  title: string;
+  dayId: ID;
+  start: string; // HH:mm
+  end: string; // HH:mm
+  categoryId: ID;
+  location: string;
+  description: string;
+  status: TimetableStatus;
+  createdAt: string;
+}
+
+/** Structural grid settings — editable by the user. */
+export interface TimetableSettings {
+  dayStart: string; // HH:mm
+  dayEnd: string; // HH:mm
+  slotMinutes: number; // grid row height in minutes
+}
+
+export interface TimetableData {
+  days: TimetableDay[];
+  categories: TimetableCategory[];
+  events: TimetableEvent[];
+  settings: TimetableSettings;
+}
+
 export interface ChatMessage {
   id: ID;
   role: 'user' | 'assistant';
@@ -183,6 +228,7 @@ export interface NexusData {
   notes: Note[];
   resources: Resource[];
   exams: ExamEvent[];
+  timetable: TimetableData;
   dsaActive: boolean;
   dsaTopics: DsaTopic[];
   chat: ChatMessage[];

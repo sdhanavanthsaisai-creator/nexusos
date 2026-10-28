@@ -1,10 +1,12 @@
 import type {
   DailyLog, StudySession, Task, Habit, HabitRecords, Skill, Project,
-  Note, Resource, ExamEvent, DsaTopic, NexusData,
+  Note, Resource, ExamEvent, DsaTopic, NexusData, TimetableData, TimetableEvent,
+  TimetableStatus,
 } from './types';
 import {
   SUBJECT_SEED, HABIT_SEED, DSA_TOPICS_SEED, SKILL_SEED,
   DEFAULT_PROFILE, DASHBOARD_WIDGETS_DEFAULT,
+  TIMETABLE_DAYS_SEED, TIMETABLE_CATEGORIES_SEED, TIMETABLE_SETTINGS_DEFAULT,
 } from './constants';
 import { addDays, dateKey, pad2, todayKey, uid } from './utils';
 
@@ -16,6 +18,53 @@ function mulberry32(seed: number) {
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** First-run weekly timetable. Also used by "reset to default" and by migration. */
+export function buildTimetableSeed(): TimetableData {
+  const createdAt = new Date().toISOString();
+  const ev = (
+    id: string, title: string, dayId: string, start: string, end: string,
+    categoryId: string, location: string, description = '', status: TimetableStatus = 'scheduled',
+  ): TimetableEvent => ({
+    id, title, dayId, start, end, categoryId, location, description, status, createdAt,
+  });
+
+  return {
+    days: TIMETABLE_DAYS_SEED.map((d) => ({ ...d })),
+    categories: TIMETABLE_CATEGORIES_SEED.map((c) => ({ ...c })),
+    settings: { ...TIMETABLE_SETTINGS_DEFAULT },
+    events: [
+      // Monday
+      ev('tte-01', 'Maths — Calculus I', 'mon', '09:00', '10:00', 'cat-lecture', 'LH-204'),
+      ev('tte-02', 'C Programming Lab', 'mon', '10:15', '12:15', 'cat-lab', 'CSE Lab 2', 'Bring the lab manual + pen drive.'),
+      ev('tte-03', 'Lunch break', 'mon', '12:30', '13:15', 'cat-break', 'Cafeteria'),
+      ev('tte-04', 'Chemistry — Atomic Structure', 'mon', '14:00', '15:00', 'cat-lecture', 'LH-118'),
+      ev('tte-05', 'Self study — problem sets', 'mon', '16:00', '17:30', 'cat-study', 'Library, 2nd floor'),
+      // Tuesday
+      ev('tte-06', 'Computer Science — Intro to CS', 'tue', '09:00', '10:00', 'cat-lecture', 'LH-301'),
+      ev('tte-07', 'Chinese — HSK 1', 'tue', '11:00', '12:00', 'cat-lecture', 'Language Lab'),
+      ev('tte-08', 'Yoga', 'tue', '15:00', '16:00', 'cat-tutorial', 'Sports hall'),
+      ev('tte-09', 'Maths tutorial — group B', 'tue', '16:30', '17:30', 'cat-tutorial', 'Tutorial room 4'),
+      // Wednesday
+      ev('tte-10', 'Maths tutorial — group A', 'wed', '09:00', '10:00', 'cat-tutorial', 'Tutorial room 2'),
+      ev('tte-11', 'Chemistry Lab', 'wed', '10:30', '12:30', 'cat-lab', 'Chem Lab 1', 'Goggles mandatory.'),
+      ev('tte-12', 'Self study — lab report', 'wed', '14:30', '16:00', 'cat-study', 'Library'),
+      // Thursday
+      ev('tte-13', 'C Programming — Pointers', 'thu', '09:00', '10:00', 'cat-lecture', 'LH-204'),
+      ev('tte-14', 'CS Lab — Python basics', 'thu', '10:30', '12:30', 'cat-lab', 'CSE Lab 2'),
+      ev('tte-15', 'Chinese conversation', 'thu', '14:00', '15:00', 'cat-lecture', 'Language Lab'),
+      ev('tte-16', 'Group project sync', 'thu', '15:30', '16:30', 'cat-tutorial', 'Discord', 'Moved online this week.', 'moved'),
+      // Friday
+      ev('tte-17', 'Maths — Integration', 'fri', '09:00', '10:00', 'cat-lecture', 'LH-204'),
+      ev('tte-18', 'Chemistry tutorial', 'fri', '11:00', '12:00', 'cat-tutorial', 'LH-118', 'Cancelled — faculty on leave.', 'cancelled'),
+      ev('tte-19', 'Coding practice — React', 'fri', '15:00', '17:00', 'cat-study', 'Hostel desk'),
+      ev('tte-20', 'Weekly review', 'fri', '17:00', '17:45', 'cat-study', 'Hostel desk', '', 'completed'),
+      // Saturday
+      ev('tte-21', 'Revision block — Chemistry', 'sat', '09:00', '11:00', 'cat-study', 'Library'),
+      ev('tte-22', 'Project work — portfolio', 'sat', '11:30', '13:00', 'cat-study', 'Hostel desk'),
+    ],
   };
 }
 
@@ -256,6 +305,7 @@ export function buildSeed(): NexusData {
     notes,
     resources,
     exams,
+    timetable: buildTimetableSeed(),
     dsaActive: false,
     dsaTopics,
     chat: [],

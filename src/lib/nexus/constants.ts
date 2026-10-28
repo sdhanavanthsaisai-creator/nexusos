@@ -1,6 +1,7 @@
 import type {
   Subject, SubjectCategory, TaskStatus, TaskPriority, TaskArea,
-  ModuleId, Habit, DsaTopic,
+  ModuleId, Habit, DsaTopic, TimetableCategory, TimetableDay,
+  TimetableSettings, TimetableStatus,
 } from './types';
 
 // ─── Roboto® RB/25 — monochrome ink system ──────────────────────
@@ -83,6 +84,7 @@ export const MODULE_NAV: { id: ModuleId; label: string; desc: string; group: 'co
   { id: 'habits', label: 'Habits', desc: 'Streaks & consistency', group: 'core' },
   { id: 'analytics', label: 'Analytics', desc: '20+ interactive charts', group: 'data' },
   { id: 'calendar', label: 'Calendar', desc: 'Unified timeline', group: 'plan' },
+  { id: 'timetable', label: 'Timetable', desc: 'Editable weekly class grid', group: 'plan' },
   { id: 'roadmap', label: 'Roadmap', desc: 'Skills & projects', group: 'plan' },
   { id: 'dsa', label: 'DSA Plan', desc: 'Locked until Sem 1 ends', group: 'plan' },
   { id: 'notes', label: 'Notes', desc: 'Markdown & resources', group: 'plan' },
@@ -152,6 +154,37 @@ export const SKILL_SEED: {
 
 /** Legacy export kept for pickers — prefer INK_VARS (DOM) or chartPalette(dark) (canvas). */
 export const CHART_PALETTE: string[] = [...CHART_RAMP.dark];
+
+// ─── Timetable defaults ───────────────────────────────────────────────────────
+export const TIMETABLE_DAYS_SEED: TimetableDay[] = [
+  { id: 'mon', label: 'Monday', short: 'Mon' },
+  { id: 'tue', label: 'Tuesday', short: 'Tue' },
+  { id: 'wed', label: 'Wednesday', short: 'Wed' },
+  { id: 'thu', label: 'Thursday', short: 'Thu' },
+  { id: 'fri', label: 'Friday', short: 'Fri' },
+  { id: 'sat', label: 'Saturday', short: 'Sat' },
+];
+
+export const TIMETABLE_CATEGORIES_SEED: TimetableCategory[] = [
+  { id: 'cat-lecture', name: 'Lecture', color: 'var(--ink-1)' },
+  { id: 'cat-lab', name: 'Lab', color: 'var(--ink-3)' },
+  { id: 'cat-tutorial', name: 'Tutorial', color: 'var(--ink-5)' },
+  { id: 'cat-study', name: 'Self study', color: 'var(--ink-7)' },
+  { id: 'cat-break', name: 'Break', color: 'var(--ink-9)' },
+];
+
+export const TIMETABLE_SETTINGS_DEFAULT: TimetableSettings = {
+  dayStart: '08:00',
+  dayEnd: '18:00',
+  slotMinutes: 30,
+};
+
+export const TIMETABLE_STATUS_META: Record<TimetableStatus, { label: string; hint: string }> = {
+  scheduled: { label: 'Scheduled', hint: 'Planned as usual' },
+  completed: { label: 'Completed', hint: 'This slot already happened' },
+  cancelled: { label: 'Cancelled', hint: 'Skipped this week' },
+  moved: { label: 'Moved', hint: 'Held at a different time' },
+};
 
 export const DASHBOARD_WIDGETS_DEFAULT = [
   'hero', 'kpis', 'focus', 'habits', 'weekly', 'donut', 'exams',

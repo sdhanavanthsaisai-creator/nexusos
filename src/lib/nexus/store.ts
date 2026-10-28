@@ -6,10 +6,12 @@ import { useEffect, useState } from 'react';
 import type {
   ChatMessage, DailyLog, ExamEvent, Habit, HabitRecords, ID, ModuleId, NexusData, Note,
   Project, Recurrence, Settings, StudySession, Subject, SubjectCategory,
-  Subtask, Task, TaskArea, TaskPriority, TaskStatus, UserProfile,
+  Subtask, Task, TaskArea, TaskPriority, TaskStatus, TimetableCategory, TimetableDay,
+  TimetableEvent, TimetableSettings, UserProfile,
 } from './types';
-import { buildSeed } from './seed';
+import { buildSeed, buildTimetableSeed } from './seed';
 import { INK_VARS } from './constants';
+import { parseTimetableImport } from './timetable';
 import { addDays, addDaysKey, dateKey, todayKey, uid } from './utils';
 
 const STORAGE_KEY = 'nexusos-data-v1';
@@ -58,6 +60,18 @@ export interface NexusStore extends NexusData {
   deleteExam: (id: ID) => void;
   updateDsaTopic: (id: ID, patch: Partial<NexusData['dsaTopics'][number]>) => void;
   bumpDsaProblem: (id: ID, delta: number) => void;
+  addTimetableEvent: (input: Partial<TimetableEvent> & { title: string; dayId: ID; start: string; end: string; categoryId: ID }) => TimetableEvent;
+  updateTimetableEvent: (id: ID, patch: Partial<TimetableEvent>) => void;
+  deleteTimetableEvent: (id: ID) => void;
+  updateTimetableSettings: (patch: Partial<TimetableSettings>) => void;
+  addTimetableDay: (label: string, short: string) => void;
+  updateTimetableDay: (id: ID, patch: Partial<TimetableDay>) => void;
+  deleteTimetableDay: (id: ID) => void;
+  addTimetableCategory: (name: string, color: string) => void;
+  updateTimetableCategory: (id: ID, patch: Partial<TimetableCategory>) => void;
+  deleteTimetableCategory: (id: ID) => void;
+  importTimetable: (json: unknown) => { ok: boolean; error?: string };
+  resetTimetable: () => void;
   addChat: (msg: Omit<ChatMessage, 'id' | 'ts'> & { ts?: number }) => void;
   clearChat: () => void;
   celebrate: (milestone: number) => void;
@@ -75,7 +89,9 @@ const emptyState: NexusData = {
   },
   subjects: [], skills: [], dailyLogs: {}, sessions: [], tasks: [],
   habits: [], habitRecords: {}, projects: [], notes: [], resources: [],
-  exams: [], dsaActive: false, dsaTopics: [], chat: [], celebrated: [],
+  exams: [],
+  timetable: { ...buildTimetableSeed(), events: [] },
+  dsaActive: false, dsaTopics: [], chat: [], celebrated: [],
 };
 
 export const useNexus = create<NexusStore>()(
@@ -352,6 +368,102 @@ export const useNexus = create<NexusStore>()(
           }),
         })),
 
+      // ── timetable ──
+      addTimetableEvent: (input) => {
+        const event: TimetableEvent = {
+          id: input.id ?? uid(),
+          title: input.title.trim(),
+          dayId: input.dayId,
+          start: input.start,
+          end: input.end,
+          categoryId: input.categoryId,
+          location: input.location ?? '',
+          description: input.description ?? '',
+          status: input.status ?? 'scheduled',
+          createdAt: new Date().toISOString(),
+        };
+        set((s) => ({ timetable: { ...s.timetable, events: [...s.timetable.events, event] } }));
+        return event;
+      },
+      updateTimetableEvent: (id, patch) =>
+        set((s) => ({
+          timetable: {
+            ...s.timetable,
+            events: s.timetable.events.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+          },
+        })),
+      deleteTimetableEvent: (id) =>
+        set((s) => ({
+          timetable: { ...s.timetable, events: s.timetable.events.filter((x) => x.id !== id) },
+        })),
+      updateTimetableSettings: (patch) =>
+        set((s) => ({
+          timetable: { ...s.timetable, settings: { ...s.timetable.settings, ...patch } },
+        })),
+      addTimetableDay: (label, short) =>
+        set((s) => ({
+          timetable: {
+            ...s.timetable,
+            days: [
+              ...s.timetable.days,
+              { id: `day-${uid()}`, label: label.trim(), short: (short.trim() || label.trim().slice(0, 3)).slice(0, 8) },
+            ],
+          },
+        })),
+      updateTimetableDay: (id, patch) =>
+        set((s) => ({
+          timetable: {
+            ...s.timetable,
+            days: s.timetable.days.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+          },
+        })),
+      deleteTimetableDay: (id) =>
+        set((s) => {
+          if (s.timetable.days.length <= 1) return {}; // never leave the grid with no columns
+          return {
+            timetable: {
+              ...s.timetable,
+              days: s.timetable.days.filter((x) => x.id !== id),
+              events: s.timetable.events.filter((x) => x.dayId !== id),
+            },
+          };
+        }),
+      addTimetableCategory: (name, color) =>
+        set((s) => ({
+          timetable: {
+            ...s.timetable,
+            categories: [...s.timetable.categories, { id: `cat-${uid()}`, name: name.trim(), color }],
+          },
+        })),
+      updateTimetableCategory: (id, patch) =>
+        set((s) => ({
+          timetable: {
+            ...s.timetable,
+            categories: s.timetable.categories.map((x) => (x.id === id ? { ...x, ...patch } : x)),
+          },
+        })),
+      deleteTimetableCategory: (id) =>
+        set((s) => {
+          const remaining = s.timetable.categories.filter((x) => x.id !== id);
+          if (remaining.length === 0) return {}; // keep at least one category for the form
+          const fallback = remaining[0].id;
+          return {
+            timetable: {
+              ...s.timetable,
+              categories: remaining,
+              // never leave events pointing at a deleted category
+              events: s.timetable.events.map((x) => (x.categoryId === id ? { ...x, categoryId: fallback } : x)),
+            },
+          };
+        }),
+      importTimetable: (json) => {
+        const parsed = parseTimetableImport(json);
+        if (!parsed.ok) return { ok: false, error: parsed.error };
+        set({ timetable: parsed.data });
+        return { ok: true };
+      },
+      resetTimetable: () => set({ timetable: buildTimetableSeed() }),
+
       // ── chat ──
       addChat: (msg) =>
         set((s) => ({
@@ -368,6 +480,8 @@ export const useNexus = create<NexusStore>()(
           const data = json as Partial<NexusData>;
           if (!data.profile || !Array.isArray(data.subjects)) return { ok: false, error: 'Missing required fields (profile, subjects)' };
           const cur = get();
+          const parsedTimetable = data.timetable ? parseTimetableImport(data.timetable) : null;
+          if (parsedTimetable && !parsedTimetable.ok) return { ok: false, error: `Timetable: ${parsedTimetable.error}` };
           set({
             profile: { ...cur.profile, ...data.profile },
             settings: { ...cur.settings, ...data.settings },
@@ -384,6 +498,7 @@ export const useNexus = create<NexusStore>()(
             exams: data.exams ?? cur.exams,
             dsaActive: data.dsaActive ?? cur.dsaActive,
             dsaTopics: data.dsaTopics ?? cur.dsaTopics,
+            timetable: parsedTimetable?.ok ? parsedTimetable.data : cur.timetable,
             chat: data.chat ?? cur.chat,
             celebrated: data.celebrated ?? cur.celebrated,
           });
@@ -398,7 +513,7 @@ export const useNexus = create<NexusStore>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 2,
+      version: 3,
       migrate: (persisted, version) => {
         const s = persisted as NexusStore;
         if (version < 2) {
@@ -408,6 +523,9 @@ export const useNexus = create<NexusStore>()(
             s.habits = (s.habits ?? []).map((x, i) => ({ ...x, color: INK_VARS[i % INK_VARS.length] }));
             s.skills = (s.skills ?? []).map((x, i) => ({ ...x, color: INK_VARS[i % INK_VARS.length] }));
           } catch { /* best-effort migration */ }
+        }
+        if (!s.timetable) {
+          s.timetable = buildTimetableSeed();
         }
         return s;
       },
