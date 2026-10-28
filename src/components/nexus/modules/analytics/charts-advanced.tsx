@@ -49,7 +49,7 @@ export function SleepVsStudyChart({ range }: ChartProps) {
     },
     series: [{
       name: 'Days', type: 'scatter', symbolSize: 10,
-      itemStyle: { color: '#22d3ee', opacity: 0.7 },
+      itemStyle: { color: theme.palette[0], opacity: 0.7 },
       data: rows.map((r) => ({
         name: r.date,
         value: [r.sleepHours, r.minutes, r.energy],
@@ -106,7 +106,7 @@ export function SessionDurationChart({ range }: ChartProps) {
     },
     series: [{
       name: 'Sessions', type: 'bar', barMaxWidth: 28,
-      itemStyle: { color: '#22d3ee', borderRadius: [6, 6, 0, 0] },
+      itemStyle: { color: theme.palette[0], borderRadius: [6, 6, 0, 0] },
       data: rows.map((r) => r.count),
     }],
   }), [theme, rows]);

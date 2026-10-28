@@ -1,0 +1,733 @@
+     1→'use client';
+     2→
+     3→// ─── Dynamic Island — self-mounting floating command pod ─────────────────────
+     4→// Compact pill (alert → free timer → pomodoro → music → daily summary) that
+     5→// morphs into an expanded panel with Timer / Stats / Music modules. Mount it
+     6→// once anywhere (e.g. the app shell); it positions itself fixed at the top.
+     7→
+     8→import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+     9→import { AnimatePresence, motion, useAnimationControls } from 'framer-motion';
+    10→import {
+    11→  Activity, CheckCircle2, ChevronDown, Flame, ListTodo, Music, Pause, Play,
+    12→  SkipBack, SkipForward, Square, Timer, Volume2, X, Zap,
+    13→} from 'lucide-react';
+    14→import type { LucideIcon } from 'lucide-react';
+    15→import { Button } from '@/components/ui/button';
+    16→import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+    17→import { Slider } from '@/components/ui/slider';
+    18→import { Switch } from '@/components/ui/switch';
+    19→import { lofiEngine } from '@/lib/nexus/lofi';
+    20→import { pomoPhaseDurationMs, pomoRemainingMs, useIsland } from '@/lib/nexus/island-store';
+    21→import { timerElapsedMs, useNexus, useTimerTick, useUI } from '@/lib/nexus/store';
+    22→import {
+    23→  clamp, computeStreak, dateKey, dayTotalMinutes, isDueToday, isOverdue,
+    24→  minutesToHM, pad2, secondsToClock, todayKey,
+    25→} from '@/lib/nexus/utils';
+    26→
+    27→const SPRING = { type: 'spring', stiffness: 300, damping: 28 } as const;
+    28→
+    29→/** m:ss countdown format. */
+    30→const fmtMs = (ms: number) => `${Math.floor(ms / 60000)}:${pad2(Math.floor(ms / 1000) % 60)}`;
+    31→
+    32→/** True after hydration — SSR-safe mounted gate without setState-in-effect. */
+    33→const emptySubscribe = () => () => {};
+    34→const useMounted = () => useSyncExternalStore(emptySubscribe, () => true, () => false);
+    35→
+    36→// ─── Root ─────────────────────────────────────────────────────────────────────
+    37→export default function DynamicIsland() {
+    38→  const mounted = useMounted();
+    39→
+    40→  const expanded = useIsland((s) => s.expanded);
+    41→  const alert = useIsland((s) => s.alert);
+    42→
+    43→  // Auto-dismiss island alerts after ~4.5s.
+    44→  useEffect(() => {
+    45→    if (!alert) return;
+    46→    const id = window.setTimeout(() => useIsland.getState().clearAlert(), 4500);
+    47→    return () => window.clearTimeout(id);
+    48→  }, [alert]);
+    49→
+    50→  // Cross-store notification subscriptions (task completions, timer start/stop).
+    51→  useEffect(() => {
+    52→    const countDone = (tasks: readonly { status: string }[]) =>
+    53→      tasks.reduce((n, t) => (t.status === 'done' ? n + 1 : n), 0);
+    54→
+    55→    const unsubNexus = useNexus.subscribe((s, prev) => {
+    56→      if (countDone(s.tasks) > countDone(prev.tasks)) {
+    57→        useIsland.getState().notify({ title: 'Task completed', detail: '+1 task cleared', tone: 'success' });
+    58→      }
+    59→    });
+    60→
+    61→    const unsubUI = useUI.subscribe((s, prev) => {
+    62→      const t = s.timer;
+    63→      const p = prev.timer;
+    64→      // Timer started from a fully idle state.
+    65→      if (t.running && !p.running && p.subjectId === null && p.accumulatedMs === 0) {
+    66→        const name = useNexus.getState().subjects.find((x) => x.id === t.subjectId)?.name ?? 'Free session';
+    67→        useIsland.getState().notify({ title: 'Focus started', detail: name, tone: 'info' });
+    68→      }
+    69→      // Timer stopped (full reset — pause keeps subjectId / accumulatedMs).
+    70→      if (p.running && !t.running && t.subjectId === null && t.startedAt === null && t.accumulatedMs === 0) {
+    71→        const minutes = Math.max(1, Math.round(timerElapsedMs(p) / 60000));
+    72→        useIsland.getState().notify({
+    73→          title: 'Session logged',
+    74→          detail: `${minutesToHM(minutes)} focused`,
+    75→          tone: 'success',
+    76→        });
+    77→      }
+    78→    });
+    79→
+    80→    return () => {
+    81→      unsubNexus();
+    82→      unsubUI();
+    83→    };
+    84→  }, []);
+    85→
+    86→  // Escape closes the island while expanded.
+    87→  useEffect(() => {
+    88→    if (!expanded) return;
+    89→    const onKey = (e: KeyboardEvent) => {
+    90→      if (e.key === 'Escape') useIsland.getState().collapse();
+    91→    };
+    92→    window.addEventListener('keydown', onKey);
+    93→    return () => window.removeEventListener('keydown', onKey);
+    94→  }, [expanded]);
+    95→
+    96→  // Music playing flag: shared by compact pill (eq) + music module (waveform).
+    97→  const [musicPlaying, setMusicPlaying] = useState(false);
+    98→  useEffect(() => {
+    99→    const id = window.setInterval(() => setMusicPlaying(lofiEngine.isPlaying()), 1000); // safety poll
+   100→    return () => window.clearInterval(id);
+   101→  }, []);
+   102→
+   103→  if (!mounted) return null; // hydration guard (persisted island/pomo state)
+   104→
+   105→  return (
+   106→    <>
+   107→      {expanded && (
+   108→        <div
+   109→          className="pointer-events-auto fixed inset-0 z-40"
+   110→          onClick={() => useIsland.getState().collapse()}
+   111→          aria-hidden="true"
+   112→        />
+   113→      )}
+   114→      <div className="pointer-events-none fixed inset-x-0 top-2.5 z-[60] flex flex-col items-center">
+   115→        {expanded ? (
+   116→          <ExpandedPanel musicPlaying={musicPlaying} onMusicChange={setMusicPlaying} />
+   117→        ) : (
+   118→          <CompactPill musicPlaying={musicPlaying} />
+   119→        )}
+   120→      </div>
+   121→    </>
+   122→  );
+   123→}
+   124→
+   125→// ─── Compact pill ─────────────────────────────────────────────────────────────
+   126→function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
+   127→  const alert = useIsland((s) => s.alert);
+   128→  const pomo = useIsland((s) => s.pomo);
+   129→  const timer = useUI((s) => s.timer);
+   130→  const subjects = useNexus((s) => s.subjects);
+   131→  const dailyLogs = useNexus((s) => s.dailyLogs);
+   132→  const habits = useNexus((s) => s.habits);
+   133→  const habitRecords = useNexus((s) => s.habitRecords);
+   134→
+   135→  const timerActive = timer.subjectId !== null || timer.accumulatedMs > 0 || timer.running;
+   136→  const pomoActive = pomo.phase !== 'idle';
+   137→  const now = useTimerTick(timerActive || pomoActive);
+   138→  const pomoLeft = pomoRemainingMs(pomo, now);
+   139→
+   140→  const todayMin = useMemo(() => dayTotalMinutes(dailyLogs[todayKey()]), [dailyLogs]);
+   141→  const habitScore = useMemo(() => {
+   142→    const active = habits.filter((h) => !h.archived);
+   143→    const key = todayKey();
+   144→    const done = active.reduce((n, h) => (habitRecords[h.id]?.[key] ? n + 1 : n), 0);
+   145→    return `${done}/${active.length}`;
+   146→  }, [habits, habitRecords]);
+   147→  const subjectLabel = useMemo(
+   148→    () => subjects.find((x) => x.id === timer.subjectId)?.name ?? '',
+   149→    [subjects, timer.subjectId],
+   150→  );
+   151→
+   152→  // Pulse the pill whenever a new alert arrives.
+   153→  const pulse = useAnimationControls();
+   154→  const alertId = alert?.id ?? 0;
+   155→  useEffect(() => {
+   156→    if (!alertId) return;
+   157→    void pulse.start({ scale: [1, 1.06, 1], transition: { duration: 0.55, times: [0, 0.35, 1], ease: 'easeOut' } });
+   158→  }, [alertId, pulse]);
+   159→
+   160→  const contentKey = alert ? 'alert' : timerActive ? 'timer' : pomoActive ? 'pomo' : musicPlaying ? 'music' : 'idle';
+   161→
+   162→  return (
+   163→    <motion.button
+   164→      layoutId="island-pod"
+   165→      type="button"
+   166→      onClick={() => useIsland.getState().expand()}
+   167→      animate={pulse}
+   168→      whileHover={{ scale: 1.03 }}
+   169→      whileTap={{ scale: 0.97 }}
+   170→      transition={SPRING}
+   171→      className="island-shell pointer-events-auto flex h-9 max-w-[92vw] cursor-pointer items-center gap-2 rounded-full px-3.5 text-white"
+   172→      aria-label="Open Dynamic Island"
+   173→    >
+   174→      <AnimatePresence mode="wait" initial={false}>
+   175→        <motion.span
+   176→          key={contentKey}
+   177→          initial={{ opacity: 0, y: 5 }}
+   178→          animate={{ opacity: 1, y: 0 }}
+   179→          exit={{ opacity: 0, y: -5 }}
+   180→          transition={{ duration: 0.14 }}
+   181→          className="flex min-w-0 items-center gap-2"
+   182→        >
+   183→          {alert ? (
+   184→            <>
+   185→              <span
+   186→                className={`island-live-dot h-1.5 w-1.5 shrink-0 rounded-full ${
+   187→                  alert.tone === 'success' ? 'bg-emerald-400' : alert.tone === 'warning' ? 'bg-amber-400' : 'bg-[var(--primary)]'
+   188→                }`}
+   189→              />
+   190→              <span className="max-w-[220px] truncate text-xs font-medium">{alert.title}</span>
+   191→            </>
+   192→          ) : timerActive ? (
+   193→            <>
+   194→              <span
+   195→                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+   196→                  timer.running ? 'island-live-dot animate-pulse bg-[var(--primary)]' : 'bg-white/40'
+   197→                }`}
+   198→              />
+   199→              <span className="font-mono text-[11px] tabular-nums">{secondsToClock(timerElapsedMs(timer) / 1000)}</span>
+   200→              {subjectLabel && <span className="max-w-[80px] truncate text-[10px] text-white/50">{subjectLabel}</span>}
+   201→            </>
+   202→          ) : pomoActive ? (
+   203→            <>
+   204→              <span
+   205→                className={`island-live-dot animate-pulse h-1.5 w-1.5 shrink-0 rounded-full ${
+   206→                  pomo.phase === 'focus' ? 'bg-emerald-400' : 'bg-amber-400'
+   207→                }`}
+   208→              />
+   209→              <span className="font-mono text-[11px] tabular-nums">{fmtMs(pomoLeft)}</span>
+   210→              <span className="text-[10px] text-white/55">
+   211→                {pomo.phase === 'focus' ? 'Focus' : pomo.phase === 'longBreak' ? 'Long break' : 'Break'}
+   212→              </span>
+   213→            </>
+   214→          ) : musicPlaying ? (
+   215→            <>
+   216→              <span className="island-eq flex h-4 shrink-0 items-center gap-[2.5px]" aria-hidden="true">
+   217→                <span />
+   218→                <span />
+   219→                <span />
+   220→                <span />
+   221→              </span>
+   222→              <span className="max-w-[150px] truncate text-[11px]">{lofiEngine.getTrack().name}</span>
+   223→            </>
+   224→          ) : (
+   225→            <>
+   226→              <Zap className="h-3 w-3 shrink-0 text-[var(--aur-1)]" />
+   227→              <span className="font-mono text-[11px] tabular-nums">{minutesToHM(todayMin)}</span>
+   228→              <span className="h-0.5 w-0.5 shrink-0 rounded-full bg-white/30" />
+   229→              <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-400" />
+   230→              <span className="font-mono text-[11px] tabular-nums">{habitScore}</span>
+   231→            </>
+   232→          )}
+   233→        </motion.span>
+   234→      </AnimatePresence>
+   235→      <ChevronDown className="h-3 w-3 shrink-0 text-white/40" />
+   236→    </motion.button>
+   237→  );
+   238→}
+   239→
+   240→// ─── Expanded panel ───────────────────────────────────────────────────────────
+   241→function ExpandedPanel({ musicPlaying, onMusicChange }: { musicPlaying: boolean; onMusicChange: (v: boolean) => void }) {
+   242→  const activeModule = useIsland((s) => s.module);
+   243→  const setModule = useIsland((s) => s.setModule);
+   244→
+   245→  return (
+   246→    <motion.div
+   247→      layoutId="island-pod"
+   248→      layout
+   249→      role="dialog"
+   250→      aria-label="Dynamic Island"
+   251→      transition={SPRING}
+   252→      className="island-shell pointer-events-auto w-[min(380px,calc(100vw-1.5rem))] rounded-[28px] p-4 text-white"
+   253→    >
+   254→      <div className="mb-3 flex items-center gap-1">
+   255→        <TabButton active={activeModule === 'timer'} onClick={() => setModule('timer')} icon={Timer} label="Timer" />
+   256→        <TabButton active={activeModule === 'stats'} onClick={() => setModule('stats')} icon={Activity} label="Stats" />
+   257→        <TabButton active={activeModule === 'music'} onClick={() => setModule('music')} icon={Music} label="Music" />
+   258→        <div className="flex-1" />
+   259→        <button
+   260→          type="button"
+   261→          onClick={() => useIsland.getState().collapse()}
+   262→          aria-label="Close island"
+   263→          className="flex h-7 w-7 items-center justify-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white"
+   264→        >
+   265→          <X className="h-3.5 w-3.5" />
+   266→        </button>
+   267→      </div>
+   268→      <AnimatePresence mode="wait" initial={false}>
+   269→        <motion.div
+   270→          key={activeModule}
+   271→          initial={{ opacity: 0, y: 8 }}
+   272→          animate={{ opacity: 1, y: 0 }}
+   273→          exit={{ opacity: 0, y: -8 }}
+   274→          transition={{ duration: 0.16 }}
+   275→        >
+   276→          {activeModule === 'timer' && <TimerModule />}
+   277→          {activeModule === 'stats' && <StatsModule />}
+   278→          {activeModule === 'music' && <MusicModule playing={musicPlaying} onPlayingChange={onMusicChange} />}
+   279→        </motion.div>
+   280→      </AnimatePresence>
+   281→    </motion.div>
+   282→  );
+   283→}
+   284→
+   285→function TabButton({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: LucideIcon; label: string }) {
+   286→  return (
+   287→    <button
+   288→      type="button"
+   289→      onClick={onClick}
+   290→      aria-pressed={active}
+   291→      className={`relative flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-medium transition-colors ${
+   292→        active ? 'text-white' : 'text-white/45 hover:text-white/80'
+   293→      }`}
+   294→    >
+   295→      {active && (
+   296→        <motion.span
+   297→          layoutId="island-tab"
+   298→          transition={{ type: 'spring', stiffness: 400, damping: 32 }}
+   299→          className="glass-chip absolute inset-0 rounded-full"
+   300→        />
+   301→      )}
+   302→      <Icon className="relative z-10 h-3.5 w-3.5" />
+   303→      <span className="relative z-10">{label}</span>
+   304→    </button>
+   305→  );
+   306→}
+   307→
+   308→// ─── Timer module ─────────────────────────────────────────────────────────────
+   309→function TimerModule() {
+   310→  const pomo = useIsland((s) => s.pomo);
+   311→  const timer = useUI((s) => s.timer);
+   312→  const pomoActive = pomo.phase !== 'idle';
+   313→  const timerActive = timer.subjectId !== null || timer.accumulatedMs > 0 || timer.running;
+   314→  const now = useTimerTick(pomoActive || timerActive);
+   315→  const pomoLeft = pomoRemainingMs(pomo, now);
+   316→
+   317→  return (
+   318→    <div className="flex flex-col gap-3">
+   319→      {pomoActive ? <PomoActiveView pomoLeft={pomoLeft} /> : <PomoLauncher />}
+   320→      <FreeTimerSection />
+   321→    </div>
+   322→  );
+   323→}
+   324→
+   325→function PomoActiveView({ pomoLeft }: { pomoLeft: number }) {
+   326→  const pomo = useIsland((s) => s.pomo);
+   327→  const subjects = useNexus((s) => s.subjects);
+   328→
+   329→  const duration = pomoPhaseDurationMs(pomo);
+   330→  const fraction = duration > 0 ? clamp(1 - pomoLeft / duration, 0, 1) : 0;
+   331→  const R = 44;
+   332→  const CIRC = 2 * Math.PI * R;
+   333→  const ringColor = pomo.phase === 'focus' ? 'var(--aur-3)' : '#fbbf24';
+   334→  const subjectName = subjects.find((x) => x.id === pomo.subjectId)?.name ?? 'First subject';
+   335→  const filled = pomo.cycles % 4;
+   336→  const paused = pomo.pausedRemainingMs !== null;
+   337→
+   338→  return (
+   339→    <div className="flex items-center gap-5">
+   340→      <div className="relative h-28 w-28 shrink-0">
+   341→        <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
+   342→          <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="6" />
+   343→          <circle
+   344→            cx="50" cy="50" r={R} fill="none" stroke={ringColor} strokeWidth="6" strokeLinecap="round"
+   345→            strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - fraction)}
+   346→            style={{ transition: 'stroke-dashoffset 0.6s linear' }}
+   347→          />
+   348→        </svg>
+   349→        <div className="absolute inset-0 flex flex-col items-center justify-center">
+   350→          <span className="font-mono text-2xl leading-none tabular-nums">{fmtMs(pomoLeft)}</span>
+   351→          <span className="mt-1.5 text-[9px] uppercase tracking-[0.2em] text-white/50">
+   352→            {pomo.phase === 'focus' ? 'Focus' : pomo.phase === 'longBreak' ? 'Long break' : 'Break'}
+   353→          </span>
+   354→        </div>
+   355→      </div>
+   356→      <div className="flex min-w-0 flex-1 flex-col gap-3">
+   357→        <div>
+   358→          <div className="flex items-center gap-1.5" aria-label={`${filled} of 4 cycles completed`}>
+   359→            {[0, 1, 2, 3].map((i) => (
+   360→              <span key={i} className={`h-1.5 w-1.5 rounded-full ${i < filled ? 'bg-[var(--primary)]' : 'bg-white/15'}`} />
+   361→            ))}
+   362→          </div>
+   363→          <div className="mt-1.5 truncate text-[10px] text-white/45">
+   364→            Logging to <span className="text-white/80">{subjectName}</span>
+   365→          </div>
+   366→        </div>
+   367→        <div className="flex flex-wrap gap-1.5">
+   368→          {paused ? (
+   369→            <Button size="sm" variant="secondary" className="h-7 rounded-full px-3 text-[11px]" onClick={() => useIsland.getState().resumePomodoro()}>
+   370→              <Play className="h-3 w-3" /> Resume
+   371→            </Button>
+   372→          ) : (
+   373→            <Button size="sm" variant="secondary" className="h-7 rounded-full px-3 text-[11px]" onClick={() => useIsland.getState().pausePomodoro()}>
+   374→              <Pause className="h-3 w-3" /> Pause
+   375→            </Button>
+   376→          )}
+   377→          <Button
+   378→            size="sm" variant="outline"
+   379→            className="h-7 rounded-full border-white/15 bg-white/5 px-3 text-[11px] text-white/80 hover:bg-white/10 hover:text-white"
+   380→            onClick={() => useIsland.getState().skipPhase()}
+   381→          >
+   382→            Skip
+   383→          </Button>
+   384→          <Button
+   385→            size="sm" variant="outline"
+   386→            className="h-7 rounded-full border-rose-400/25 bg-rose-400/10 px-3 text-[11px] text-rose-200 hover:bg-rose-400/20 hover:text-rose-100"
+   387→            onClick={() => useIsland.getState().stopPomodoro()}
+   388→          >
+   389→            <Square className="h-3 w-3" /> Stop
+   390→          </Button>
+   391→        </div>
+   392→      </div>
+   393→    </div>
+   394→  );
+   395→}
+   396→
+   397→function PomoLauncher() {
+   398→  const pomo = useIsland((s) => s.pomo);
+   399→  const setPomo = useIsland((s) => s.setPomo);
+   400→  const subjects = useNexus((s) => s.subjects);
+   401→  const canStart = (pomo.subjectId ?? subjects[0]?.id) != null;
+   402→
+   403→  return (
+   404→    <div className="flex flex-col gap-3">
+   405→      <div>
+   406→        <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">Focus length</div>
+   407→        <div className="mt-1.5 grid grid-cols-3 gap-2">
+   408→          {[25, 50, 15].map((m) => {
+   409→            const active = pomo.lengths.focus === m;
+   410→            return (
+   411→              <button
+   412→                key={m}
+   413→                type="button"
+   414→                onClick={() => setPomo({ lengths: { ...pomo.lengths, focus: m } })}
+   415→                aria-pressed={active}
+   416→                className={`glass-chip h-8 rounded-xl text-[11px] font-medium transition ${
+   417→                  active ? 'text-white ring-1 ring-[var(--primary)]/60' : 'text-white/55 hover:text-white/85'
+   418→                }`}
+   419→              >
+   420→                {m} min
+   421→              </button>
+   422→            );
+   423→          })}
+   424→        </div>
+   425→      </div>
+   426→      <SubjectSelect />
+   427→      <div className="flex items-center justify-between">
+   428→        <span className="text-[11px] text-white/70">Auto-start break</span>
+   429→        <Switch checked={pomo.autoStartBreak} onCheckedChange={(v) => setPomo({ autoStartBreak: v })} aria-label="Auto-start break" />
+   430→      </div>
+   431→      <div className="flex items-center justify-between">
+   432→        <span className="text-[11px] text-white/70">Auto-start focus</span>
+   433→        <Switch checked={pomo.autoStartFocus} onCheckedChange={(v) => setPomo({ autoStartFocus: v })} aria-label="Auto-start focus" />
+   434→      </div>
+   435→      <button
+   436→        type="button"
+   437→        disabled={!canStart}
+   438→        onClick={() => useIsland.getState().startPomodoro()}
+   439→        className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-violet-500/90 text-xs font-semibold text-white shadow-[0_10px_28px_-10px_rgba(34,211,238,0.55)] transition hover:brightness-110 disabled:opacity-40"
+   440→      >
+   441→        <Play className="h-3.5 w-3.5" /> Start Pomodoro
+   442→      </button>
+   443→    </div>
+   444→  );
+   445→}
+   446→
+   447→/** Shared subject picker — bound to island pomo.subjectId. */
+   448→function SubjectSelect() {
+   449→  const subjects = useNexus((s) => s.subjects);
+   450→  const pomo = useIsland((s) => s.pomo);
+   451→  const setPomo = useIsland((s) => s.setPomo);
+   452→  const value = pomo.subjectId ?? subjects[0]?.id ?? '';
+   453→
+   454→  return (
+   455→    <Select value={value || undefined} onValueChange={(v) => setPomo({ subjectId: v })}>
+   456→      <SelectTrigger className="h-8 w-full rounded-xl border-white/10 bg-white/5 text-xs" aria-label="Focus subject">
+   457→        <SelectValue placeholder="Pick a subject" />
+   458→      </SelectTrigger>
+   459→      <SelectContent className="z-[70] rounded-xl border-white/10">
+   460→        {subjects.map((s) => (
+   461→          <SelectItem key={s.id} value={s.id} className="text-xs">
+   462→            {s.name}
+   463→          </SelectItem>
+   464→        ))}
+   465→      </SelectContent>
+   466→    </Select>
+   467→  );
+   468→}
+   469→
+   470→function FreeTimerSection() {
+   471→  const timer = useUI((s) => s.timer);
+   472→  const pomo = useIsland((s) => s.pomo);
+   473→  const subjects = useNexus((s) => s.subjects);
+   474→  const timerActive = timer.subjectId !== null || timer.accumulatedMs > 0 || timer.running;
+   475→  useTimerTick(timerActive); // 1s re-render while the free timer is active
+   476→
+   477→  const subjectName = subjects.find((x) => x.id === timer.subjectId)?.name ?? 'Free session';
+   478→  const selected = pomo.subjectId ?? subjects[0]?.id ?? '';
+   479→
+   480→  return (
+   481→    <>
+   482→      <div className="flex items-center gap-2 text-[9px] uppercase tracking-[0.22em] text-white/35" aria-hidden="true">
+   483→        <span className="h-px flex-1 bg-white/10" /> or <span className="h-px flex-1 bg-white/10" />
+   484→      </div>
+   485→      {timerActive ? (
+   486→        <div className="flex flex-col gap-2">
+   487→          <div className="glass-chip flex items-center justify-between gap-3 rounded-2xl px-3.5 py-2.5">
+   488→            <div className="min-w-0">
+   489→              <div className="truncate text-[10px] text-white/50">
+   490→                {subjectName} · free timer{timer.running ? '' : ' · paused'}
+   491→              </div>
+   492→              <div className="mt-0.5 font-mono text-lg leading-none tabular-nums">
+   493→                {secondsToClock(timerElapsedMs(timer) / 1000)}
+   494→              </div>
+   495→            </div>
+   496→            {timer.running ? (
+   497→              <Button size="icon" variant="secondary" className="h-8 w-8 shrink-0 rounded-full" onClick={() => useUI.getState().pauseTimer()} aria-label="Pause timer">
+   498→                <Pause className="h-3.5 w-3.5" />
+   499→              </Button>
+   500→            ) : (
+   501→              <Button size="icon" variant="secondary" className="h-8 w-8 shrink-0 rounded-full" onClick={() => useUI.getState().resumeTimer()} aria-label="Resume timer">
+   502→                <Play className="h-3.5 w-3.5" />
+   503→              </Button>
+   504→            )}
+   505→          </div>
+   506→          <button
+   507→            type="button"
+   508→            onClick={() => useUI.getState().stopTimer()}
+   509→            className="flex h-8 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-violet-500/90 text-[11px] font-semibold text-white transition hover:brightness-110"
+   510→          >
+   511→            <Square className="h-3 w-3" /> Stop &amp; log session
+   512→          </button>
+   513→        </div>
+   514→      ) : (
+   515→        <div className="flex flex-col gap-2">
+   516→          <SubjectSelect />
+   517→          <Button
+   518→            size="sm" variant="outline" disabled={!selected}
+   519→            className="h-8 rounded-full border-white/15 bg-white/5 text-[11px] text-white/85 hover:bg-white/10 hover:text-white"
+   520→            onClick={() => {
+   521→              if (selected) useUI.getState().startTimer(selected);
+   522→            }}
+   523→          >
+   524→            <Play className="h-3 w-3" /> Start free timer
+   525→          </Button>
+   526→        </div>
+   527→      )}
+   528→    </>
+   529→  );
+   530→}
+   531→
+   532→// ─── Stats module ─────────────────────────────────────────────────────────────
+   533→function StatsModule() {
+   534→  const dailyLogs = useNexus((s) => s.dailyLogs);
+   535→  const tasks = useNexus((s) => s.tasks);
+   536→  const habits = useNexus((s) => s.habits);
+   537→  const habitRecords = useNexus((s) => s.habitRecords);
+   538→
+   539→  const todayMin = useMemo(() => dayTotalMinutes(dailyLogs[todayKey()]), [dailyLogs]);
+   540→  const habitStat = useMemo(() => {
+   541→    const active = habits.filter((h) => !h.archived);
+   542→    const key = todayKey();
+   543→    const done = active.reduce((n, h) => (habitRecords[h.id]?.[key] ? n + 1 : n), 0);
+   544→    return { done, total: active.length };
+   545→  }, [habits, habitRecords]);
+   546→  const streak = useMemo(() => computeStreak(dailyLogs).current, [dailyLogs]);
+   547→  const taskStat = useMemo(
+   548→    () => ({
+   549→      due: tasks.reduce((n, t) => (isDueToday(t) ? n + 1 : n), 0),
+   550→      overdue: tasks.reduce((n, t) => (isOverdue(t) ? n + 1 : n), 0),
+   551→    }),
+   552→    [tasks],
+   553→  );
+   554→  const last7 = useMemo(() => {
+   555→    const vals: number[] = [];
+   556→    for (let i = 6; i >= 0; i--) {
+   557→      const d = new Date();
+   558→      d.setDate(d.getDate() - i);
+   559→      vals.push(dayTotalMinutes(dailyLogs[dateKey(d)]));
+   560→    }
+   561→    return vals;
+   562→  }, [dailyLogs]);
+   563→  const max7 = Math.max(...last7, 30);
+   564→
+   565→  return (
+   566→    <div className="flex flex-col gap-2">
+   567→      <div className="grid grid-cols-2 gap-2">
+   568→        <StatCard icon={Zap} iconClass="text-[var(--aur-1)]" label="Today focus" value={minutesToHM(todayMin)} />
+   569→        <div className="glass-chip rounded-2xl p-3">
+   570→          <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] text-white/40">
+   571→            <CheckCircle2 className="h-3 w-3 text-emerald-400" /> Habit score
+   572→          </div>
+   573→          <div className="mt-1.5 text-base font-semibold leading-none tabular-nums">
+   574→            {habitStat.done}/{habitStat.total}
+   575→          </div>
+   576→          <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
+   577→            <div
+   578→              className="h-full rounded-full bg-emerald-400 transition-all"
+   579→              style={{ width: `${habitStat.total === 0 ? 0 : Math.round((habitStat.done / habitStat.total) * 100)}%` }}
+   580→            />
+   581→          </div>
+   582→        </div>
+   583→        <StatCard icon={Flame} iconClass="text-amber-400" label="Streak" value={`${streak} day${streak === 1 ? '' : 's'}`} />
+   584→        <div className="glass-chip rounded-2xl p-3">
+   585→          <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] text-white/40">
+   586→            <ListTodo className="h-3 w-3 text-[var(--aur-4)]" /> Due today
+   587→          </div>
+   588→          <div className="mt-1.5 text-base font-semibold leading-none tabular-nums">{taskStat.due} due</div>
+   589→          <div className={`mt-1 text-[10px] ${taskStat.overdue > 0 ? 'text-rose-300' : 'text-white/40'}`}>
+   590→            {taskStat.overdue} overdue
+   591→          </div>
+   592→        </div>
+   593→      </div>
+   594→      <div className="glass-chip rounded-2xl p-3">
+   595→        <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">Last 7 days</div>
+   596→        <div className="mt-2 flex h-10 items-end gap-1.5">
+   597→          {last7.map((v, i) => (
+   598→            <div
+   599→              key={i}
+   600→              title={minutesToHM(v)}
+   601→              className={`w-full rounded-full ${i === last7.length - 1 ? 'bg-[var(--primary)]' : 'bg-white/15'}`}
+   602→              style={{ height: `${Math.max(3, Math.round((v / max7) * 40))}px` }}
+   603→            />
+   604→          ))}
+   605→        </div>
+   606→      </div>
+   607→    </div>
+   608→  );
+   609→}
+   610→
+   611→function StatCard({ icon: Icon, iconClass, label, value }: { icon: LucideIcon; iconClass: string; label: string; value: string }) {
+   612→  return (
+   613→    <div className="glass-chip rounded-2xl p-3">
+   614→      <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] text-white/40">
+   615→        <Icon className={`h-3 w-3 ${iconClass}`} /> {label}
+   616→      </div>
+   617→      <div className="mt-1.5 text-base font-semibold leading-none">{value}</div>
+   618→    </div>
+   619→  );
+   620→}
+   621→
+   622→// ─── Music module ─────────────────────────────────────────────────────────────
+   623→function MusicModule({ playing, onPlayingChange }: { playing: boolean; onPlayingChange: (v: boolean) => void }) {
+   624→  const [volume, setVolume] = useState(lofiEngine.getVolume());
+   625→  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+   626→
+   627→  // Live oscilloscope — rAF only while playing.
+   628→  useEffect(() => {
+   629→    if (!playing) return;
+   630→    const canvas = canvasRef.current;
+   631→    const c2d = canvas?.getContext('2d');
+   632→    if (!canvas || !c2d) return;
+   633→    const dpr = window.devicePixelRatio || 1;
+   634→    const w = canvas.clientWidth;
+   635→    const h = canvas.clientHeight;
+   636→    canvas.width = Math.max(1, Math.floor(w * dpr));
+   637→    canvas.height = Math.max(1, Math.floor(h * dpr));
+   638→    c2d.scale(dpr, dpr);
+   639→    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#22d3ee';
+   640→    const buf = new Uint8Array(512);
+   641→    let raf = 0;
+   642→    const draw = () => {
+   643→      raf = window.requestAnimationFrame(draw);
+   644→      lofiEngine.waveform(buf);
+   645→      c2d.clearRect(0, 0, w, h);
+   646→      c2d.beginPath();
+   647→      const step = w / (buf.length - 1);
+   648→      for (let i = 0; i < buf.length; i++) {
+   649→        const y = h / 2 + ((buf[i] - 128) / 128) * (h / 2) * 0.92;
+   650→        if (i === 0) c2d.moveTo(0, y);
+   651→        else c2d.lineTo(i * step, y);
+   652→      }
+   653→      c2d.strokeStyle = primary;
+   654→      c2d.lineWidth = 1.5;
+   655→      c2d.shadowColor = primary;
+   656→      c2d.shadowBlur = 8;
+   657→      c2d.stroke();
+   658→    };
+   659→    draw();
+   660→    return () => window.cancelAnimationFrame(raf);
+   661→  }, [playing]);
+   662→
+   663→  const togglePlay = () => {
+   664→    if (playing) lofiEngine.pause();
+   665→    else {
+   666→      lofiEngine.unlock(); // first-gesture AudioContext unlock
+   667→      lofiEngine.play();
+   668→    }
+   669→    onPlayingChange(lofiEngine.isPlaying());
+   670→  };
+   671→
+   672→  const track = lofiEngine.getTrack();
+   673→
+   674→  return (
+   675→    <div className="flex flex-col gap-3">
+   676→      <div className="flex items-center gap-3">
+   677→        <button
+   678→          type="button"
+   679→          onClick={togglePlay}
+   680→          aria-label={playing ? 'Pause music' : 'Play music'}
+   681→          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white transition hover:bg-white/15"
+   682→          style={{ boxShadow: '0 0 22px -6px var(--primary)' }}
+   683→        >
+   684→          {playing ? <Pause className="h-4 w-4" /> : <Play className="ml-0.5 h-4 w-4" />}
+   685→        </button>
+   686→        <div className="min-w-0 flex-1">
+   687→          <div className="truncate text-sm font-medium">{track.name}</div>
+   688→          <div className="truncate text-[10px] text-white/50">
+   689→            {track.artist} · {track.bpm} BPM · {track.key}
+   690→          </div>
+   691→        </div>
+   692→        <span className="glass-chip shrink-0 rounded-full px-2 py-0.5 text-[8px] uppercase tracking-[0.14em] text-white/60">
+   693→          procedural lo-fi
+   694→        </span>
+   695→      </div>
+   696→      <canvas ref={canvasRef} className="h-12 w-full rounded-xl" aria-hidden="true" />
+   697→      <div className="flex items-center gap-2">
+   698→        <Button
+   699→          size="icon" variant="ghost" className="h-7 w-7 rounded-full text-white/70 hover:bg-white/10 hover:text-white"
+   700→          onClick={() => {
+   701→            lofiEngine.prev();
+   702→            onPlayingChange(lofiEngine.isPlaying());
+   703→          }}
+   704→          aria-label="Previous track"
+   705→        >
+   706→          <SkipBack className="h-3.5 w-3.5" />
+   707→        </Button>
+   708→        <Button
+   709→          size="icon" variant="ghost" className="h-7 w-7 rounded-full text-white/70 hover:bg-white/10 hover:text-white"
+   710→          onClick={() => {
+   711→            lofiEngine.next();
+   712→            onPlayingChange(lofiEngine.isPlaying());
+   713→          }}
+   714→          aria-label="Next track"
+   715→        >
+   716→          <SkipForward className="h-3.5 w-3.5" />
+   717→        </Button>
+   718→        <Volume2 className="ml-1 h-3.5 w-3.5 shrink-0 text-white/50" />
+   719→        <Slider
+   720→          value={[Math.round(volume * 100)]}
+   721→          onValueChange={(v) => {
+   722→            const nv = v[0] / 100;
+   723→            lofiEngine.setVolume(nv);
+   724→            setVolume(nv);
+   725→          }}
+   726→          aria-label="Music volume"
+   727→          className="w-full"
+   728→        />
+   729→      </div>
+   730→    </div>
+   731→  );
+   732→}
+   733→

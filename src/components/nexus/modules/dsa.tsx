@@ -16,9 +16,9 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 
 const DIFF_META: Record<DsaTopic['difficulty'], { label: string; color: string; cls: string }> = {
-  easy: { label: 'Easy', color: '#34d399', cls: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-400' },
-  medium: { label: 'Medium', color: '#fbbf24', cls: 'border-amber-400/30 bg-amber-400/10 text-amber-400' },
-  hard: { label: 'Hard', color: '#fb7185', cls: 'border-rose-400/30 bg-rose-400/10 text-rose-400' },
+  easy: { label: 'Easy', color: 'var(--ink-5)', cls: 'border-foreground/20 bg-foreground/[0.04] text-foreground/70' },
+  medium: { label: 'Medium', color: 'var(--ink-3)', cls: 'border-foreground/30 bg-foreground/[0.08] text-foreground' },
+  hard: { label: 'Hard', color: 'var(--ink-1)', cls: 'bg-foreground text-background border-foreground' },
 };
 
 // ─── Locked state ─────────────────────────────────────────────────────────────
@@ -53,7 +53,7 @@ function LockedState() {
             </RingProgress>
           </div>
           <div className="min-w-0 space-y-3">
-            <Badge variant="outline" className="border-amber-400/30 bg-amber-400/10 text-amber-400">
+            <Badge variant="outline" className="border-foreground/25 bg-foreground/[0.06] text-foreground/80">
               Semester {profile.semester}
             </Badge>
             <h2 className="text-xl font-semibold tracking-tight">DSA Module — Locked</h2>
@@ -144,7 +144,7 @@ function ActiveState() {
   const donutOption: EChartsOption = useMemo(() => {
     const data = diffRows
       .filter((d) => d.total > 0)
-      .map((d) => ({ name: d.label, value: d.solved, itemStyle: { color: d.color } }));
+      .map((d, i) => ({ name: d.label, value: d.solved, itemStyle: { color: theme.palette[i % theme.palette.length] } }));
     return {
       tooltip: { ...baseTooltip(theme), trigger: 'item' },
       legend: {

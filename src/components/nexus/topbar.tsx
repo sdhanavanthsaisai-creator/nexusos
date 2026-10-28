@@ -22,7 +22,7 @@ const THEME_OPTIONS: { id: ThemeId; label: string; icon: LucideIcon }[] = [
   { id: 'dark', label: 'Obsidian Cyber Glass', icon: Moon },
   { id: 'light', label: 'Frost Light', icon: Sun },
   { id: 'oled', label: 'OLED Void', icon: MonitorSmartphone },
-  { id: 'cyberpunk', label: 'Neon Cyberpunk', icon: Palette },
+  { id: 'cyberpunk', label: 'Graphite Fog', icon: Palette },
 ];
 
 type Notification = { id: string; title: string; detail: string; tone: 'danger' | 'warning' | 'info'; module: string };
@@ -95,7 +95,7 @@ export default function Topbar() {
       </Sheet>
 
       <div className="min-w-0 shrink">
-        <p className="max-w-[76px] truncate text-sm font-semibold tracking-tight sm:max-w-none">{moduleLabel}</p>
+        <p className="max-w-[76px] truncate text-sm font-black tracking-tight sm:max-w-none">{moduleLabel}</p>
         <p className="hidden truncate text-[11px] text-muted-foreground sm:block">{fmtDayFull(todayKey())} · {profile.university}</p>
       </div>
 
@@ -120,7 +120,7 @@ export default function Topbar() {
 
         {/* Streak pill */}
         <div
-          className="glass-chip hidden items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-amber-400 sm:flex"
+          className="glass-chip hidden items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-foreground sm:flex"
           title="Current study streak"
         >
           <Flame className="h-3.5 w-3.5" aria-hidden="true" />
@@ -138,7 +138,7 @@ export default function Topbar() {
               <Button variant="ghost" size="icon" className="relative" aria-label={`Notifications (${notifications.length})`}>
                 <Bell className="h-4.5 w-4.5" aria-hidden="true" />
                 {notifications.length > 0 && (
-                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[9px] font-bold text-white">
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-0.5 text-[9px] font-bold text-background">
                     {notifications.length > 9 ? '9+' : notifications.length}
                   </span>
                 )}
@@ -160,11 +160,11 @@ export default function Topbar() {
                   className="flex w-full items-start gap-2.5 rounded-lg p-2 text-left transition-colors hover:bg-accent"
                 >
                   {n.tone === 'danger' ? (
-                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" aria-hidden="true" />
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-foreground font-medium" aria-hidden="true" />
                   ) : n.tone === 'warning' ? (
-                    <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+                    <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-foreground/80" aria-hidden="true" />
                   ) : (
-                    <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" aria-hidden="true" />
+                    <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-foreground" aria-hidden="true" />
                   )}
                   <span className="min-w-0">
                     <span className="block truncate text-xs font-medium">{n.title}</span>
@@ -208,9 +208,9 @@ export default function Topbar() {
           whileTap={{ scale: 0.96, transition: { type: 'spring', stiffness: 400, damping: 25 } }}
           animate={{
             boxShadow: [
-              '0 0 20px -4px rgba(34,211,238,0.5)',
-              '0 0 30px -2px rgba(167,139,250,0.55)',
-              '0 0 20px -4px rgba(34,211,238,0.5)',
+              '0 0 20px -4px rgba(255,255,255,0.35)',
+              '0 0 30px -2px rgba(255,255,255,0.45)',
+              '0 0 20px -4px rgba(255,255,255,0.35)',
             ],
           }}
           transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
@@ -218,7 +218,7 @@ export default function Topbar() {
           <Button
             size="sm"
             onClick={() => setAiOpen(true)}
-            className="gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500/90 to-violet-500/90 px-2.5 text-white"
+            className="gap-1.5 rounded-xl bg-foreground px-2.5 text-background transition-colors hover:bg-foreground/90"
             aria-label="Open AI productivity coach"
           >
             <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />

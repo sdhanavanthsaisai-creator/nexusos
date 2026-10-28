@@ -37,11 +37,11 @@ import { cn } from '@/lib/utils';
 const Hero3D = dynamic(() => import('@/components/nexus/hero-3d'), {
   ssr: false,
   loading: () => (
-    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-cyan-400/10 via-transparent to-violet-500/15" />
+    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-foreground/[0.07] via-transparent to-foreground/[0.05]" />
   ),
 });
 
-const CONFETTI_COLORS = ['#22d3ee', '#a78bfa', '#34d399', '#f472b6', '#fbbf24'];
+const CONFETTI_COLORS = ['#FFFFFF', '#C9C9C9', '#F1F1F1', '#C9C9C9', '#FFFFFF'];
 
 function fireConfettiBurst() {
   confetti({
@@ -171,7 +171,7 @@ export default function DashboardModule() {
     const data = [...byCat.entries()]
       .filter(([, m]) => m > 0)
       .sort((a, b) => b[1] - a[1])
-      .map(([cat, m]) => ({ name: CATEGORY_META[cat].label, value: m, itemStyle: { color: CATEGORY_META[cat].color } }));
+      .map(([cat, m]) => ({ name: CATEGORY_META[cat].label, value: m }));
     return { data, total: sum([...byCat.values()]) };
   }, [last7Keys, dailyLogs, subjects]);
 
@@ -182,7 +182,7 @@ export default function DashboardModule() {
     for (const e of exams) {
       if (e.date >= today && e.date <= horizon) {
         const meta = EXAM_TYPE_META[e.type];
-        items.push({ id: `exam-${e.id}`, date: e.date, title: e.title, kind: meta?.label ?? e.type, color: meta?.color ?? '#22d3ee' });
+        items.push({ id: `exam-${e.id}`, date: e.date, title: e.title, kind: meta?.label ?? e.type, color: meta?.color ?? 'var(--ink-1)' });
       }
     }
     for (const t of tasks) {
@@ -278,9 +278,9 @@ export default function DashboardModule() {
           data: weekData.map((d) => d.minutes),
           symbol: 'circle',
           symbolSize: 6,
-          lineStyle: { width: 2.5, color: '#22d3ee' },
-          itemStyle: { color: '#22d3ee', borderColor: theme.bg, borderWidth: 2 },
-          areaStyle: { color: 'rgba(34,211,238,0.14)' },
+          lineStyle: { width: 2.5, color: theme.palette[0] },
+          itemStyle: { color: theme.palette[0], borderColor: theme.bg, borderWidth: 2 },
+          areaStyle: { color: theme.split },
           markLine: {
             silent: true,
             symbol: 'none',
@@ -319,7 +319,7 @@ export default function DashboardModule() {
           avoidLabelOverlap: true,
           itemStyle: { borderRadius: 6, borderColor: theme.bg, borderWidth: 2 },
           label: { show: false },
-          data: donutData.data,
+          data: donutData.data.map((d, i) => ({ ...d, itemStyle: { color: theme.palette[i % theme.palette.length] } })),
         },
       ],
     }),
@@ -333,8 +333,8 @@ export default function DashboardModule() {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-background/25 to-transparent" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-5 md:p-6">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{dateLabel}</p>
-          <h2 className="text-gradient mt-1.5 text-xl font-semibold tracking-tight md:text-2xl">
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">{dateLabel}</p>
+          <h2 className="text-gradient mt-1.5 text-2xl font-black tracking-tight md:text-4xl">
             {greeting}, {profile.name}
           </h2>
         </div>
@@ -351,7 +351,7 @@ export default function DashboardModule() {
             </Button>
           </div>
           <div className="pointer-events-auto rounded-2xl bg-background/40 p-1.5 backdrop-blur">
-            <RingProgress value={todayPct} size={88} stroke={8} color="#22d3ee" label="Today's study target progress">
+            <RingProgress value={todayPct} size={88} stroke={8} color="var(--ink-1)" label="Today's study target progress">
               <span className="font-mono text-sm font-semibold tabular-nums">{minutesToHM(todayMin)}</span>
               <span className="text-[9px] text-muted-foreground">of {profile.dailyTargetHours}h target</span>
             </RingProgress>
@@ -459,7 +459,7 @@ export default function DashboardModule() {
                 {t.dueDate && (
                   <Badge
                     variant="outline"
-                    className={cn('shrink-0 text-[10px]', overdue ? 'border-rose-500/40 text-rose-400' : 'text-muted-foreground')}
+                    className={cn('shrink-0 text-[10px]', overdue ? 'border-foreground/40 text-foreground' : 'text-muted-foreground')}
                   >
                     {overdue ? `Overdue · ${fmtDayNum(t.dueDate)}` : `Due ${fmtDayNum(t.dueDate)}`}
                   </Badge>
@@ -476,7 +476,7 @@ export default function DashboardModule() {
     <div className="glass rounded-2xl p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold tracking-tight">Habits today</h3>
-        <Badge variant="outline" className={cn('text-[10px]', allHabitsDone ? 'border-emerald-500/40 text-emerald-400' : 'text-muted-foreground')}>
+        <Badge variant="outline" className={cn('text-[10px]', allHabitsDone ? 'border-foreground/30 text-foreground' : 'text-muted-foreground')}>
           {habitsDone}/{activeHabits.length}
         </Badge>
       </div>
@@ -496,8 +496,8 @@ export default function DashboardModule() {
                 className={cn(
                   'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all active:scale-95',
                   !done && 'border-border/70 bg-muted/40 text-muted-foreground hover:border-foreground/30 hover:text-foreground',
+                  done && 'border-foreground/40 bg-foreground/[0.08] text-foreground',
                 )}
-                style={done ? { backgroundColor: `${h.color}1f`, borderColor: `${h.color}66`, color: h.color } : undefined}
               >
                 {done && <Check className="h-3 w-3" aria-hidden="true" />}
                 {h.name}

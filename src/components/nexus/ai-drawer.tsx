@@ -49,7 +49,7 @@ function Markdown({ content }: { content: string }) {
 function EmptyChatState() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-      <span className="glow-soft flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400/25 to-violet-500/25 text-primary">
+      <span className="glow-soft flex h-14 w-14 items-center justify-center rounded-2xl bg-foreground/[0.08] text-foreground">
         <Sparkles className="h-6 w-6" aria-hidden="true" />
       </span>
       <div>
@@ -140,7 +140,7 @@ export default function AIDrawer() {
         {/* Header */}
         <div className="flex items-center justify-between gap-3 border-b border-border/60 p-4 pr-14">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 text-white shadow-lg">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-background shadow-lg">
               <Sparkles className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="min-w-0">

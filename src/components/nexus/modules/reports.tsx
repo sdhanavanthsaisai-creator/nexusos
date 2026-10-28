@@ -121,7 +121,7 @@ export default function ReportsModule() {
       .slice(0, 5)
       .map(([id, minutes]) => {
         const su = subjects.find((s) => s.id === id);
-        return { id, name: su?.name ?? id, color: su?.color ?? '#22d3ee', minutes };
+        return { id, name: su?.name ?? id, color: su?.color ?? 'var(--ink-1)', minutes };
       });
 
     const byCategory = new Map<SubjectCategory, number>();
@@ -216,7 +216,7 @@ export default function ReportsModule() {
           barMaxWidth: 16,
           itemStyle: { borderRadius: [0, 6, 6, 0] },
           label: { show: true, position: 'right', formatter: '{c}m', color: theme.subtext, fontSize: 10 },
-          data: report.topSubjects.map((t) => ({ value: t.minutes, itemStyle: { color: t.color } })),
+          data: report.topSubjects.map((t, i) => ({ value: t.minutes, itemStyle: { color: theme.palette[i % theme.palette.length] } })),
         },
       ],
     }),
@@ -234,7 +234,7 @@ export default function ReportsModule() {
           center: ['50%', '44%'],
           itemStyle: { borderColor: theme.bg, borderWidth: 2, borderRadius: 6 },
           label: { show: false },
-          data: report.categoryRows.map((c) => ({ name: c.label, value: c.minutes, itemStyle: { color: c.color } })),
+          data: report.categoryRows.map((c, i) => ({ name: c.label, value: c.minutes, itemStyle: { color: theme.palette[i % theme.palette.length] } })),
         },
       ],
     }),
@@ -422,7 +422,7 @@ export default function ReportsModule() {
                 value={minutesToHM(r.totalMinutes)}
                 right={
                   <>
-                    <span className={r.totalMinutes >= r.targetMinutes ? 'text-emerald-400' : 'text-rose-400'}>
+                    <span className={r.totalMinutes >= r.targetMinutes ? 'text-foreground' : 'text-foreground font-medium'}>
                       {deltaLabel(r.totalMinutes - r.targetMinutes)}
                     </span>
                     <span className="text-muted-foreground/60"> / {minutesToHM(r.targetMinutes)}</span>
@@ -434,7 +434,7 @@ export default function ReportsModule() {
                 value={minutesToHM(r.codingMinutes)}
                 right={
                   <>
-                    <span className={r.codingMinutes >= r.codingTargetMinutes ? 'text-emerald-400' : 'text-rose-400'}>
+                    <span className={r.codingMinutes >= r.codingTargetMinutes ? 'text-foreground' : 'text-foreground font-medium'}>
                       {deltaLabel(r.codingMinutes - r.codingTargetMinutes)}
                     </span>
                     <span className="text-muted-foreground/60"> / {minutesToHM(r.codingTargetMinutes)}</span>
@@ -496,13 +496,13 @@ export default function ReportsModule() {
               <ul className="space-y-2 text-xs text-muted-foreground">
                 {r.bestDay && r.bestDay.minutes > 0 && (
                   <li className="flex items-start gap-2">
-                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" aria-hidden="true" />
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-foreground/80" aria-hidden="true" />
                     <span>Best study day: <b className="text-foreground">{fmtDayFull(r.bestDay.key)}</b> with {minutesToHM(r.bestDay.minutes)} focused.</span>
                   </li>
                 )}
                 {r.topHabit && r.topHabit.done > 0 && (
                   <li className="flex items-start gap-2">
-                    <Medal className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden="true" />
+                    <Medal className="mt-0.5 h-3.5 w-3.5 shrink-0 text-foreground" aria-hidden="true" />
                     <span>Most consistent habit: <b className="text-foreground">{r.topHabit.name}</b> ({r.topHabit.done}/{r.topHabit.target} this period).</span>
                   </li>
                 )}
@@ -511,7 +511,7 @@ export default function ReportsModule() {
                   <span>Current streak: <b className="text-foreground">{r.streak.current} day{r.streak.current === 1 ? '' : 's'}</b> (all-time best {r.streak.best}).</span>
                 </li>
                 {r.overdueCount > 0 && (
-                  <li className="flex items-start gap-2 text-rose-400">
+                  <li className="flex items-start gap-2 font-medium text-foreground">
                     <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                     <span><b>{r.overdueCount}</b> overdue task{r.overdueCount === 1 ? '' : 's'} — clear {r.overdueCount === 1 ? 'it' : 'them'} today.</span>
                   </li>

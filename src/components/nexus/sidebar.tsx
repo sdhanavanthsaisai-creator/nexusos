@@ -136,7 +136,7 @@ export default function Sidebar() {
         </motion.div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold tracking-tight text-gradient">NEXUS OS</p>
+            <p className="truncate text-sm font-black tracking-tight text-gradient">NEXUS OS</p>
             <p className="truncate text-[10px] text-muted-foreground">Student Productivity OS</p>
           </div>
         )}
@@ -147,7 +147,7 @@ export default function Sidebar() {
       {/* Footer profile + collapse */}
       <div className={cn('flex items-center gap-2 border-t border-border/60 p-3', collapsed && 'flex-col')}>
         <div className={cn('flex min-w-0 flex-1 items-center gap-2', collapsed && 'flex-none')}>
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-400/30 to-violet-400/30 text-xs font-bold text-foreground">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-foreground/15 to-foreground/[0.05] text-xs font-bold text-foreground">
             {profile.name.slice(0, 1).toUpperCase()}
           </span>
           {!collapsed && (

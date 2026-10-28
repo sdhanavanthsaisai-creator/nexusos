@@ -30,7 +30,7 @@ export function SubjectDistributionChart() {
       ...baseTooltip(theme), trigger: 'axis', axisPointer: { type: 'shadow' },
       valueFormatter: (v) => minutesToHM(asNum(v)),
     },
-    color: top.map((t) => t.subject.color),
+    color: top.map((_, i) => theme.palette[i % theme.palette.length]),
     legend: { orient: 'vertical', right: 0, top: 14, itemWidth: 10, itemHeight: 10, textStyle: { color: theme.text, fontSize: 11 } },
     grid: { left: 44, right: 118, top: 20, bottom: 24 },
     xAxis: {
@@ -42,9 +42,9 @@ export function SubjectDistributionChart() {
       type: 'value', splitLine: { lineStyle: { color: theme.split } },
       axisLabel: { color: theme.subtext, fontSize: 11, formatter: (v) => minutesToLabel(asNum(v)) },
     },
-    series: top.map((t) => ({
+    series: top.map((t, i) => ({
       name: t.subject.name, type: 'bar', stack: 'total', barMaxWidth: 26,
-      itemStyle: { color: t.subject.color }, emphasis: { focus: 'series' },
+      itemStyle: { color: theme.palette[i % theme.palette.length] }, emphasis: { focus: 'series' },
       data: weekly.map((w) => w.bySubject.get(t.subject.id) ?? 0),
     })),
   }), [theme, top, weekly]);
@@ -79,7 +79,7 @@ export function CodingHoursChart() {
       ...baseTooltip(theme), trigger: 'axis', axisPointer: { type: 'shadow' },
       valueFormatter: (v) => `${asNum(v).toFixed(1)}h`,
     },
-    color: coding.map((s) => s.color),
+    color: coding.map((_, i) => theme.palette[i % theme.palette.length]),
     legend: { top: 0, left: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: theme.text, fontSize: 11 } },
     grid: { left: 40, right: 14, top: 30, bottom: 24 },
     xAxis: {
@@ -91,9 +91,9 @@ export function CodingHoursChart() {
       type: 'value', splitLine: { lineStyle: { color: theme.split } },
       axisLabel: { color: theme.subtext, fontSize: 11, formatter: (v) => `${asNum(v)}h` },
     },
-    series: coding.map((s) => ({
+    series: coding.map((s, i) => ({
       name: s.name, type: 'bar', stack: 'coding', barMaxWidth: 30,
-      itemStyle: { color: s.color }, emphasis: { focus: 'series' },
+      itemStyle: { color: theme.palette[i % theme.palette.length] }, emphasis: { focus: 'series' },
       data: weekly.map((w) => round1((w.bySubject.get(s.id) ?? 0) / 60)),
     })),
   }), [theme, coding, weekly]);
@@ -136,9 +136,9 @@ export function SubjectBalanceRadarChart() {
         type: 'radar', symbol: 'circle', symbolSize: 4,
         data: [{
           name: 'Avg weekly minutes', value: seriesValues,
-          lineStyle: { color: '#22d3ee', width: 2 },
-          itemStyle: { color: '#22d3ee' },
-          areaStyle: { color: 'rgba(34,211,238,0.25)' },
+          lineStyle: { color: theme.palette[0], width: 2 },
+          itemStyle: { color: theme.palette[0] },
+          areaStyle: { color: theme.dark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.22)' },
         }],
       }],
     };
@@ -167,8 +167,8 @@ export function TimeAllocationChart({ range }: ChartProps) {
   const data = useMemo(
     () => CATEGORY_ORDER
       .filter((c) => totals[c] > 0)
-      .map((c) => ({ name: CATEGORY_META[c].label, value: totals[c], itemStyle: { color: CATEGORY_META[c].color } })),
-    [totals],
+      .map((c, i) => ({ name: CATEGORY_META[c].label, value: totals[c], itemStyle: { color: theme.palette[i % theme.palette.length] } })),
+    [totals, theme],
   );
 
   const option = useMemo<EChartsOption>(() => ({
@@ -222,7 +222,7 @@ export function ConcentrationVsDurationChart({ range }: ChartProps) {
         return `${q.name}<br/>${asNum(v[0])} min · concentration ${asNum(v[1])}/5`;
       },
     },
-    color: cats.map((c) => CATEGORY_META[c].color),
+    color: cats.map((_, i) => theme.palette[i % theme.palette.length]),
     legend: { top: 0, left: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: theme.text, fontSize: 11 } },
     grid: { left: 40, right: 20, top: 30, bottom: 30 },
     xAxis: {
@@ -238,9 +238,9 @@ export function ConcentrationVsDurationChart({ range }: ChartProps) {
       splitLine: { lineStyle: { color: theme.split } },
       axisLabel: { color: theme.subtext, fontSize: 11 },
     },
-    series: cats.map((c) => ({
+    series: cats.map((c, i) => ({
       name: CATEGORY_META[c].label, type: 'scatter', symbolSize: 11,
-      itemStyle: { color: CATEGORY_META[c].color, opacity: 0.72 },
+      itemStyle: { color: theme.palette[i % theme.palette.length], opacity: 0.72 },
       data: inRange
         .filter((s) => s.category === c)
         .map((s) => ({ name: nameOf.get(s.subjectId) ?? s.subjectId, value: [s.durationMin, s.concentration] })),
@@ -295,8 +295,8 @@ export function CollegeVsWeekendChart({ range }: ChartProps) {
     series: [{
       name: 'Avg minutes', type: 'bar', barWidth: 48,
       data: [
-        { value: stats.collegeAvg, itemStyle: { color: '#a78bfa', borderRadius: [6, 6, 0, 0] } },
-        { value: stats.weekendAvg, itemStyle: { color: '#fbbf24', borderRadius: [6, 6, 0, 0] } },
+        { value: stats.collegeAvg, itemStyle: { color: theme.palette[0], borderRadius: [6, 6, 0, 0] } },
+        { value: stats.weekendAvg, itemStyle: { color: theme.palette[1], borderRadius: [6, 6, 0, 0] } },
       ],
     }],
   }), [theme, stats]);
@@ -359,7 +359,7 @@ export function TopTagsChart({ range }: ChartProps) {
     },
     series: [{
       name: 'Minutes', type: 'bar', barMaxWidth: 16,
-      itemStyle: { color: '#a78bfa', borderRadius: [0, 6, 6, 0] },
+      itemStyle: { color: theme.palette[0], borderRadius: [0, 6, 6, 0] },
       data: rows.map((r) => r.minutes),
     }],
   }), [theme, rows]);
@@ -411,7 +411,7 @@ export function BiologicalPrimeTimeChart({ range }: ChartProps) {
       name: 'Minutes', type: 'bar', coordinateSystem: 'polar',
       data: rows.map((r) => ({
         value: r.minutes,
-        itemStyle: { color: r.hour === peakHour ? '#a78bfa' : 'rgba(34,211,238,0.55)', borderRadius: 3 },
+        itemStyle: { color: r.hour === peakHour ? theme.palette[0] : theme.dark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.50)', borderRadius: 3 },
       })),
     }],
   }), [theme, rows, peakHour]);

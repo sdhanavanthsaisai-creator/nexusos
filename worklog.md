@@ -278,3 +278,107 @@ Work Log:
 
 Stage Summary:
 - Nexus Study OS is now fully Glass OS: obsidian cyber glass default, Frost Light, OLED Void, Neon Cyberpunk; functional Dynamic Island (timer/pomodoro/stats/lo-fi music + notification alerts); spring physics across shell; all study-tracking functionality preserved and browser-verified end-to-end.
+
+---
+Task ID: 4-a
+Agent: frontend-styling-expert
+Task: RB/25 monochrome sweep — analytics charts + reports
+
+Work Log:
+- charts-time.tsx: all series hex colors (#22d3ee/#a78bfa/#fbbf24) → theme.palette[0..2]; area gradients → areaGradient(theme.dark ? '#ffffff' : '#000000') (5 series); target markLine/Target line → theme-conditional rgba(255,255,255,0.55)/rgba(0,0,0,0.55); Study Heatmap visualMap → 5-step monochrome ink ladder (dark white-ramp / light black-ramp) + empty-cell bg → rgba(255,255,255,0.06)/rgba(0,0,0,0.05); Weekly Focus by Category legend color[] + series → palette[i % len].
+- charts-subjects.tsx: Subject Distribution + Coding Hours (entity .color from migrated var() strings — canvas-unsafe) → palette[i]; Subject Balance Radar line/item → palette[0], area → theme-conditional 0.25/0.22 ink; Time Allocation donut data → palette[i] (memo deps +theme); Concentration vs Duration color[]/series → palette[i]; College vs Weekend bars → palette[0]/palette[1]; Top Tags → palette[0]; Biological Prime Time peak → palette[0], non-peak → 50% ink.
+- charts-habits-tasks.tsx: Task Completion + Burndown series → palette[0] + mono areaGradient; Habit Consistency visualMap → 5-step monochrome ladder; Semester Goal Progress: RingProgress color → "currentColor" (SVG attr-safe, theme-aware), 3 GoalBars → var(--ink-2/3/4) DOM-safe inline styles.
+- charts-advanced.tsx: Sleep vs Study scatter + Session Duration bars → palette[0].
+- reports.tsx: Top subjects bar data + Time allocation donut data → theme.palette[i] (entity/category .color no longer passed to canvas; fallback hex → 'var(--ink-1)'); KPI delta text emerald/rose → text-foreground (+font-medium on negative); Highlights icons amber→foreground/80, emerald→foreground; overdue row rose → font-medium text-foreground. Habit-row DOM bars keep h.color (var strings).
+- Verification: rg chromatic tailwind classes → 0 matches; rg hex → only #ffffff/#000000; rg rgba() → all 255,255,255 / 0,0,0 based; bunx tsc --noEmit → 0 errors in src; eslint on the 5 files → 0 problems. No structural/logic/prop changes.
+
+Stage Summary:
+- Analytics Suite (22 charts + widgets) and Reports module are fully RB/25 monochrome: canvas colors resolve via useChartTheme().palette / theme-conditional rgba, DOM accents use foreground/ink tokens, both heatmaps sit on the sanctioned ink ladders, light + dark themes render identically-clean with zero chromatic residue.
+
+---
+Task ID: 4-b
+Agent: frontend-styling-expert
+Task: RB/25 monochrome sweep — shell, island, hero-3d, settings
+
+Work Log:
+- ui-bits.tsx: TONES map remapped to the sanctioned monochrome ladder (cyan/violet/emerald/pink/amber/rose per spec; kept the extra 'slate' key as the dimmest rung text-foreground/70 + bg/[0.04] + ring/10 so all call sites keep working); StarRating amber → text-foreground. KpiCard progress bar (t.text.replace text-→bg-) still yields valid bg-foreground/NN classes.
+- topbar.tsx: streak pill amber → text-foreground; notification count bg-rose-500+text-white → bg-foreground+text-background; notification tone icons rose → text-foreground font-medium (r3), amber → text-foreground/80 (r2), cyan → text-foreground (r1); AI Coach CTA gradient+text-white → bg-foreground text-background hover:bg-foreground/90 transition-colors (r6); animated AI glow rgba(34,211,238)/rgba(167,139,250) → white-based rgba(255,255,255,0.35/0.45) (r12); topbar title font-semibold → font-black (typography).
+- status-bar.tsx: flame amber → text-foreground; cyan focus-timer chip → text-foreground; "local sync on" emerald text+dot → text-foreground/80 + bg-foreground.
+- dynamic-island.tsx: pure text-white → text-foreground on island-shell roots (safe: globals.css pins --foreground:#f1f1f1 inside .island-shell), tab active + close-hover; alert/pomo status dots per r9 (success/focus bg-foreground, warning/break bg-foreground/55, danger keeps bg-[var(--primary)]); CheckCircle2 ×2 + habit bar + streak Flame icon → text-foreground / bg-foreground; break-phase ring #fbbf24 → rgba(255,255,255,0.55); danger pill rebuilt per r13 (border-foreground/40 bg-foreground/[0.08] text-foreground hover:bg-foreground/[0.14]); Start Pomodoro + Stop&log gradient CTAs → bg-foreground text-background hover:bg-foreground/90 transition-colors, cyan shadow → rgba(255,255,255,0.22) neutral; overdue text-rose-300 → text-foreground font-medium; oscilloscope fallback hex '#22d3ee' → '#ffffff'; StatCard value + big countdown get tabular-nums (typography). White-alpha utilities (text-white/45, bg-white/10, border-white/15) intentionally kept — palette-legal alpha whites.
+- hero-3d.tsx: NODE_PALETTE → ['#ffffff','#c9c9c9','#f1f1f1','#c9c9c9','#ffffff'] mono wireframe ladder; CYAN/VIOLET THREE.Color consts → WHITE/SILVER (#ffffff/#c9c9c9) for the 700-particle field; pointLight #22d3ee/#a78bfa → #ffffff/#c9c9c9; both static gradient overlays → from-foreground/[0.07] via-transparent to-foreground/[0.05] (r8). Scene geometry/props/logic untouched.
+- sidebar.tsx: wordmark font-bold → font-black; avatar gradient from-cyan-400/30 to-violet-400/30 → from-foreground/15 to-foreground/[0.05] (mono gradient tint per r8 spirit).
+- settings.tsx: THEME_PREVIEWS swatches → mono sets (dark/oled ['#000000','#FFFFFF','#C9C9C9'], light ['#F1F1F1','#000000','#C9C9C9'], cyberpunk ['#000000','#C9C9C9','#FFFFFF']) + relabel 'Neon Cyberpunk' → 'Graphite Fog' (id kept); subject color picker CHART_PALETTE → INK_VARS (default state + swatch map; CHART_PALETTE import dropped); category Badge borderColor `${meta.color}55` → color-mix(in srgb, ${meta.color} 33%, transparent) because meta.color is now a var() string and "var(--ink-N)55" is invalid CSS; delete icon rose → text-foreground font-medium hover:bg-foreground/[0.08]; both AlertDialogAction bg-rose-500/90 → bg-foreground text-background hover:bg-foreground/90 (r7); Danger zone section → border-foreground/25 bg-foreground/[0.04] + icon well bg-foreground/[0.08] text-foreground.
+- command-palette.tsx: no chromatic residue found; only relabeled theme action 'Cyberpunk' → 'Graphite Fog' for cross-shell label consistency. nexus-app.tsx: fully clean, zero edits.
+- Verification: rg chromatic tailwind classes in the 9 files → 0 matches; rg hex → only #000000/#FFFFFF/#C9C9C9/#F1F1F1; rg rgba() → all 255,255,255-based; bun run lint → 0 problems. No structural/logic/prop changes.
+
+Judgment calls:
+- settings cyberpunk swatch: spec asked '#101014' but the verification gate allows only #000000/#FFFFFF/#C9C9C9/#F1F1F1 (and #101014 is faintly blue, h≈240°), so used ['#000000','#C9C9C9','#FFFFFF'] (reordered to stay visually distinct from dark/oled).
+- 'Graphite Fog' relabel also applied to topbar THEME_OPTIONS and command-palette THEMES so all three surfaces name the cyberpunk theme identically.
+- TONES 'slate' key kept (not in the 6 listed keys) with the dimmest mono rung to preserve call-site compatibility.
+- Island Flame/streak icon kept at full text-foreground (not /80) to mirror status-bar's explicit amber-flame mapping.
+- hero-3d dim differentiation done via the hex ladder (#c9c9c9/#f1f1f1) at constant 0.72 wireframe opacity instead of adding per-node opacity props (would have been a prop change).
+
+Stage Summary:
+- App shell (topbar, sidebar, status-bar, command palette, boot screen), Dynamic Island, hero-3d scene, shared ui-bits KPI system and the Settings module are now strictly RB/25 monochrome: foreground/background ink tokens only, shape- and opacity-coded status dots, inverted foreground CTAs, white-alpha glows, and var()-driven subject colors — zero chromatic classes, hexes or rgba() remain in the 9 owned files.
+
+---
+Task ID: 4-c
+Agent: frontend-styling-expert
+Task: RB/25 monochrome sweep — feature modules
+
+Work Log:
+- dashboard.tsx: hero loading overlay cyan/violet gradient → from-foreground/[0.07] via-transparent to-foreground/[0.05] (r8); CONFETTI_COLORS → ['#FFFFFF','#C9C9C9','#F1F1F1',…] (r12, canvas-safe); donut itemStyle moved off CATEGORY_META var() colors → theme.palette[i % len] injected in donutOption (canvas cannot resolve var()); weekly line chart '#22d3ee' → theme.palette[0] (line+item) and areaStyle rgba(34,211,238,0.14) → theme.split (theme-aware 10% tint); hero RingProgress '#22d3ee' → 'var(--ink-1)' (SVG/DOM); exam-item fallback '#22d3ee' → 'var(--ink-1)' (DOM dot); overdue Badge rose → border-foreground/40 text-foreground; habits Badge emerald → border-foreground/30 text-foreground; habit "done" chip `${h.color}1f`/`${h.color}66` inline concat (invalid with var() strings) → done && 'border-foreground/40 bg-foreground/[0.08] text-foreground'.
+- daily-tracker.tsx: Saved ✓ emerald → text-foreground (r1); three stepper buttons emerald/cyan/rose → unified text-foreground/70 hover:bg-foreground/10 hover:text-foreground (glyphs +/− carry the meaning); target-hit RingProgress '#34d399' → 'var(--ink-1)'.
+- calendar.tsx: legend reshaped per r9 — Tasks bg-primary kept, Exams bg-rose-400 → bg-foreground (filled), Sessions bg-emerald-400 → border-2 border-foreground bg-transparent (ring), Habit perfect bg-amber-400 → bg-foreground/45 (dim); month-grid task chip `${PRIORITY_META.color}22` → bg-foreground/[0.08] class; done-check emerald → text-foreground; exam chip `${meta.color}26`+color → bg-foreground/[0.08] text-foreground (+ removed now-dead `meta` binding); minutes chip emerald border/bg/text → border-foreground/25 bg-foreground/[0.08] text-foreground + tabular-nums; perfect Flame amber → text-foreground/80; day-detail exam Badge inline style → bg-foreground/[0.08] text-foreground; delete hover rose → hover:bg-foreground/[0.06] hover:text-foreground; session duration Badge emerald → text-foreground; subject-dot fallback '#94a3b8' → 'var(--ink-4)'.
+- sessions.tsx: gradient p-px wrapper (from-cyan/violet/fuchsia) → bg-foreground/20 p-px neutral hairline (r13); timer RingProgress '#34d399'/'#fbbf24' → 'var(--ink-1)'/'var(--ink-5)' (running strong / paused dim, SVG); avg-concentration star amber → text-foreground; subject-dot fallback '#94a3b8' → 'var(--ink-4)'; row delete hover rose → hover:bg-foreground/[0.06] hover:text-foreground; confirm AlertDialogAction bg-rose-500 text-white hover:bg-rose-600 → bg-foreground text-background hover:bg-foreground/90 (r7/r10).
+- session-dialog.tsx: invalid-time warning text-rose-400 → text-foreground font-medium (r3); computed-duration text-emerald-400 → text-foreground.
+- tasks/board.tsx: area chip `${area.color}1a` concat → bg-foreground/[0.08] class (style keeps color: area.color for per-area ink shade); overdue due-chip bg-rose-500/15 text-rose-400 → bg-foreground/[0.08] text-foreground font-medium + tabular-nums; STATUS_META var() column dots + subtask fill kept (DOM-resolvable).
+- tasks/list.tsx: overdue border-l-rose-400 → border-l-foreground (r5); overdue due text-rose-400 → text-foreground (+tabular-nums); status Badge `${status.color}55` borderColor → border-foreground/25 class (style keeps color); bulk-delete AlertDialogAction text-white → text-background (r10; bg-destructive is already mono in globals).
+- tasks/focus.tsx: overdue text-rose-400 → text-foreground (+tabular-nums); celebration confetti gets mono colors ['#FFFFFF','#C9C9C9','#F1F1F1'] (canvas default palette was chromatic).
+- tasks/calendar-view.tsx: cell chip `${c}22` → bg-foreground/[0.08] class (style keeps color); overdue text-rose-400 → text-foreground tabular-nums; status Badge `${status.color}55` → border-foreground/25.
+- tasks/task-dialog.tsx: delete AlertDialogAction text-white → text-background (r10).
+- habits.tsx: color picker CHART_PALETTE → INK_VARS (import + useState default + reset default + swatch map; style={{ background: c }} works natively with var strings); consistency bar series habit.color (var) → theme.palette[i % len] (canvas); habit "done" chip `${h.color}1a` concat → done && 'border-foreground/40 bg-foreground/[0.08] text-foreground'; all-habits confetti → mono colors.
+- habits/habit-card.tsx: icon well `${habit.color}1a` → bg-foreground/[0.08] class (style keeps color: habit.color); done-check text-white → text-background (inverted fill); delete AlertDialogAction text-white → text-background. Ring/heatmap/dot var() color usages kept (SVG/DOM).
+- notes.tsx: delete-note button rose → text-foreground hover:bg-foreground/[0.06] hover:text-foreground (+font-medium per r3); resource delete icon rose → text-foreground hover:bg-foreground/[0.06] hover:text-foreground; note + resource AlertDialogActions bg-rose-500/90 text-white → bg-foreground text-background hover:bg-foreground/90; note-list timestamp gets tabular-nums.
+- roadmap.tsx: SKILL_STATUS active emerald → border-foreground/30 bg-foreground/[0.08] text-foreground, paused amber → border-foreground/20 bg-foreground/[0.04] text-foreground/75; PROJECT_STATUS planning amber → weak rung, shipped emerald → strong rung; weekly-goal hit emerald → text-foreground; overdue text-rose-400 → text-foreground font-medium; hours-logged span + tabular-nums; delete icon rose → text-foreground hover:bg-foreground/[0.06] hover:text-foreground; stacked-bar option.color codingSkills var() colors → theme.palette (canvas); delete-confirm action rose/text-white → bg-foreground text-background hover:bg-foreground/90.
+- dsa.tsx: DIFF_META recolored per spec (easy var(--ink-5)/border-foreground/20 bg-foreground/[0.04] text-foreground/70; medium var(--ink-3)/border-foreground/30 bg-foreground/[0.08] text-foreground; hard var(--ink-1)/bg-foreground text-background border-foreground); locked-state amber Badge → border-foreground/25 bg-foreground/[0.06] text-foreground/80; difficulty donut itemStyle var() colors → theme.palette[i % len]; mastery bar keeps diff.color (DOM-resolvable var()).
+- Typography: tabular-nums added to calendar minutes chip, board due chip, list/focus/calendar-view due/overdue text, roadmap hours-logged, notes timestamps (low-risk counts/durations only).
+
+Verification (all 15 owned files):
+- rg chromatic Tailwind palette classes → 0 matches.
+- rg hex → 3 lines, all confetti palettes using only #FFFFFF/#C9C9C9/#F1F1F1 (allowed set).
+- rg rgba( → 0 matches.
+- bun run lint → exit 0, no problems.
+
+Judgment calls:
+- `${color}XX` alpha-suffix concatenations (7 spots: dashboard habit chip, calendar task/exam chips + exam Badge, board area chip, list/calendar-view status Badges, calendar-view cell chip, habit-card icon well) were class-swapped instead of kept: "var(--ink-N)1a" is invalid CSS post-foundation, and per instructions var() entity colors must not be concatenated. Where per-entity shading still matters (board area chip, status Badges, calendar-view chips, habit-card icon), text/border keeps style={{ color: meta.color }} so each ink rung still reads.
+- ECharts var() leaks fixed with the sanctioned theme.palette ramp: dashboard donut + weekly line, habits consistency bars, roadmap stacked bars, dsa difficulty donut. Dashboard areaStyle uses theme.split (exact 10% white/black alpha the original cyan 0.14 approximated) to stay theme-aware in both modes.
+- Timer RingProgress state colors: running → var(--ink-1) (strong), paused → var(--ink-5) (≈ amber-400's dim intent), ready keeps var(--primary).
+- calendar legend Tasks dot intentionally left bg-primary while Exams/sessions/habit use the r9 shape code — primary is already mono and the file-specific spec only redefined the other three.
+- Confetti palettes given mono hex arrays (canvas-confetti default is chromatic) in focus.tsx + habits.tsx; dashboard's existing CONFETTI_COLORS constant remapped in place.
+- list/task-dialog/habit-card `bg-destructive` kept (token is #000000/#FFFFFF in RB/25 globals); only text-white → text-background per r10.
+- ui-bits tone= props (cyan/violet/emerald/pink/amber/rose/slate) untouched — ui-bits.tsx is owned by task 4-b which already monochromed TONES.
+- calendar.tsx month-grid exam chip: removed the now-unused `const meta` binding created by the color swap (dead-code only, no behavior change).
+
+Stage Summary:
+- All 15 feature modules (dashboard, tracker, calendar, sessions+dialog, tasks×5, habits+card, notes, roadmap, dsa) are now strictly RB/25 monochrome: ink/foreground tokens for all accents, shape-coded legends, inverted foreground CTAs and delete confirms, theme.palette ramps for every ECharts surface, and native var() entity colors preserved only in DOM/SVG call sites. Zero chromatic classes, zero non-mono hexes, zero rgba() remain; lint clean.
+
+---
+
+Task ID: 5 & 6
+Agent: lead (Z.ai Code orchestrator)
+Task: Roboto® RB/25 design-system integration — foundation, orchestration, QA
+
+Work Log:
+- Saved design system docs: docs/design/roboto-rb-25.md + .agent/skills/design-system-roboto-rb-25/SKILL.md
+- globals.css: full monochrome token rewrite (4 moods: Obsidian/Frost/Void/Graphite-Fog), 10-step ink ramp --ink-1…10, neutral aurora + starfields, RB/25 motion curves (transform .15s cubic-bezier(.33,1,.68,1), bg .25s ease-in-out), body 15px, ::selection inverted, .font-editorial (Times)
+- layout.tsx: Inter (Aeonik stand-in) + IBM Plex Mono via next/font (--font-rb-sans/--font-rb-mono)
+- constants.ts: INK_VARS + CHART_RAMP/chartPalette(dark); all META + seed entity colors → var(--ink-N)
+- echarts-wrapper.tsx: theme-aware mono chart palette/axis/tooltip; helpers.ts: mono dataZoom (+ dataBackground/moveHandle fix for ECharts' default blue)
+- store.ts: persist version 2 + migrate() remaps persisted entity colors onto ink ramp
+- Parallel subagent sweeps (4-a analytics/reports, 4-b shell/island/hero-3d/settings, 4-c feature modules): zero chromatic classes/hex/rgba remain in src/components/nexus + src/app (verified by grep; only #000000/#FFFFFF/#C9C9C9/#F1F1F1)
+- ai-drawer.tsx: caught + fixed 2 leftover gradients (orphan file)
+- Typography: 900-weight display headings (dashboard hero, tracker total, splash), mono micro-labels, tabular-nums
+- QA (agent-browser): dashboard/kanban/analytics (dark+light)/DSA lock/island pomodoro+music/Cmd+K palette/theme switching/mobile drawer all verified; zero console errors; lint clean
+
+Stage Summary: NexusOS now fully complies with the Roboto® RB/25 monochrome design system. Entity color model: var(--ink-N) in DOM, theme-aware rgba ramp in canvas.

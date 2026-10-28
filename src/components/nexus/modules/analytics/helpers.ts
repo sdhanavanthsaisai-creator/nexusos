@@ -33,13 +33,26 @@ export const areaGradient = (hex: string) => ({
   ],
 });
 
-/** NexusOS-styled dataZoom pair (inside + slider). */
+/** NexusOS-styled dataZoom pair (inside + slider) — monochrome RB/25. */
 export const dataZoomStyled = (theme: ChartThemeInfo): EChartsOption['dataZoom'] => [
   { type: 'inside' },
   {
     type: 'slider', height: 16, bottom: 6,
-    fillerColor: 'rgba(34,211,238,0.15)', borderColor: 'transparent',
-    handleStyle: { color: '#22d3ee' },
+    fillerColor: theme.dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)', borderColor: 'transparent',
+    handleStyle: { color: theme.dark ? '#ffffff' : '#000000' },
+    moveHandleStyle: { color: theme.dark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)' },
+    emphasis: {
+      handleStyle: { color: theme.dark ? '#ffffff' : '#000000' },
+      moveHandleStyle: { color: theme.dark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)' },
+    },
+    dataBackground: {
+      lineStyle: { color: theme.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)' },
+      areaStyle: { color: theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+    },
+    selectedDataBackground: {
+      lineStyle: { color: theme.dark ? 'rgba(255,255,255,0.32)' : 'rgba(0,0,0,0.32)' },
+      areaStyle: { color: theme.dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)' },
+    },
     textStyle: { color: theme.subtext, fontSize: 10 },
   },
 ];

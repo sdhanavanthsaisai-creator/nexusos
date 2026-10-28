@@ -4,6 +4,8 @@ import * as echarts from 'echarts';
 import { useEffect, useRef } from 'react';
 import { useNexus } from '@/lib/nexus/store';
 
+import { chartPalette } from '@/lib/nexus/constants';
+
 export interface ChartThemeInfo {
   dark: boolean;
   text: string;
@@ -14,7 +16,9 @@ export interface ChartThemeInfo {
   palette: string[];
 }
 
-const PALETTE = ['#22d3ee', '#a78bfa', '#34d399', '#f472b6', '#fbbf24', '#fb7185', '#2dd4bf', '#e879f9', '#fb923c', '#4ade80'];
+/** Roboto® RB/25 — canvas-safe monochrome series ramp (ECharts cannot resolve CSS vars). */
+const AXIS_TEXT_DARK = '#c9c9c9';
+const AXIS_TEXT_LIGHT = 'rgba(0,0,0,0.56)';
 
 /** Theme-aware colors for chart options. */
 export function useChartTheme(): ChartThemeInfo {
@@ -22,21 +26,21 @@ export function useChartTheme(): ChartThemeInfo {
   const dark = theme !== 'light';
   return {
     dark,
-    text: dark ? '#c8c8d0' : '#3f4450',
-    subtext: dark ? '#8b8b96' : '#6b7280',
-    split: dark ? 'rgba(148,163,184,0.12)' : 'rgba(71,85,105,0.14)',
-    bg: dark ? '#101014' : '#ffffff',
-    tooltipBg: dark ? 'rgba(16,16,20,0.95)' : 'rgba(255,255,255,0.97)',
-    palette: PALETTE,
+    text: dark ? AXIS_TEXT_DARK : AXIS_TEXT_LIGHT,
+    subtext: dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.45)',
+    split: dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.10)',
+    bg: dark ? '#0a0a0c' : '#ffffff',
+    tooltipBg: dark ? 'rgba(8,8,10,0.95)' : 'rgba(255,255,255,0.97)',
+    palette: chartPalette(dark),
   };
 }
 
 export function baseTooltip(theme: ChartThemeInfo) {
   return {
     backgroundColor: theme.tooltipBg,
-    borderColor: theme.dark ? '#2c2c34' : '#d8dbe1',
+    borderColor: theme.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)',
     textStyle: { color: theme.text, fontSize: 12 },
-    extraCssText: 'backdrop-filter: blur(8px); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);',
+    extraCssText: 'backdrop-filter: blur(8px); border-radius: 999px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);',
   };
 }
 

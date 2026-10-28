@@ -12,9 +12,9 @@ import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { useNexus } from '@/lib/nexus/store';
 
-const NODE_PALETTE = ['#22d3ee', '#a78bfa', '#34d399', '#f472b6', '#fbbf24'] as const;
-const CYAN = new THREE.Color('#22d3ee');
-const VIOLET = new THREE.Color('#a78bfa');
+const NODE_PALETTE = ['#ffffff', '#c9c9c9', '#f1f1f1', '#c9c9c9', '#ffffff'] as const;
+const WHITE = new THREE.Color('#ffffff');
+const SILVER = new THREE.Color('#c9c9c9');
 
 // ─── Particle field: ~700 points on a fibonacci sphere with jitter ───────────
 function ParticleField() {
@@ -34,7 +34,7 @@ function ParticleField() {
       pos[i * 3] = Math.cos(theta) * r * RADIUS + (Math.random() - 0.5) * JITTER;
       pos[i * 3 + 1] = y * RADIUS + (Math.random() - 0.5) * JITTER;
       pos[i * 3 + 2] = Math.sin(theta) * r * RADIUS + (Math.random() - 0.5) * JITTER;
-      const c = Math.random() < 0.5 ? CYAN : VIOLET;
+      const c = Math.random() < 0.5 ? WHITE : SILVER;
       col[i * 3] = c.r;
       col[i * 3 + 1] = c.g;
       col[i * 3 + 2] = c.b;
@@ -134,7 +134,7 @@ class Hero3DBoundary extends Component<{ children: ReactNode }, { failed: boolea
     if (this.state.failed) {
       return (
         <div
-          className="grid-bg absolute inset-0 bg-gradient-to-br from-cyan-400/10 via-transparent to-violet-500/15"
+          className="grid-bg absolute inset-0 bg-gradient-to-br from-foreground/[0.07] via-transparent to-foreground/[0.05]"
           aria-hidden="true"
         />
       );
@@ -161,7 +161,7 @@ export default function Hero3D() {
     <Hero3DBoundary>
       <div className="absolute inset-0" aria-hidden="true">
         {/* static base gradient shows through the alpha canvas (and in reduce3d mode) */}
-        <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/10 via-transparent to-violet-500/15" />
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.07] via-transparent to-foreground/[0.05]" />
         <Canvas
           dpr={[1, 1.75]}
           camera={{ position: [0, 0, 9], fov: 55 }}
@@ -171,8 +171,8 @@ export default function Hero3D() {
           resize={{ scroll: false }}
         >
           <ambientLight intensity={0.6} />
-          <pointLight position={[4, 3, 6]} intensity={30} distance={20} color="#22d3ee" />
-          <pointLight position={[-5, -2, 4]} intensity={30} distance={20} color="#a78bfa" />
+          <pointLight position={[4, 3, 6]} intensity={30} distance={20} color="#ffffff" />
+          <pointLight position={[-5, -2, 4]} intensity={30} distance={20} color="#c9c9c9" />
           <ParallaxRig enabled={!reduce3d && !hidden}>
             <ParticleField />
             {ICO_NODES.map((n) => (

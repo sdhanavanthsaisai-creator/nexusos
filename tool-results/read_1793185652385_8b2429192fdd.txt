@@ -1,0 +1,657 @@
+     1→'use client';
+     2→
+     3→/**
+     4→ * DashboardModule — Overview dashboard: 3D hero, KPI grid, focus list,
+     5→ * habits chips, 7-day chart, category donut, upcoming deadlines,
+     6→ * streak-milestone celebrations and a widget customizer.
+     7→ */
+     8→
+     9→import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+    10→import dynamic from 'next/dynamic';
+    11→import confetti from 'canvas-confetti';
+    12→import { toast } from 'sonner';
+    13→import {
+    14→  ArrowDown, ArrowUp, BookOpenCheck, Brain, CalendarDays, Check, Clock, Code2,
+    15→  Coffee, Flame, LayoutDashboard, ListTodo, Lock, Play, Plus, SlidersHorizontal,
+    16→} from 'lucide-react';
+    17→import { useNexus, useUI } from '@/lib/nexus/store';
+    18→import type { SubjectCategory, Task } from '@/lib/nexus/types';
+    19→import {
+    20→  addDays, addDaysKey, computeStreak, dayTotalMinutes, eachDayKeys, fmtDayNum,
+    21→  minutesToHM, pct, startOfWeek, sum, todayKey,
+    22→} from '@/lib/nexus/utils';
+    23→import {
+    24→  CATEGORY_META, DASHBOARD_WIDGETS_DEFAULT, EXAM_TYPE_META, PRIORITY_META,
+    25→  STREAK_MILESTONES,
+    26→} from '@/lib/nexus/constants';
+    27→import {
+    28→  baseTooltip, ChartCard, EmptyState, KpiCard, ModuleHeader, RingProgress,
+    29→  useChartTheme, type EChartsOption,
+    30→} from '../ui-bits';
+    31→import { Badge } from '@/components/ui/badge';
+    32→import { Button } from '@/components/ui/button';
+    33→import { Checkbox } from '@/components/ui/checkbox';
+    34→import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+    35→import { cn } from '@/lib/utils';
+    36→
+    37→const Hero3D = dynamic(() => import('@/components/nexus/hero-3d'), {
+    38→  ssr: false,
+    39→  loading: () => (
+    40→    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-cyan-400/10 via-transparent to-violet-500/15" />
+    41→  ),
+    42→});
+    43→
+    44→const CONFETTI_COLORS = ['#22d3ee', '#a78bfa', '#34d399', '#f472b6', '#fbbf24'];
+    45→
+    46→function fireConfettiBurst() {
+    47→  confetti({
+    48→    particleCount: 90,
+    49→    spread: 100,
+    50→    origin: { y: 0.6 },
+    51→    colors: CONFETTI_COLORS,
+    52→    disableForReducedMotion: true,
+    53→  });
+    54→  setTimeout(() => {
+    55→    confetti({ particleCount: 55, angle: 60, spread: 70, origin: { x: 0, y: 0.75 }, colors: CONFETTI_COLORS, disableForReducedMotion: true });
+    56→    confetti({ particleCount: 55, angle: 120, spread: 70, origin: { x: 1, y: 0.75 }, colors: CONFETTI_COLORS, disableForReducedMotion: true });
+    57→  }, 180);
+    58→}
+    59→
+    60→const WIDGET_META: Record<string, { label: string }> = {
+    61→  hero: { label: '3D Hero' },
+    62→  kpis: { label: 'KPI cards' },
+    63→  focus: { label: 'Focus today' },
+    64→  habits: { label: 'Habits today' },
+    65→  weekly: { label: 'Last 7 days chart' },
+    66→  donut: { label: '7-day allocation donut' },
+    67→  exams: { label: 'Upcoming deadlines' },
+    68→};
+    69→
+    70→export default function DashboardModule() {
+    71→  // ── store ──
+    72→  const profile = useNexus((s) => s.profile);
+    73→  const settings = useNexus((s) => s.settings);
+    74→  const subjects = useNexus((s) => s.subjects);
+    75→  const dailyLogs = useNexus((s) => s.dailyLogs);
+    76→  const tasks = useNexus((s) => s.tasks);
+    77→  const habits = useNexus((s) => s.habits);
+    78→  const habitRecords = useNexus((s) => s.habitRecords);
+    79→  const exams = useNexus((s) => s.exams);
+    80→  const dsaActive = useNexus((s) => s.dsaActive);
+    81→  const dsaTopics = useNexus((s) => s.dsaTopics);
+    82→  const celebrated = useNexus((s) => s.celebrated);
+    83→  const setSetting = useNexus((s) => s.setSetting);
+    84→  const completeTask = useNexus((s) => s.completeTask);
+    85→  const toggleHabitDate = useNexus((s) => s.toggleHabitDate);
+    86→  const celebrate = useNexus((s) => s.celebrate);
+    87→  const setActiveModule = useUI((s) => s.setActiveModule);
+    88→
+    89→  const themeRaw = useChartTheme();
+    90→  const theme = useMemo(
+    91→    () => themeRaw,
+    92→    [themeRaw.dark, themeRaw.text, themeRaw.subtext, themeRaw.split, themeRaw.bg, themeRaw.tooltipBg],
+    93→  );
+    94→
+    95→  // ── date labels (client-only component tree, safe to read clock) ──
+    96→  const now = new Date();
+    97→  const hour = now.getHours();
+    98→  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    99→  const dateLabel = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+   100→  const today = todayKey();
+   101→
+   102→  // ── derived data ──
+   103→  const last7Keys = useMemo(() => eachDayKeys(addDays(new Date(), -6), new Date()), []);
+   104→  const weekStartKeys = useMemo(() => eachDayKeys(startOfWeek(new Date()), new Date()), []);
+   105→
+   106→  const todayMin = dayTotalMinutes(dailyLogs[today]);
+   107→  const targetMin = profile.dailyTargetHours * 60;
+   108→  const todayPct = pct(todayMin, targetMin);
+   109→
+   110→  const weekMin = useMemo(() => sum(last7Keys.map((k) => dayTotalMinutes(dailyLogs[k]))), [last7Keys, dailyLogs]);
+   111→
+   112→  const tasksDone = useMemo(() => tasks.filter((t) => t.status === 'done').length, [tasks]);
+   113→  const tasksPending = tasks.length - tasksDone;
+   114→
+   115→  const activeHabits = useMemo(() => habits.filter((h) => !h.archived), [habits]);
+   116→  const habitsDone = useMemo(
+   117→    () => activeHabits.filter((h) => !!habitRecords[h.id]?.[today]).length,
+   118→    [activeHabits, habitRecords, today],
+   119→  );
+   120→  const habitScore = pct(habitsDone, activeHabits.length);
+   121→
+   122→  const streak = useMemo(() => computeStreak(dailyLogs), [dailyLogs]);
+   123→
+   124→  const codingMinWeek = useMemo(() => {
+   125→    const ids = new Set(subjects.filter((s) => s.category === 'coding').map((s) => s.id));
+   126→    return sum(
+   127→      weekStartKeys.flatMap((k) =>
+   128→        Object.entries(dailyLogs[k]?.minutes ?? {})
+   129→          .filter(([sid]) => ids.has(sid))
+   130→          .map(([, m]) => m),
+   131→      ),
+   132→    );
+   133→  }, [weekStartKeys, dailyLogs, subjects]);
+   134→  const codingHours = Math.round((codingMinWeek / 60) * 10) / 10;
+   135→
+   136→  const dsaSolved = useMemo(() => dsaTopics.reduce((a, t) => a + t.problemsSolved, 0), [dsaTopics]);
+   137→
+   138→  const focusTasks = useMemo(() => {
+   139→    const picked = new Map<string, Task>();
+   140→    for (const t of tasks) {
+   141→      if (t.status === 'done') continue;
+   142→      const dueOrOverdue = !!t.dueDate && t.dueDate <= today;
+   143→      const hotPriority = t.priority === 'critical' || t.priority === 'important';
+   144→      if (dueOrOverdue || hotPriority) picked.set(t.id, t);
+   145→    }
+   146→    return [...picked.values()]
+   147→      .sort(
+   148→        (a, b) =>
+   149→          PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank ||
+   150→          (a.dueDate ?? '9999-12-31').localeCompare(b.dueDate ?? '9999-12-31'),
+   151→      )
+   152→      .slice(0, 6);
+   153→  }, [tasks, today]);
+   154→
+   155→  const weekData = useMemo(
+   156→    () => last7Keys.map((k) => ({ key: k, day: fmtDayNum(k), minutes: dayTotalMinutes(dailyLogs[k]) })),
+   157→    [last7Keys, dailyLogs],
+   158→  );
+   159→
+   160→  const donutData = useMemo(() => {
+   161→    const byCat = new Map<SubjectCategory, number>();
+   162→    for (const k of last7Keys) {
+   163→      const log = dailyLogs[k];
+   164→      if (!log) continue;
+   165→      for (const [sid, m] of Object.entries(log.minutes)) {
+   166→        const cat = subjects.find((s) => s.id === sid)?.category;
+   167→        if (!cat) continue;
+   168→        byCat.set(cat, (byCat.get(cat) ?? 0) + m);
+   169→      }
+   170→    }
+   171→    const data = [...byCat.entries()]
+   172→      .filter(([, m]) => m > 0)
+   173→      .sort((a, b) => b[1] - a[1])
+   174→      .map(([cat, m]) => ({ name: CATEGORY_META[cat].label, value: m, itemStyle: { color: CATEGORY_META[cat].color } }));
+   175→    return { data, total: sum([...byCat.values()]) };
+   176→  }, [last7Keys, dailyLogs, subjects]);
+   177→
+   178→  type UpItem = { id: string; date: string; title: string; kind: string; color: string };
+   179→  const upcoming = useMemo<UpItem[]>(() => {
+   180→    const horizon = addDaysKey(today, 14);
+   181→    const items: UpItem[] = [];
+   182→    for (const e of exams) {
+   183→      if (e.date >= today && e.date <= horizon) {
+   184→        const meta = EXAM_TYPE_META[e.type];
+   185→        items.push({ id: `exam-${e.id}`, date: e.date, title: e.title, kind: meta?.label ?? e.type, color: meta?.color ?? '#22d3ee' });
+   186→      }
+   187→    }
+   188→    for (const t of tasks) {
+   189→      if (t.status !== 'done' && t.dueDate && t.dueDate >= today && t.dueDate <= horizon) {
+   190→        items.push({ id: `task-${t.id}`, date: t.dueDate, title: t.title, kind: 'Task', color: PRIORITY_META[t.priority].color });
+   191→      }
+   192→    }
+   193→    return items.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 8);
+   194→  }, [exams, tasks, today]);
+   195→
+   196→  // ── celebrations ──
+   197→  useEffect(() => {
+   198→    const milestone = STREAK_MILESTONES.find((m) => m === streak.current);
+   199→    if (!milestone || celebrated.includes(milestone)) return;
+   200→    celebrate(milestone); // persists → effect won't re-fire
+   201→    if (settings.confettiEnabled) fireConfettiBurst();
+   202→    toast.success(`🔥 ${milestone}-day streak!`, { description: 'Consistency compounds — keep the chain alive.' });
+   203→  }, [streak.current, celebrated, celebrate, settings.confettiEnabled]);
+   204→
+   205→  const habitsMountedRef = useRef(false);
+   206→  const habitsFiredRef = useRef<string | null>(null);
+   207→  const allHabitsDone = activeHabits.length > 0 && habitsDone === activeHabits.length;
+   208→  useEffect(() => {
+   209→    if (!habitsMountedRef.current) {
+   210→      habitsMountedRef.current = true;
+   211→      return; // skip firing on initial mount (e.g. already-complete seed data)
+   212→    }
+   213→    if (!allHabitsDone) return;
+   214→    const key = todayKey();
+   215→    if (habitsFiredRef.current === key) return;
+   216→    habitsFiredRef.current = key;
+   217→    if (settings.confettiEnabled) fireConfettiBurst();
+   218→    toast.success('All habits done! 🔥', { description: `${habitsDone}/${activeHabits.length} complete today.` });
+   219→  }, [allHabitsDone, settings.confettiEnabled, habitsDone, activeHabits.length]);
+   220→
+   221→  // ── widget customization ──
+   222→  const enabledWidgets = useMemo(() => {
+   223→    const list = settings.dashboardWidgets?.length ? settings.dashboardWidgets : DASHBOARD_WIDGETS_DEFAULT;
+   224→    return list.filter((id) => id in WIDGET_META);
+   225→  }, [settings.dashboardWidgets]);
+   226→
+   227→  const moveWidget = (index: number, dir: -1 | 1) => {
+   228→    const next = [...enabledWidgets];
+   229→    const j = index + dir;
+   230→    if (j < 0 || j >= next.length) return;
+   231→    [next[index], next[j]] = [next[j], next[index]];
+   232→    setSetting({ dashboardWidgets: next });
+   233→  };
+   234→  const toggleWidget = (id: string, on: boolean) => {
+   235→    const next = on ? [...enabledWidgets, id] : enabledWidgets.filter((w) => w !== id);
+   236→    setSetting({ dashboardWidgets: next });
+   237→  };
+   238→
+   239→  // ── quick actions ──
+   240→  const goLogStudy = () => setActiveModule('tracker');
+   241→  const goNewTask = () => {
+   242→    setActiveModule('tasks');
+   243→    window.dispatchEvent(new CustomEvent('nexus:new-task'));
+   244→  };
+   245→  const goStartTimer = () => {
+   246→    setActiveModule('sessions');
+   247→    window.dispatchEvent(new CustomEvent('nexus:timer-started'));
+   248→  };
+   249→
+   250→  // ── chart options ──
+   251→  const weeklyOption = useMemo<EChartsOption>(
+   252→    () => ({
+   253→      backgroundColor: 'transparent',
+   254→      tooltip: {
+   255→        trigger: 'axis',
+   256→        ...baseTooltip(theme),
+   257→        valueFormatter: (v: unknown) => minutesToHM(Number(v)),
+   258→      },
+   259→      grid: { left: 6, right: 14, top: 30, bottom: 0, containLabel: true },
+   260→      xAxis: {
+   261→        type: 'category',
+   262→        data: weekData.map((d) => d.day),
+   263→        boundaryGap: false,
+   264→        axisTick: { show: false },
+   265→        axisLine: { lineStyle: { color: theme.split } },
+   266→        axisLabel: { color: theme.subtext, fontSize: 10 },
+   267→      },
+   268→      yAxis: {
+   269→        type: 'value',
+   270→        splitLine: { lineStyle: { color: theme.split } },
+   271→        axisLabel: { color: theme.subtext, fontSize: 10, formatter: (v: number) => `${Math.round((v / 60) * 10) / 10}h` },
+   272→      },
+   273→      series: [
+   274→        {
+   275→          name: 'Study time',
+   276→          type: 'line',
+   277→          smooth: true,
+   278→          data: weekData.map((d) => d.minutes),
+   279→          symbol: 'circle',
+   280→          symbolSize: 6,
+   281→          lineStyle: { width: 2.5, color: '#22d3ee' },
+   282→          itemStyle: { color: '#22d3ee', borderColor: theme.bg, borderWidth: 2 },
+   283→          areaStyle: { color: 'rgba(34,211,238,0.14)' },
+   284→          markLine: {
+   285→            silent: true,
+   286→            symbol: 'none',
+   287→            lineStyle: { type: 'dashed', color: theme.subtext },
+   288→            label: { formatter: `Target ${profile.dailyTargetHours}h`, color: theme.subtext, fontSize: 10, position: 'insideEndTop' },
+   289→            data: [{ yAxis: targetMin }],
+   290→          },
+   291→        },
+   292→      ],
+   293→    }),
+   294→    [theme, weekData, targetMin, theme.bg, profile.dailyTargetHours],
+   295→  );
+   296→
+   297→  const donutOption = useMemo<EChartsOption>(
+   298→    () => ({
+   299→      backgroundColor: 'transparent',
+   300→      tooltip: {
+   301→        trigger: 'item',
+   302→        ...baseTooltip(theme),
+   303→        valueFormatter: (v: unknown) => minutesToHM(Number(v)),
+   304→      },
+   305→      legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { color: theme.subtext, fontSize: 10 } },
+   306→      title: {
+   307→        text: `${(donutData.total / 60).toFixed(1)}h`,
+   308→        subtext: '7-day total',
+   309→        left: 'center',
+   310→        top: '36%',
+   311→        textStyle: { color: theme.text, fontSize: 22, fontWeight: 600 },
+   312→        subtextStyle: { color: theme.subtext, fontSize: 10 },
+   313→      },
+   314→      series: [
+   315→        {
+   316→          type: 'pie',
+   317→          radius: ['55%', '80%'],
+   318→          center: ['50%', '42%'],
+   319→          avoidLabelOverlap: true,
+   320→          itemStyle: { borderRadius: 6, borderColor: theme.bg, borderWidth: 2 },
+   321→          label: { show: false },
+   322→          data: donutData.data,
+   323→        },
+   324→      ],
+   325→    }),
+   326→    [theme, donutData, theme.bg, theme.text, theme.subtext],
+   327→  );
+   328→
+   329→  // ── widget renderers ──
+   330→  const renderHero = () => (
+   331→    <section className="glass relative h-[300px] overflow-hidden rounded-2xl md:h-[360px]">
+   332→      <Hero3D />
+   333→      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-background/25 to-transparent" aria-hidden="true" />
+   334→      <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-5 md:p-6">
+   335→        <div>
+   336→          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{dateLabel}</p>
+   337→          <h2 className="text-gradient mt-1.5 text-xl font-semibold tracking-tight md:text-2xl">
+   338→            {greeting}, {profile.name}
+   339→          </h2>
+   340→        </div>
+   341→        <div className="flex flex-wrap items-end justify-between gap-4">
+   342→          <div className="pointer-events-auto flex flex-wrap gap-2">
+   343→            <Button size="sm" className="glow-soft gap-1.5" onClick={goLogStudy}>
+   344→              <BookOpenCheck className="h-3.5 w-3.5" aria-hidden="true" /> Log study
+   345→            </Button>
+   346→            <Button size="sm" variant="outline" className="border-border/60 bg-background/50 backdrop-blur" onClick={goNewTask}>
+   347→              <Plus className="h-3.5 w-3.5" aria-hidden="true" /> New task
+   348→            </Button>
+   349→            <Button size="sm" variant="outline" className="border-border/60 bg-background/50 backdrop-blur" onClick={goStartTimer}>
+   350→              <Play className="h-3.5 w-3.5" aria-hidden="true" /> Start timer
+   351→            </Button>
+   352→          </div>
+   353→          <div className="pointer-events-auto rounded-2xl bg-background/40 p-1.5 backdrop-blur">
+   354→            <RingProgress value={todayPct} size={88} stroke={8} color="#22d3ee" label="Today's study target progress">
+   355→              <span className="font-mono text-sm font-semibold tabular-nums">{minutesToHM(todayMin)}</span>
+   356→              <span className="text-[9px] text-muted-foreground">of {profile.dailyTargetHours}h target</span>
+   357→            </RingProgress>
+   358→          </div>
+   359→        </div>
+   360→      </div>
+   361→    </section>
+   362→  );
+   363→
+   364→  const renderKpis = () => (
+   365→    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+   366→      <KpiCard
+   367→        icon={Clock}
+   368→        label="Today's study"
+   369→        value={minutesToHM(todayMin)}
+   370→        sub={`${todayPct}% of ${profile.dailyTargetHours}h target`}
+   371→        tone="cyan"
+   372→        progress={todayPct}
+   373→      />
+   374→      <KpiCard
+   375→        icon={CalendarDays}
+   376→        label="Last 7 days"
+   377→        value={minutesToHM(weekMin)}
+   378→        sub={`Avg ${minutesToHM(Math.round(weekMin / 7))}/day`}
+   379→        tone="violet"
+   380→        progress={pct(weekMin, targetMin * 7)}
+   381→      />
+   382→      <KpiCard
+   383→        icon={ListTodo}
+   384→        label="Tasks"
+   385→        value={`${tasksDone}/${tasks.length}`}
+   386→        sub={`${tasksPending} pending`}
+   387→        tone="emerald"
+   388→        progress={pct(tasksDone, tasks.length)}
+   389→      />
+   390→      <KpiCard
+   391→        icon={Check}
+   392→        label="Habit score"
+   393→        value={`${habitScore}%`}
+   394→        sub={`${habitsDone}/${activeHabits.length} habits today`}
+   395→        tone="pink"
+   396→        progress={habitScore}
+   397→      />
+   398→      <KpiCard icon={Flame} label="Current streak" value={`${streak.current}d`} sub={`Best: ${streak.best}d`} tone="amber" />
+   399→      <KpiCard
+   400→        icon={Code2}
+   401→        label="Coding this week"
+   402→        value={`${codingHours}h`}
+   403→        sub={`Target ${profile.weeklyCodingTargetHours}h`}
+   404→        tone="rose"
+   405→        progress={pct(codingMinWeek, profile.weeklyCodingTargetHours * 60)}
+   406→      />
+   407→      {!dsaActive ? (
+   408→        <button
+   409→          type="button"
+   410→          onClick={() => setActiveModule('dsa')}
+   411→          aria-label="DSA plan is locked — open DSA module"
+   412→          className="block w-full cursor-pointer rounded-2xl text-left transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+   413→        >
+   414→          <KpiCard icon={Lock} label="DSA status" value="Locked" sub="Starts after Semester 1" tone="slate" />
+   415→        </button>
+   416→      ) : (
+   417→        <KpiCard icon={Brain} label="DSA status" value={`${dsaSolved}`} sub="Problems solved" tone="slate" />
+   418→      )}
+   419→    </div>
+   420→  );
+   421→
+   422→  const renderFocus = () => (
+   423→    <div className="glass rounded-2xl p-4">
+   424→      <div className="mb-3 flex items-center justify-between gap-2">
+   425→        <h3 className="text-sm font-semibold tracking-tight">Focus today</h3>
+   426→        <Badge variant="outline" className="text-[10px] text-muted-foreground">{focusTasks.length} urgent</Badge>
+   427→      </div>
+   428→      {focusTasks.length === 0 ? (
+   429→        <EmptyState icon={Coffee} title="Nothing urgent — enjoy the calm" hint="No overdue or high-priority tasks right now." />
+   430→      ) : (
+   431→        <div className="slim-scroll max-h-96 space-y-1.5 overflow-y-auto pr-1">
+   432→          {focusTasks.map((t) => {
+   433→            const overdue = !!t.dueDate && t.dueDate < today;
+   434→            return (
+   435→              <div key={t.id} className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/40 px-3 py-2">
+   436→                <Checkbox
+   437→                  className="mt-0.5"
+   438→                  onCheckedChange={(v) => {
+   439→                    if (!v) return;
+   440→                    completeTask(t.id);
+   441→                    toast.success('Task completed 🎉', { description: t.title });
+   442→                  }}
+   443→                  aria-label={`Mark "${t.title}" complete`}
+   444→                />
+   445→                <button
+   446→                  type="button"
+   447→                  onClick={() => setActiveModule('tasks')}
+   448→                  className="min-w-0 flex-1 truncate text-left text-sm transition-colors hover:text-primary"
+   449→                  title={t.title}
+   450→                >
+   451→                  {t.title}
+   452→                </button>
+   453→                <span
+   454→                  className="h-2 w-2 shrink-0 rounded-full"
+   455→                  style={{ backgroundColor: PRIORITY_META[t.priority].color }}
+   456→                  aria-hidden="true"
+   457→                  title={PRIORITY_META[t.priority].label}
+   458→                />
+   459→                {t.dueDate && (
+   460→                  <Badge
+   461→                    variant="outline"
+   462→                    className={cn('shrink-0 text-[10px]', overdue ? 'border-rose-500/40 text-rose-400' : 'text-muted-foreground')}
+   463→                  >
+   464→                    {overdue ? `Overdue · ${fmtDayNum(t.dueDate)}` : `Due ${fmtDayNum(t.dueDate)}`}
+   465→                  </Badge>
+   466→                )}
+   467→              </div>
+   468→            );
+   469→          })}
+   470→        </div>
+   471→      )}
+   472→    </div>
+   473→  );
+   474→
+   475→  const renderHabits = () => (
+   476→    <div className="glass rounded-2xl p-4">
+   477→      <div className="mb-3 flex items-center justify-between gap-2">
+   478→        <h3 className="text-sm font-semibold tracking-tight">Habits today</h3>
+   479→        <Badge variant="outline" className={cn('text-[10px]', allHabitsDone ? 'border-emerald-500/40 text-emerald-400' : 'text-muted-foreground')}>
+   480→          {habitsDone}/{activeHabits.length}
+   481→        </Badge>
+   482→      </div>
+   483→      {activeHabits.length === 0 ? (
+   484→        <EmptyState icon={Check} title="No habits yet" hint="Create habits in the Habits module to track them here." />
+   485→      ) : (
+   486→        <div className="flex flex-wrap gap-2">
+   487→          {activeHabits.map((h) => {
+   488→            const done = !!habitRecords[h.id]?.[today];
+   489→            return (
+   490→              <button
+   491→                key={h.id}
+   492→                type="button"
+   493→                onClick={() => toggleHabitDate(h.id, today)}
+   494→                aria-pressed={done}
+   495→                aria-label={`${done ? 'Undo' : 'Complete'} habit ${h.name}`}
+   496→                className={cn(
+   497→                  'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all active:scale-95',
+   498→                  !done && 'border-border/70 bg-muted/40 text-muted-foreground hover:border-foreground/30 hover:text-foreground',
+   499→                )}
+   500→                style={done ? { backgroundColor: `${h.color}1f`, borderColor: `${h.color}66`, color: h.color } : undefined}
+   501→              >
+   502→                {done && <Check className="h-3 w-3" aria-hidden="true" />}
+   503→                {h.name}
+   504→              </button>
+   505→            );
+   506→          })}
+   507→        </div>
+   508→      )}
+   509→    </div>
+   510→  );
+   511→
+   512→  const renderWeekly = () => (
+   513→    <ChartCard
+   514→      title="Last 7 days"
+   515→      subtitle="Total focused minutes per day"
+   516→      option={weeklyOption}
+   517→      csv={{ name: 'last-7-days-study', rows: weekData.map(({ day, minutes }) => ({ day, minutes })) }}
+   518→    />
+   519→  );
+   520→
+   521→  const renderDonut = () =>
+   522→    donutData.total === 0 ? (
+   523→      <div className="glass rounded-2xl p-4">
+   524→        <h3 className="text-sm font-semibold tracking-tight">7-day allocation</h3>
+   525→        <EmptyState icon={CalendarDays} title="No study time logged" hint="Log a session to see your category split." />
+   526→      </div>
+   527→    ) : (
+   528→      <ChartCard title="7-day allocation" subtitle="Minutes by subject category" option={donutOption} height={300} />
+   529→    );
+   530→
+   531→  const renderExams = () => (
+   532→    <div className="glass rounded-2xl p-4">
+   533→      <div className="mb-3 flex items-center justify-between gap-2">
+   534→        <h3 className="text-sm font-semibold tracking-tight">Upcoming</h3>
+   535→        <Badge variant="outline" className="text-[10px] text-muted-foreground">Next 14 days</Badge>
+   536→      </div>
+   537→      {upcoming.length === 0 ? (
+   538→        <EmptyState icon={CalendarDays} title="No deadlines in the next 14 days" hint="Exams, assignments and task due dates will appear here." />
+   539→      ) : (
+   540→        <div className="slim-scroll max-h-96 space-y-1.5 overflow-y-auto pr-1">
+   541→          {upcoming.map((item) => (
+   542→            <button
+   543→              key={item.id}
+   544→              type="button"
+   545→              onClick={() => setActiveModule('calendar')}
+   546→              className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-left transition-colors hover:border-primary/30 hover:bg-muted/40"
+   547→            >
+   548→              <span className="shrink-0 rounded-lg bg-primary/10 px-2 py-1 font-mono text-[10px] leading-none text-primary">
+   549→                {fmtDayNum(item.date)}
+   550→              </span>
+   551→              <span className="min-w-0 flex-1 truncate text-sm">{item.title}</span>
+   552→              <span className="flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground">
+   553→                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} aria-hidden="true" />
+   554→                {item.kind}
+   555→              </span>
+   556→            </button>
+   557→          ))}
+   558→        </div>
+   559→      )}
+   560→    </div>
+   561→  );
+   562→
+   563→  const renderWidget = (id: string): ReactNode => {
+   564→    switch (id) {
+   565→      case 'hero': return renderHero();
+   566→      case 'kpis': return renderKpis();
+   567→      case 'focus': return renderFocus();
+   568→      case 'habits': return renderHabits();
+   569→      case 'weekly': return renderWeekly();
+   570→      case 'donut': return renderDonut();
+   571→      case 'exams': return renderExams();
+   572→      default: return null;
+   573→    }
+   574→  };
+   575→
+   576→  return (
+   577→    <div className="space-y-6">
+   578→      <ModuleHeader
+   579→        icon={LayoutDashboard}
+   580→        title="Overview Dashboard"
+   581→        subtitle={`${profile.university} · Semester ${profile.semester}`}
+   582→        actions={
+   583→          <Popover>
+   584→            <PopoverTrigger asChild>
+   585→              <Button variant="outline" size="sm" className="gap-1.5">
+   586→                <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" /> Customize widgets
+   587→              </Button>
+   588→            </PopoverTrigger>
+   589→            <PopoverContent align="end" className="w-64 p-3">
+   590→              <p className="mb-2 text-xs font-medium text-muted-foreground">Toggle & reorder dashboard widgets</p>
+   591→              <div className="space-y-0.5">
+   592→                {enabledWidgets.map((id, i) => (
+   593→                  <div key={id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/50">
+   594→                    <Checkbox
+   595→                      checked
+   596→                      onCheckedChange={(v) => {
+   597→                        if (!v) toggleWidget(id, false);
+   598→                      }}
+   599→                      aria-label={`Hide ${WIDGET_META[id]?.label ?? id}`}
+   600→                    />
+   601→                    <span className="flex-1 text-xs">{WIDGET_META[id]?.label ?? id}</span>
+   602→                    <Button
+   603→                      variant="ghost"
+   604→                      size="icon"
+   605→                      className="h-6 w-6"
+   606→                      disabled={i === 0}
+   607→                      onClick={() => moveWidget(i, -1)}
+   608→                      aria-label={`Move ${WIDGET_META[id]?.label ?? id} up`}
+   609→                    >
+   610→                      <ArrowUp className="h-3 w-3" aria-hidden="true" />
+   611→                    </Button>
+   612→                    <Button
+   613→                      variant="ghost"
+   614→                      size="icon"
+   615→                      className="h-6 w-6"
+   616→                      disabled={i === enabledWidgets.length - 1}
+   617→                      onClick={() => moveWidget(i, 1)}
+   618→                      aria-label={`Move ${WIDGET_META[id]?.label ?? id} down`}
+   619→                    >
+   620→                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+   621→                    </Button>
+   622→                  </div>
+   623→                ))}
+   624→                {DASHBOARD_WIDGETS_DEFAULT.filter((id) => !enabledWidgets.includes(id)).map((id) => (
+   625→                  <div key={id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 opacity-60 hover:bg-muted/50">
+   626→                    <Checkbox
+   627→                      checked={false}
+   628→                      onCheckedChange={(v) => {
+   629→                        if (v) toggleWidget(id, true);
+   630→                      }}
+   631→                      aria-label={`Show ${WIDGET_META[id]?.label ?? id}`}
+   632→                    />
+   633→                    <span className="flex-1 text-xs">{WIDGET_META[id]?.label ?? id}</span>
+   634→                  </div>
+   635→                ))}
+   636→              </div>
+   637→            </PopoverContent>
+   638→          </Popover>
+   639→        }
+   640→      />
+   641→      {enabledWidgets.length === 0 ? (
+   642→        <EmptyState
+   643→          icon={LayoutDashboard}
+   644→          title="All widgets are hidden"
+   645→          hint="Use the Customize widgets button to bring sections back."
+   646→        />
+   647→      ) : (
+   648→        <div className="space-y-6">
+   649→          {enabledWidgets.map((id) => (
+   650→            <div key={id}>{renderWidget(id)}</div>
+   651→          ))}
+   652→        </div>
+   653→      )}
+   654→    </div>
+   655→  );
+   656→}
+   657→

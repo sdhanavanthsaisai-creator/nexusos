@@ -109,7 +109,7 @@ function NoteEditor({ note, onDelete }: { note: Note; onDelete: () => void }) {
 
       <div className="flex items-center justify-between border-t border-border/50 pt-3">
         <p className="text-[11px] text-muted-foreground">Edited {timeAgo(note.updatedAt)}</p>
-        <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-rose-400 hover:bg-rose-400/10 hover:text-rose-400" onClick={onDelete}>
+        <Button variant="ghost" size="sm" className="h-7 gap-1 text-[11px] text-foreground hover:bg-foreground/[0.06] hover:text-foreground" onClick={onDelete}>
           <Trash2 className="h-3 w-3" /> Delete note
         </Button>
       </div>
@@ -291,7 +291,7 @@ export default function NotesModule() {
                             aria-hidden="true"
                           />
                           <span className="truncate text-xs font-medium">{n.title || 'Untitled'}</span>
-                          <span className="ml-auto shrink-0 text-[10px] text-muted-foreground">{timeAgo(n.updatedAt)}</span>
+                          <span className="ml-auto shrink-0 text-[10px] tabular-nums text-muted-foreground">{timeAgo(n.updatedAt)}</span>
                         </div>
                         {n.tags.length > 0 && (
                           <div className="mt-1 flex flex-wrap gap-1 pl-[18px]">
@@ -323,7 +323,7 @@ export default function NotesModule() {
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancel</AlertDialogCancel>
                           <AlertDialogAction
-                            className="bg-rose-500/90 text-white hover:bg-rose-500"
+                            className="bg-foreground text-background hover:bg-foreground/90"
                             onClick={handleDeleteNote}
                           >
                             Delete
@@ -383,7 +383,7 @@ export default function NotesModule() {
                     {r.notes && <p className="line-clamp-2 text-[11px] text-muted-foreground">{r.notes}</p>}
                     <div className="flex justify-end border-t border-border/50 pt-2">
                       <Button
-                        variant="ghost" size="icon" className="h-7 w-7 text-rose-400 hover:bg-rose-400/10 hover:text-rose-400"
+                        variant="ghost" size="icon" className="h-7 w-7 text-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                         onClick={() => setDeletingResource(r)}
                         aria-label={`Delete ${r.title}`}
                       >
@@ -412,7 +412,7 @@ export default function NotesModule() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-rose-500/90 text-white hover:bg-rose-500"
+                className="bg-foreground text-background hover:bg-foreground/90"
                 onClick={() => {
                   deleteResource(deletingResource.id);
                   toast.success('Resource deleted');

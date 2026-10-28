@@ -126,7 +126,7 @@ export function ListView({ tasks, onEdit }: ListProps) {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={bulkDelete}
-                  className="bg-destructive text-white hover:bg-destructive/90"
+                  className="bg-destructive text-background hover:bg-destructive/90"
                 >
                   Delete
                 </AlertDialogAction>
@@ -165,7 +165,7 @@ export function ListView({ tasks, onEdit }: ListProps) {
               }}
               className={cn(
                 'flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                overdue && 'border-l-2 border-l-rose-400',
+                overdue && 'border-l-2 border-l-foreground',
               )}
             >
               <span onClick={(e) => e.stopPropagation()} className="flex items-center">
@@ -192,7 +192,7 @@ export function ListView({ tasks, onEdit }: ListProps) {
                 <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                   <span style={{ color: area.color }}>{area.label}</span>
                   {t.dueDate && (
-                    <span className={cn(overdue && 'font-medium text-rose-400')}>
+                    <span className={cn('tabular-nums', overdue && 'font-medium text-foreground')}>
                       {fmtDayNum(t.dueDate)}
                     </span>
                   )}
@@ -208,8 +208,8 @@ export function ListView({ tasks, onEdit }: ListProps) {
               </div>
               <Badge
                 variant="outline"
-                className="hidden shrink-0 sm:inline-flex"
-                style={{ color: status.color, borderColor: `${status.color}55` }}
+                className="hidden shrink-0 border-foreground/25 sm:inline-flex"
+                style={{ color: status.color }}
               >
                 {status.label}
               </Badge>

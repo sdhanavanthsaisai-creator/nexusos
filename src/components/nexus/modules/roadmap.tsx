@@ -29,16 +29,16 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const SKILL_STATUS: Record<Skill['status'], { label: string; cls: string }> = {
-  active: { label: 'Active', cls: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-400' },
-  paused: { label: 'Paused', cls: 'border-amber-400/30 bg-amber-400/10 text-amber-400' },
+  active: { label: 'Active', cls: 'border-foreground/30 bg-foreground/[0.08] text-foreground' },
+  paused: { label: 'Paused', cls: 'border-foreground/20 bg-foreground/[0.04] text-foreground/75' },
   completed: { label: 'Completed', cls: 'border-primary/30 bg-primary/10 text-primary' },
 };
 
 const PROJECT_STATUS: Record<Project['status'], { label: string; cls: string }> = {
   idea: { label: 'Idea', cls: 'border-border/60 bg-muted/50 text-muted-foreground' },
-  planning: { label: 'Planning', cls: 'border-amber-400/30 bg-amber-400/10 text-amber-400' },
+  planning: { label: 'Planning', cls: 'border-foreground/20 bg-foreground/[0.04] text-foreground/75' },
   'in-progress': { label: 'In progress', cls: 'border-primary/30 bg-primary/10 text-primary' },
-  shipped: { label: 'Shipped', cls: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-400' },
+  shipped: { label: 'Shipped', cls: 'border-foreground/30 bg-foreground/[0.08] text-foreground' },
 };
 
 const hostOf = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/+$/, '');
@@ -177,7 +177,7 @@ function SkillCard({ skill, weekMinutes, onEdit }: { skill: Skill; weekMinutes: 
           <p className="flex justify-between gap-2">
             <span className="shrink-0">Weekly goal</span>
             <span className="truncate font-mono text-foreground">
-              {skill.weeklyHoursGoal}h · <span className={cn(actualHours >= skill.weeklyHoursGoal && skill.weeklyHoursGoal > 0 ? 'text-emerald-400' : '')}>{actualHours}h</span> this week
+              {skill.weeklyHoursGoal}h · <span className={cn(actualHours >= skill.weeklyHoursGoal && skill.weeklyHoursGoal > 0 ? 'text-foreground' : '')}>{actualHours}h</span> this week
             </span>
           </p>
         </div>
@@ -335,11 +335,11 @@ function ProjectCard({
         </div>
       )}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-        <span className={cn('inline-flex items-center gap-1', overdue && 'font-medium text-rose-400')}>
+        <span className={cn('inline-flex items-center gap-1', overdue && 'font-medium text-foreground')}>
           <CalendarDays className="h-3 w-3 shrink-0" />
           {project.dueDate ? fmtDayFull(project.dueDate) : 'No due date'}
         </span>
-        <span className="inline-flex items-center gap-1">
+        <span className="inline-flex items-center gap-1 tabular-nums">
           <Clock className="h-3 w-3 shrink-0" />
           {project.hoursLogged}h logged
         </span>
@@ -363,7 +363,7 @@ function ProjectCard({
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit} aria-label={`Edit ${project.name}`}>
           <Pencil className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-rose-400 hover:bg-rose-400/10 hover:text-rose-400" onClick={onDelete} aria-label={`Delete ${project.name}`}>
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-foreground hover:bg-foreground/[0.06] hover:text-foreground" onClick={onDelete} aria-label={`Delete ${project.name}`}>
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -410,7 +410,7 @@ export default function RoadmapModule() {
       labels.map((week, wi) => ({ week, skill: sk.name, hours: hours[si][wi] })),
     );
     const option: EChartsOption = {
-      color: codingSkills.map((sk) => sk.color),
+      color: theme.palette,
       tooltip: { ...baseTooltip(theme), trigger: 'axis', axisPointer: { type: 'shadow' } },
       legend: { top: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: theme.subtext, fontSize: 10 } },
       grid: { left: 4, right: 8, top: 32, bottom: 0, containLabel: true },
@@ -512,7 +512,7 @@ export default function RoadmapModule() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-rose-500/90 text-white hover:bg-rose-500"
+                className="bg-foreground text-background hover:bg-foreground/90"
                 onClick={() => {
                   deleteProject(deletingProject.id);
                   toast.success('Project deleted');

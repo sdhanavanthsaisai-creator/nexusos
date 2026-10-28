@@ -126,8 +126,8 @@ export default function HabitCard({ habit, records, onEdit }: HabitCardProps) {
       {/* header: icon / name / streak */}
       <div className="flex items-center gap-2.5">
         <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: `${habit.color}1a`, color: habit.color }}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-foreground/[0.08]"
+          style={{ color: habit.color }}
         >
           <Icon className="h-4 w-4" aria-hidden="true" />
         </span>
@@ -175,7 +175,7 @@ export default function HabitCard({ habit, records, onEdit }: HabitCardProps) {
                 style={done ? { backgroundColor: habit.color } : undefined}
               >
                 {done ? (
-                  <Check className="h-3.5 w-3.5 text-white" aria-hidden="true" />
+                  <Check className="h-3.5 w-3.5 text-background" aria-hidden="true" />
                 ) : (
                   <span className="text-[9px] font-medium">{WEEKDAYS[(parseKey(k).getDay() + 6) % 7][0]}</span>
                 )}
@@ -241,7 +241,7 @@ export default function HabitCard({ habit, records, onEdit }: HabitCardProps) {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={removeHabit}
-                  className="bg-destructive text-white hover:bg-destructive/90"
+                  className="bg-destructive text-background hover:bg-destructive/90"
                 >
                   Delete
                 </AlertDialogAction>

@@ -20,7 +20,7 @@ const THEMES: { id: ThemeId; label: string; icon: LucideIcon }[] = [
   { id: 'dark', label: 'Obsidian Dark', icon: Moon },
   { id: 'light', label: 'Daylight', icon: Sun },
   { id: 'oled', label: 'OLED Black', icon: MonitorSmartphone },
-  { id: 'cyberpunk', label: 'Cyberpunk', icon: Palette },
+  { id: 'cyberpunk', label: 'Graphite Fog', icon: Palette },
 ];
 
 export default function CommandPalette() {

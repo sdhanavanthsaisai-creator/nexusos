@@ -168,7 +168,7 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
       transition={SPRING}
-      className="island-shell pointer-events-auto flex h-9 max-w-[92vw] cursor-pointer items-center gap-2 rounded-full px-3.5 text-white"
+      className="island-shell pointer-events-auto flex h-9 max-w-[92vw] cursor-pointer items-center gap-2 rounded-full px-3.5 text-foreground"
       aria-label="Open Dynamic Island"
     >
       <AnimatePresence mode="wait" initial={false}>
@@ -184,7 +184,7 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
             <>
               <span
                 className={`island-live-dot h-1.5 w-1.5 shrink-0 rounded-full ${
-                  alert.tone === 'success' ? 'bg-emerald-400' : alert.tone === 'warning' ? 'bg-amber-400' : 'bg-[var(--primary)]'
+                  alert.tone === 'success' ? 'bg-foreground' : alert.tone === 'warning' ? 'bg-foreground/55' : 'bg-[var(--primary)]'
                 }`}
               />
               <span className="max-w-[220px] truncate text-xs font-medium">{alert.title}</span>
@@ -203,7 +203,7 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
             <>
               <span
                 className={`island-live-dot animate-pulse h-1.5 w-1.5 shrink-0 rounded-full ${
-                  pomo.phase === 'focus' ? 'bg-emerald-400' : 'bg-amber-400'
+                  pomo.phase === 'focus' ? 'bg-foreground' : 'bg-foreground/55'
                 }`}
               />
               <span className="font-mono text-[11px] tabular-nums">{fmtMs(pomoLeft)}</span>
@@ -226,7 +226,7 @@ function CompactPill({ musicPlaying }: { musicPlaying: boolean }) {
               <Zap className="h-3 w-3 shrink-0 text-[var(--aur-1)]" />
               <span className="font-mono text-[11px] tabular-nums">{minutesToHM(todayMin)}</span>
               <span className="h-0.5 w-0.5 shrink-0 rounded-full bg-white/30" />
-              <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-400" />
+              <CheckCircle2 className="h-3 w-3 shrink-0 text-foreground" />
               <span className="font-mono text-[11px] tabular-nums">{habitScore}</span>
             </>
           )}
@@ -249,7 +249,7 @@ function ExpandedPanel({ musicPlaying, onMusicChange }: { musicPlaying: boolean;
       role="dialog"
       aria-label="Dynamic Island"
       transition={SPRING}
-      className="island-shell pointer-events-auto w-[min(380px,calc(100vw-1.5rem))] rounded-[28px] p-4 text-white"
+      className="island-shell pointer-events-auto w-[min(380px,calc(100vw-1.5rem))] rounded-[28px] p-4 text-foreground"
     >
       <div className="mb-3 flex items-center gap-1">
         <TabButton active={activeModule === 'timer'} onClick={() => setModule('timer')} icon={Timer} label="Timer" />
@@ -260,7 +260,7 @@ function ExpandedPanel({ musicPlaying, onMusicChange }: { musicPlaying: boolean;
           type="button"
           onClick={() => useIsland.getState().collapse()}
           aria-label="Close island"
-          className="flex h-7 w-7 items-center justify-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-foreground"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -289,7 +289,7 @@ function TabButton({ active, onClick, icon: Icon, label }: { active: boolean; on
       onClick={onClick}
       aria-pressed={active}
       className={`relative flex h-8 items-center gap-1.5 rounded-full px-3 text-[11px] font-medium transition-colors ${
-        active ? 'text-white' : 'text-white/45 hover:text-white/80'
+        active ? 'text-foreground' : 'text-white/45 hover:text-white/80'
       }`}
     >
       {active && (
@@ -330,7 +330,7 @@ function PomoActiveView({ pomoLeft }: { pomoLeft: number }) {
   const fraction = duration > 0 ? clamp(1 - pomoLeft / duration, 0, 1) : 0;
   const R = 44;
   const CIRC = 2 * Math.PI * R;
-  const ringColor = pomo.phase === 'focus' ? 'var(--aur-3)' : '#fbbf24';
+  const ringColor = pomo.phase === 'focus' ? 'var(--aur-3)' : 'rgba(255,255,255,0.55)';
   const subjectName = subjects.find((x) => x.id === pomo.subjectId)?.name ?? 'First subject';
   const filled = pomo.cycles % 4;
   const paused = pomo.pausedRemainingMs !== null;
@@ -383,7 +383,7 @@ function PomoActiveView({ pomoLeft }: { pomoLeft: number }) {
           </Button>
           <Button
             size="sm" variant="outline"
-            className="h-7 rounded-full border-rose-400/25 bg-rose-400/10 px-3 text-[11px] text-rose-200 hover:bg-rose-400/20 hover:text-rose-100"
+            className="h-7 rounded-full border-foreground/40 bg-foreground/[0.08] px-3 text-[11px] text-foreground hover:bg-foreground/[0.14]"
             onClick={() => useIsland.getState().stopPomodoro()}
           >
             <Square className="h-3 w-3" /> Stop
@@ -436,7 +436,7 @@ function PomoLauncher() {
         type="button"
         disabled={!canStart}
         onClick={() => useIsland.getState().startPomodoro()}
-        className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-violet-500/90 text-xs font-semibold text-white shadow-[0_10px_28px_-10px_rgba(34,211,238,0.55)] transition hover:brightness-110 disabled:opacity-40"
+        className="flex h-9 items-center justify-center gap-1.5 rounded-full bg-foreground text-background text-xs font-semibold shadow-[0_10px_28px_-10px_rgba(255,255,255,0.22)] transition-colors hover:bg-foreground/90 disabled:opacity-40"
       >
         <Play className="h-3.5 w-3.5" /> Start Pomodoro
       </button>
@@ -506,7 +506,7 @@ function FreeTimerSection() {
           <button
             type="button"
             onClick={() => useUI.getState().stopTimer()}
-            className="flex h-8 items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-cyan-500/90 to-violet-500/90 text-[11px] font-semibold text-white transition hover:brightness-110"
+            className="flex h-8 items-center justify-center gap-1.5 rounded-full bg-foreground text-background text-[11px] font-semibold transition-colors hover:bg-foreground/90"
           >
             <Square className="h-3 w-3" /> Stop &amp; log session
           </button>
@@ -568,25 +568,25 @@ function StatsModule() {
         <StatCard icon={Zap} iconClass="text-[var(--aur-1)]" label="Today focus" value={minutesToHM(todayMin)} />
         <div className="glass-chip rounded-2xl p-3">
           <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] text-white/40">
-            <CheckCircle2 className="h-3 w-3 text-emerald-400" /> Habit score
+            <CheckCircle2 className="h-3 w-3 text-foreground" /> Habit score
           </div>
           <div className="mt-1.5 text-base font-semibold leading-none tabular-nums">
             {habitStat.done}/{habitStat.total}
           </div>
           <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
             <div
-              className="h-full rounded-full bg-emerald-400 transition-all"
+              className="h-full rounded-full bg-foreground transition-all"
               style={{ width: `${habitStat.total === 0 ? 0 : Math.round((habitStat.done / habitStat.total) * 100)}%` }}
             />
           </div>
         </div>
-        <StatCard icon={Flame} iconClass="text-amber-400" label="Streak" value={`${streak} day${streak === 1 ? '' : 's'}`} />
+        <StatCard icon={Flame} iconClass="text-foreground" label="Streak" value={`${streak} day${streak === 1 ? '' : 's'}`} />
         <div className="glass-chip rounded-2xl p-3">
           <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] text-white/40">
             <ListTodo className="h-3 w-3 text-[var(--aur-4)]" /> Due today
           </div>
           <div className="mt-1.5 text-base font-semibold leading-none tabular-nums">{taskStat.due} due</div>
-          <div className={`mt-1 text-[10px] ${taskStat.overdue > 0 ? 'text-rose-300' : 'text-white/40'}`}>
+          <div className={`mt-1 text-[10px] ${taskStat.overdue > 0 ? 'text-foreground font-medium' : 'text-white/40'}`}>
             {taskStat.overdue} overdue
           </div>
         </div>
@@ -614,7 +614,7 @@ function StatCard({ icon: Icon, iconClass, label, value }: { icon: LucideIcon; i
       <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-[0.16em] text-white/40">
         <Icon className={`h-3 w-3 ${iconClass}`} /> {label}
       </div>
-      <div className="mt-1.5 text-base font-semibold leading-none">{value}</div>
+      <div className="mt-1.5 text-base font-semibold leading-none tabular-nums">{value}</div>
     </div>
   );
 }
@@ -636,7 +636,7 @@ function MusicModule({ playing, onPlayingChange }: { playing: boolean; onPlaying
     canvas.width = Math.max(1, Math.floor(w * dpr));
     canvas.height = Math.max(1, Math.floor(h * dpr));
     c2d.scale(dpr, dpr);
-    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#22d3ee';
+    const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#ffffff';
     const buf = new Uint8Array(512);
     let raf = 0;
     const draw = () => {

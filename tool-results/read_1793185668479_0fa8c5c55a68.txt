@@ -1,0 +1,657 @@
+     1→     1→'use client';
+     2→     2→
+     3→     3→/**
+     4→     4→ * DashboardModule — Overview dashboard: 3D hero, KPI grid, focus list,
+     5→     5→ * habits chips, 7-day chart, category donut, upcoming deadlines,
+     6→     6→ * streak-milestone celebrations and a widget customizer.
+     7→     7→ */
+     8→     8→
+     9→     9→import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+    10→    10→import dynamic from 'next/dynamic';
+    11→    11→import confetti from 'canvas-confetti';
+    12→    12→import { toast } from 'sonner';
+    13→    13→import {
+    14→    14→  ArrowDown, ArrowUp, BookOpenCheck, Brain, CalendarDays, Check, Clock, Code2,
+    15→    15→  Coffee, Flame, LayoutDashboard, ListTodo, Lock, Play, Plus, SlidersHorizontal,
+    16→    16→} from 'lucide-react';
+    17→    17→import { useNexus, useUI } from '@/lib/nexus/store';
+    18→    18→import type { SubjectCategory, Task } from '@/lib/nexus/types';
+    19→    19→import {
+    20→    20→  addDays, addDaysKey, computeStreak, dayTotalMinutes, eachDayKeys, fmtDayNum,
+    21→    21→  minutesToHM, pct, startOfWeek, sum, todayKey,
+    22→    22→} from '@/lib/nexus/utils';
+    23→    23→import {
+    24→    24→  CATEGORY_META, DASHBOARD_WIDGETS_DEFAULT, EXAM_TYPE_META, PRIORITY_META,
+    25→    25→  STREAK_MILESTONES,
+    26→    26→} from '@/lib/nexus/constants';
+    27→    27→import {
+    28→    28→  baseTooltip, ChartCard, EmptyState, KpiCard, ModuleHeader, RingProgress,
+    29→    29→  useChartTheme, type EChartsOption,
+    30→    30→} from '../ui-bits';
+    31→    31→import { Badge } from '@/components/ui/badge';
+    32→    32→import { Button } from '@/components/ui/button';
+    33→    33→import { Checkbox } from '@/components/ui/checkbox';
+    34→    34→import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+    35→    35→import { cn } from '@/lib/utils';
+    36→    36→
+    37→    37→const Hero3D = dynamic(() => import('@/components/nexus/hero-3d'), {
+    38→    38→  ssr: false,
+    39→    39→  loading: () => (
+    40→    40→    <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-cyan-400/10 via-transparent to-violet-500/15" />
+    41→    41→  ),
+    42→    42→});
+    43→    43→
+    44→    44→const CONFETTI_COLORS = ['#22d3ee', '#a78bfa', '#34d399', '#f472b6', '#fbbf24'];
+    45→    45→
+    46→    46→function fireConfettiBurst() {
+    47→    47→  confetti({
+    48→    48→    particleCount: 90,
+    49→    49→    spread: 100,
+    50→    50→    origin: { y: 0.6 },
+    51→    51→    colors: CONFETTI_COLORS,
+    52→    52→    disableForReducedMotion: true,
+    53→    53→  });
+    54→    54→  setTimeout(() => {
+    55→    55→    confetti({ particleCount: 55, angle: 60, spread: 70, origin: { x: 0, y: 0.75 }, colors: CONFETTI_COLORS, disableForReducedMotion: true });
+    56→    56→    confetti({ particleCount: 55, angle: 120, spread: 70, origin: { x: 1, y: 0.75 }, colors: CONFETTI_COLORS, disableForReducedMotion: true });
+    57→    57→  }, 180);
+    58→    58→}
+    59→    59→
+    60→    60→const WIDGET_META: Record<string, { label: string }> = {
+    61→    61→  hero: { label: '3D Hero' },
+    62→    62→  kpis: { label: 'KPI cards' },
+    63→    63→  focus: { label: 'Focus today' },
+    64→    64→  habits: { label: 'Habits today' },
+    65→    65→  weekly: { label: 'Last 7 days chart' },
+    66→    66→  donut: { label: '7-day allocation donut' },
+    67→    67→  exams: { label: 'Upcoming deadlines' },
+    68→    68→};
+    69→    69→
+    70→    70→export default function DashboardModule() {
+    71→    71→  // ── store ──
+    72→    72→  const profile = useNexus((s) => s.profile);
+    73→    73→  const settings = useNexus((s) => s.settings);
+    74→    74→  const subjects = useNexus((s) => s.subjects);
+    75→    75→  const dailyLogs = useNexus((s) => s.dailyLogs);
+    76→    76→  const tasks = useNexus((s) => s.tasks);
+    77→    77→  const habits = useNexus((s) => s.habits);
+    78→    78→  const habitRecords = useNexus((s) => s.habitRecords);
+    79→    79→  const exams = useNexus((s) => s.exams);
+    80→    80→  const dsaActive = useNexus((s) => s.dsaActive);
+    81→    81→  const dsaTopics = useNexus((s) => s.dsaTopics);
+    82→    82→  const celebrated = useNexus((s) => s.celebrated);
+    83→    83→  const setSetting = useNexus((s) => s.setSetting);
+    84→    84→  const completeTask = useNexus((s) => s.completeTask);
+    85→    85→  const toggleHabitDate = useNexus((s) => s.toggleHabitDate);
+    86→    86→  const celebrate = useNexus((s) => s.celebrate);
+    87→    87→  const setActiveModule = useUI((s) => s.setActiveModule);
+    88→    88→
+    89→    89→  const themeRaw = useChartTheme();
+    90→    90→  const theme = useMemo(
+    91→    91→    () => themeRaw,
+    92→    92→    [themeRaw.dark, themeRaw.text, themeRaw.subtext, themeRaw.split, themeRaw.bg, themeRaw.tooltipBg],
+    93→    93→  );
+    94→    94→
+    95→    95→  // ── date labels (client-only component tree, safe to read clock) ──
+    96→    96→  const now = new Date();
+    97→    97→  const hour = now.getHours();
+    98→    98→  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    99→    99→  const dateLabel = now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+   100→   100→  const today = todayKey();
+   101→   101→
+   102→   102→  // ── derived data ──
+   103→   103→  const last7Keys = useMemo(() => eachDayKeys(addDays(new Date(), -6), new Date()), []);
+   104→   104→  const weekStartKeys = useMemo(() => eachDayKeys(startOfWeek(new Date()), new Date()), []);
+   105→   105→
+   106→   106→  const todayMin = dayTotalMinutes(dailyLogs[today]);
+   107→   107→  const targetMin = profile.dailyTargetHours * 60;
+   108→   108→  const todayPct = pct(todayMin, targetMin);
+   109→   109→
+   110→   110→  const weekMin = useMemo(() => sum(last7Keys.map((k) => dayTotalMinutes(dailyLogs[k]))), [last7Keys, dailyLogs]);
+   111→   111→
+   112→   112→  const tasksDone = useMemo(() => tasks.filter((t) => t.status === 'done').length, [tasks]);
+   113→   113→  const tasksPending = tasks.length - tasksDone;
+   114→   114→
+   115→   115→  const activeHabits = useMemo(() => habits.filter((h) => !h.archived), [habits]);
+   116→   116→  const habitsDone = useMemo(
+   117→   117→    () => activeHabits.filter((h) => !!habitRecords[h.id]?.[today]).length,
+   118→   118→    [activeHabits, habitRecords, today],
+   119→   119→  );
+   120→   120→  const habitScore = pct(habitsDone, activeHabits.length);
+   121→   121→
+   122→   122→  const streak = useMemo(() => computeStreak(dailyLogs), [dailyLogs]);
+   123→   123→
+   124→   124→  const codingMinWeek = useMemo(() => {
+   125→   125→    const ids = new Set(subjects.filter((s) => s.category === 'coding').map((s) => s.id));
+   126→   126→    return sum(
+   127→   127→      weekStartKeys.flatMap((k) =>
+   128→   128→        Object.entries(dailyLogs[k]?.minutes ?? {})
+   129→   129→          .filter(([sid]) => ids.has(sid))
+   130→   130→          .map(([, m]) => m),
+   131→   131→      ),
+   132→   132→    );
+   133→   133→  }, [weekStartKeys, dailyLogs, subjects]);
+   134→   134→  const codingHours = Math.round((codingMinWeek / 60) * 10) / 10;
+   135→   135→
+   136→   136→  const dsaSolved = useMemo(() => dsaTopics.reduce((a, t) => a + t.problemsSolved, 0), [dsaTopics]);
+   137→   137→
+   138→   138→  const focusTasks = useMemo(() => {
+   139→   139→    const picked = new Map<string, Task>();
+   140→   140→    for (const t of tasks) {
+   141→   141→      if (t.status === 'done') continue;
+   142→   142→      const dueOrOverdue = !!t.dueDate && t.dueDate <= today;
+   143→   143→      const hotPriority = t.priority === 'critical' || t.priority === 'important';
+   144→   144→      if (dueOrOverdue || hotPriority) picked.set(t.id, t);
+   145→   145→    }
+   146→   146→    return [...picked.values()]
+   147→   147→      .sort(
+   148→   148→        (a, b) =>
+   149→   149→          PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank ||
+   150→   150→          (a.dueDate ?? '9999-12-31').localeCompare(b.dueDate ?? '9999-12-31'),
+   151→   151→      )
+   152→   152→      .slice(0, 6);
+   153→   153→  }, [tasks, today]);
+   154→   154→
+   155→   155→  const weekData = useMemo(
+   156→   156→    () => last7Keys.map((k) => ({ key: k, day: fmtDayNum(k), minutes: dayTotalMinutes(dailyLogs[k]) })),
+   157→   157→    [last7Keys, dailyLogs],
+   158→   158→  );
+   159→   159→
+   160→   160→  const donutData = useMemo(() => {
+   161→   161→    const byCat = new Map<SubjectCategory, number>();
+   162→   162→    for (const k of last7Keys) {
+   163→   163→      const log = dailyLogs[k];
+   164→   164→      if (!log) continue;
+   165→   165→      for (const [sid, m] of Object.entries(log.minutes)) {
+   166→   166→        const cat = subjects.find((s) => s.id === sid)?.category;
+   167→   167→        if (!cat) continue;
+   168→   168→        byCat.set(cat, (byCat.get(cat) ?? 0) + m);
+   169→   169→      }
+   170→   170→    }
+   171→   171→    const data = [...byCat.entries()]
+   172→   172→      .filter(([, m]) => m > 0)
+   173→   173→      .sort((a, b) => b[1] - a[1])
+   174→   174→      .map(([cat, m]) => ({ name: CATEGORY_META[cat].label, value: m, itemStyle: { color: CATEGORY_META[cat].color } }));
+   175→   175→    return { data, total: sum([...byCat.values()]) };
+   176→   176→  }, [last7Keys, dailyLogs, subjects]);
+   177→   177→
+   178→   178→  type UpItem = { id: string; date: string; title: string; kind: string; color: string };
+   179→   179→  const upcoming = useMemo<UpItem[]>(() => {
+   180→   180→    const horizon = addDaysKey(today, 14);
+   181→   181→    const items: UpItem[] = [];
+   182→   182→    for (const e of exams) {
+   183→   183→      if (e.date >= today && e.date <= horizon) {
+   184→   184→        const meta = EXAM_TYPE_META[e.type];
+   185→   185→        items.push({ id: `exam-${e.id}`, date: e.date, title: e.title, kind: meta?.label ?? e.type, color: meta?.color ?? '#22d3ee' });
+   186→   186→      }
+   187→   187→    }
+   188→   188→    for (const t of tasks) {
+   189→   189→      if (t.status !== 'done' && t.dueDate && t.dueDate >= today && t.dueDate <= horizon) {
+   190→   190→        items.push({ id: `task-${t.id}`, date: t.dueDate, title: t.title, kind: 'Task', color: PRIORITY_META[t.priority].color });
+   191→   191→      }
+   192→   192→    }
+   193→   193→    return items.sort((a, b) => a.date.localeCompare(b.date)).slice(0, 8);
+   194→   194→  }, [exams, tasks, today]);
+   195→   195→
+   196→   196→  // ── celebrations ──
+   197→   197→  useEffect(() => {
+   198→   198→    const milestone = STREAK_MILESTONES.find((m) => m === streak.current);
+   199→   199→    if (!milestone || celebrated.includes(milestone)) return;
+   200→   200→    celebrate(milestone); // persists → effect won't re-fire
+   201→   201→    if (settings.confettiEnabled) fireConfettiBurst();
+   202→   202→    toast.success(`🔥 ${milestone}-day streak!`, { description: 'Consistency compounds — keep the chain alive.' });
+   203→   203→  }, [streak.current, celebrated, celebrate, settings.confettiEnabled]);
+   204→   204→
+   205→   205→  const habitsMountedRef = useRef(false);
+   206→   206→  const habitsFiredRef = useRef<string | null>(null);
+   207→   207→  const allHabitsDone = activeHabits.length > 0 && habitsDone === activeHabits.length;
+   208→   208→  useEffect(() => {
+   209→   209→    if (!habitsMountedRef.current) {
+   210→   210→      habitsMountedRef.current = true;
+   211→   211→      return; // skip firing on initial mount (e.g. already-complete seed data)
+   212→   212→    }
+   213→   213→    if (!allHabitsDone) return;
+   214→   214→    const key = todayKey();
+   215→   215→    if (habitsFiredRef.current === key) return;
+   216→   216→    habitsFiredRef.current = key;
+   217→   217→    if (settings.confettiEnabled) fireConfettiBurst();
+   218→   218→    toast.success('All habits done! 🔥', { description: `${habitsDone}/${activeHabits.length} complete today.` });
+   219→   219→  }, [allHabitsDone, settings.confettiEnabled, habitsDone, activeHabits.length]);
+   220→   220→
+   221→   221→  // ── widget customization ──
+   222→   222→  const enabledWidgets = useMemo(() => {
+   223→   223→    const list = settings.dashboardWidgets?.length ? settings.dashboardWidgets : DASHBOARD_WIDGETS_DEFAULT;
+   224→   224→    return list.filter((id) => id in WIDGET_META);
+   225→   225→  }, [settings.dashboardWidgets]);
+   226→   226→
+   227→   227→  const moveWidget = (index: number, dir: -1 | 1) => {
+   228→   228→    const next = [...enabledWidgets];
+   229→   229→    const j = index + dir;
+   230→   230→    if (j < 0 || j >= next.length) return;
+   231→   231→    [next[index], next[j]] = [next[j], next[index]];
+   232→   232→    setSetting({ dashboardWidgets: next });
+   233→   233→  };
+   234→   234→  const toggleWidget = (id: string, on: boolean) => {
+   235→   235→    const next = on ? [...enabledWidgets, id] : enabledWidgets.filter((w) => w !== id);
+   236→   236→    setSetting({ dashboardWidgets: next });
+   237→   237→  };
+   238→   238→
+   239→   239→  // ── quick actions ──
+   240→   240→  const goLogStudy = () => setActiveModule('tracker');
+   241→   241→  const goNewTask = () => {
+   242→   242→    setActiveModule('tasks');
+   243→   243→    window.dispatchEvent(new CustomEvent('nexus:new-task'));
+   244→   244→  };
+   245→   245→  const goStartTimer = () => {
+   246→   246→    setActiveModule('sessions');
+   247→   247→    window.dispatchEvent(new CustomEvent('nexus:timer-started'));
+   248→   248→  };
+   249→   249→
+   250→   250→  // ── chart options ──
+   251→   251→  const weeklyOption = useMemo<EChartsOption>(
+   252→   252→    () => ({
+   253→   253→      backgroundColor: 'transparent',
+   254→   254→      tooltip: {
+   255→   255→        trigger: 'axis',
+   256→   256→        ...baseTooltip(theme),
+   257→   257→        valueFormatter: (v: unknown) => minutesToHM(Number(v)),
+   258→   258→      },
+   259→   259→      grid: { left: 6, right: 14, top: 30, bottom: 0, containLabel: true },
+   260→   260→      xAxis: {
+   261→   261→        type: 'category',
+   262→   262→        data: weekData.map((d) => d.day),
+   263→   263→        boundaryGap: false,
+   264→   264→        axisTick: { show: false },
+   265→   265→        axisLine: { lineStyle: { color: theme.split } },
+   266→   266→        axisLabel: { color: theme.subtext, fontSize: 10 },
+   267→   267→      },
+   268→   268→      yAxis: {
+   269→   269→        type: 'value',
+   270→   270→        splitLine: { lineStyle: { color: theme.split } },
+   271→   271→        axisLabel: { color: theme.subtext, fontSize: 10, formatter: (v: number) => `${Math.round((v / 60) * 10) / 10}h` },
+   272→   272→      },
+   273→   273→      series: [
+   274→   274→        {
+   275→   275→          name: 'Study time',
+   276→   276→          type: 'line',
+   277→   277→          smooth: true,
+   278→   278→          data: weekData.map((d) => d.minutes),
+   279→   279→          symbol: 'circle',
+   280→   280→          symbolSize: 6,
+   281→   281→          lineStyle: { width: 2.5, color: '#22d3ee' },
+   282→   282→          itemStyle: { color: '#22d3ee', borderColor: theme.bg, borderWidth: 2 },
+   283→   283→          areaStyle: { color: 'rgba(34,211,238,0.14)' },
+   284→   284→          markLine: {
+   285→   285→            silent: true,
+   286→   286→            symbol: 'none',
+   287→   287→            lineStyle: { type: 'dashed', color: theme.subtext },
+   288→   288→            label: { formatter: `Target ${profile.dailyTargetHours}h`, color: theme.subtext, fontSize: 10, position: 'insideEndTop' },
+   289→   289→            data: [{ yAxis: targetMin }],
+   290→   290→          },
+   291→   291→        },
+   292→   292→      ],
+   293→   293→    }),
+   294→   294→    [theme, weekData, targetMin, theme.bg, profile.dailyTargetHours],
+   295→   295→  );
+   296→   296→
+   297→   297→  const donutOption = useMemo<EChartsOption>(
+   298→   298→    () => ({
+   299→   299→      backgroundColor: 'transparent',
+   300→   300→      tooltip: {
+   301→   301→        trigger: 'item',
+   302→   302→        ...baseTooltip(theme),
+   303→   303→        valueFormatter: (v: unknown) => minutesToHM(Number(v)),
+   304→   304→      },
+   305→   305→      legend: { bottom: 0, icon: 'circle', itemWidth: 8, itemHeight: 8, textStyle: { color: theme.subtext, fontSize: 10 } },
+   306→   306→      title: {
+   307→   307→        text: `${(donutData.total / 60).toFixed(1)}h`,
+   308→   308→        subtext: '7-day total',
+   309→   309→        left: 'center',
+   310→   310→        top: '36%',
+   311→   311→        textStyle: { color: theme.text, fontSize: 22, fontWeight: 600 },
+   312→   312→        subtextStyle: { color: theme.subtext, fontSize: 10 },
+   313→   313→      },
+   314→   314→      series: [
+   315→   315→        {
+   316→   316→          type: 'pie',
+   317→   317→          radius: ['55%', '80%'],
+   318→   318→          center: ['50%', '42%'],
+   319→   319→          avoidLabelOverlap: true,
+   320→   320→          itemStyle: { borderRadius: 6, borderColor: theme.bg, borderWidth: 2 },
+   321→   321→          label: { show: false },
+   322→   322→          data: donutData.data,
+   323→   323→        },
+   324→   324→      ],
+   325→   325→    }),
+   326→   326→    [theme, donutData, theme.bg, theme.text, theme.subtext],
+   327→   327→  );
+   328→   328→
+   329→   329→  // ── widget renderers ──
+   330→   330→  const renderHero = () => (
+   331→   331→    <section className="glass relative h-[300px] overflow-hidden rounded-2xl md:h-[360px]">
+   332→   332→      <Hero3D />
+   333→   333→      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/85 via-background/25 to-transparent" aria-hidden="true" />
+   334→   334→      <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-5 md:p-6">
+   335→   335→        <div>
+   336→   336→          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{dateLabel}</p>
+   337→   337→          <h2 className="text-gradient mt-1.5 text-xl font-semibold tracking-tight md:text-2xl">
+   338→   338→            {greeting}, {profile.name}
+   339→   339→          </h2>
+   340→   340→        </div>
+   341→   341→        <div className="flex flex-wrap items-end justify-between gap-4">
+   342→   342→          <div className="pointer-events-auto flex flex-wrap gap-2">
+   343→   343→            <Button size="sm" className="glow-soft gap-1.5" onClick={goLogStudy}>
+   344→   344→              <BookOpenCheck className="h-3.5 w-3.5" aria-hidden="true" /> Log study
+   345→   345→            </Button>
+   346→   346→            <Button size="sm" variant="outline" className="border-border/60 bg-background/50 backdrop-blur" onClick={goNewTask}>
+   347→   347→              <Plus className="h-3.5 w-3.5" aria-hidden="true" /> New task
+   348→   348→            </Button>
+   349→   349→            <Button size="sm" variant="outline" className="border-border/60 bg-background/50 backdrop-blur" onClick={goStartTimer}>
+   350→   350→              <Play className="h-3.5 w-3.5" aria-hidden="true" /> Start timer
+   351→   351→            </Button>
+   352→   352→          </div>
+   353→   353→          <div className="pointer-events-auto rounded-2xl bg-background/40 p-1.5 backdrop-blur">
+   354→   354→            <RingProgress value={todayPct} size={88} stroke={8} color="#22d3ee" label="Today's study target progress">
+   355→   355→              <span className="font-mono text-sm font-semibold tabular-nums">{minutesToHM(todayMin)}</span>
+   356→   356→              <span className="text-[9px] text-muted-foreground">of {profile.dailyTargetHours}h target</span>
+   357→   357→            </RingProgress>
+   358→   358→          </div>
+   359→   359→        </div>
+   360→   360→      </div>
+   361→   361→    </section>
+   362→   362→  );
+   363→   363→
+   364→   364→  const renderKpis = () => (
+   365→   365→    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+   366→   366→      <KpiCard
+   367→   367→        icon={Clock}
+   368→   368→        label="Today's study"
+   369→   369→        value={minutesToHM(todayMin)}
+   370→   370→        sub={`${todayPct}% of ${profile.dailyTargetHours}h target`}
+   371→   371→        tone="cyan"
+   372→   372→        progress={todayPct}
+   373→   373→      />
+   374→   374→      <KpiCard
+   375→   375→        icon={CalendarDays}
+   376→   376→        label="Last 7 days"
+   377→   377→        value={minutesToHM(weekMin)}
+   378→   378→        sub={`Avg ${minutesToHM(Math.round(weekMin / 7))}/day`}
+   379→   379→        tone="violet"
+   380→   380→        progress={pct(weekMin, targetMin * 7)}
+   381→   381→      />
+   382→   382→      <KpiCard
+   383→   383→        icon={ListTodo}
+   384→   384→        label="Tasks"
+   385→   385→        value={`${tasksDone}/${tasks.length}`}
+   386→   386→        sub={`${tasksPending} pending`}
+   387→   387→        tone="emerald"
+   388→   388→        progress={pct(tasksDone, tasks.length)}
+   389→   389→      />
+   390→   390→      <KpiCard
+   391→   391→        icon={Check}
+   392→   392→        label="Habit score"
+   393→   393→        value={`${habitScore}%`}
+   394→   394→        sub={`${habitsDone}/${activeHabits.length} habits today`}
+   395→   395→        tone="pink"
+   396→   396→        progress={habitScore}
+   397→   397→      />
+   398→   398→      <KpiCard icon={Flame} label="Current streak" value={`${streak.current}d`} sub={`Best: ${streak.best}d`} tone="amber" />
+   399→   399→      <KpiCard
+   400→   400→        icon={Code2}
+   401→   401→        label="Coding this week"
+   402→   402→        value={`${codingHours}h`}
+   403→   403→        sub={`Target ${profile.weeklyCodingTargetHours}h`}
+   404→   404→        tone="rose"
+   405→   405→        progress={pct(codingMinWeek, profile.weeklyCodingTargetHours * 60)}
+   406→   406→      />
+   407→   407→      {!dsaActive ? (
+   408→   408→        <button
+   409→   409→          type="button"
+   410→   410→          onClick={() => setActiveModule('dsa')}
+   411→   411→          aria-label="DSA plan is locked — open DSA module"
+   412→   412→          className="block w-full cursor-pointer rounded-2xl text-left transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+   413→   413→        >
+   414→   414→          <KpiCard icon={Lock} label="DSA status" value="Locked" sub="Starts after Semester 1" tone="slate" />
+   415→   415→        </button>
+   416→   416→      ) : (
+   417→   417→        <KpiCard icon={Brain} label="DSA status" value={`${dsaSolved}`} sub="Problems solved" tone="slate" />
+   418→   418→      )}
+   419→   419→    </div>
+   420→   420→  );
+   421→   421→
+   422→   422→  const renderFocus = () => (
+   423→   423→    <div className="glass rounded-2xl p-4">
+   424→   424→      <div className="mb-3 flex items-center justify-between gap-2">
+   425→   425→        <h3 className="text-sm font-semibold tracking-tight">Focus today</h3>
+   426→   426→        <Badge variant="outline" className="text-[10px] text-muted-foreground">{focusTasks.length} urgent</Badge>
+   427→   427→      </div>
+   428→   428→      {focusTasks.length === 0 ? (
+   429→   429→        <EmptyState icon={Coffee} title="Nothing urgent — enjoy the calm" hint="No overdue or high-priority tasks right now." />
+   430→   430→      ) : (
+   431→   431→        <div className="slim-scroll max-h-96 space-y-1.5 overflow-y-auto pr-1">
+   432→   432→          {focusTasks.map((t) => {
+   433→   433→            const overdue = !!t.dueDate && t.dueDate < today;
+   434→   434→            return (
+   435→   435→              <div key={t.id} className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/40 px-3 py-2">
+   436→   436→                <Checkbox
+   437→   437→                  className="mt-0.5"
+   438→   438→                  onCheckedChange={(v) => {
+   439→   439→                    if (!v) return;
+   440→   440→                    completeTask(t.id);
+   441→   441→                    toast.success('Task completed 🎉', { description: t.title });
+   442→   442→                  }}
+   443→   443→                  aria-label={`Mark "${t.title}" complete`}
+   444→   444→                />
+   445→   445→                <button
+   446→   446→                  type="button"
+   447→   447→                  onClick={() => setActiveModule('tasks')}
+   448→   448→                  className="min-w-0 flex-1 truncate text-left text-sm transition-colors hover:text-primary"
+   449→   449→                  title={t.title}
+   450→   450→                >
+   451→   451→                  {t.title}
+   452→   452→                </button>
+   453→   453→                <span
+   454→   454→                  className="h-2 w-2 shrink-0 rounded-full"
+   455→   455→                  style={{ backgroundColor: PRIORITY_META[t.priority].color }}
+   456→   456→                  aria-hidden="true"
+   457→   457→                  title={PRIORITY_META[t.priority].label}
+   458→   458→                />
+   459→   459→                {t.dueDate && (
+   460→   460→                  <Badge
+   461→   461→                    variant="outline"
+   462→   462→                    className={cn('shrink-0 text-[10px]', overdue ? 'border-rose-500/40 text-rose-400' : 'text-muted-foreground')}
+   463→   463→                  >
+   464→   464→                    {overdue ? `Overdue · ${fmtDayNum(t.dueDate)}` : `Due ${fmtDayNum(t.dueDate)}`}
+   465→   465→                  </Badge>
+   466→   466→                )}
+   467→   467→              </div>
+   468→   468→            );
+   469→   469→          })}
+   470→   470→        </div>
+   471→   471→      )}
+   472→   472→    </div>
+   473→   473→  );
+   474→   474→
+   475→   475→  const renderHabits = () => (
+   476→   476→    <div className="glass rounded-2xl p-4">
+   477→   477→      <div className="mb-3 flex items-center justify-between gap-2">
+   478→   478→        <h3 className="text-sm font-semibold tracking-tight">Habits today</h3>
+   479→   479→        <Badge variant="outline" className={cn('text-[10px]', allHabitsDone ? 'border-emerald-500/40 text-emerald-400' : 'text-muted-foreground')}>
+   480→   480→          {habitsDone}/{activeHabits.length}
+   481→   481→        </Badge>
+   482→   482→      </div>
+   483→   483→      {activeHabits.length === 0 ? (
+   484→   484→        <EmptyState icon={Check} title="No habits yet" hint="Create habits in the Habits module to track them here." />
+   485→   485→      ) : (
+   486→   486→        <div className="flex flex-wrap gap-2">
+   487→   487→          {activeHabits.map((h) => {
+   488→   488→            const done = !!habitRecords[h.id]?.[today];
+   489→   489→            return (
+   490→   490→              <button
+   491→   491→                key={h.id}
+   492→   492→                type="button"
+   493→   493→                onClick={() => toggleHabitDate(h.id, today)}
+   494→   494→                aria-pressed={done}
+   495→   495→                aria-label={`${done ? 'Undo' : 'Complete'} habit ${h.name}`}
+   496→   496→                className={cn(
+   497→   497→                  'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all active:scale-95',
+   498→   498→                  !done && 'border-border/70 bg-muted/40 text-muted-foreground hover:border-foreground/30 hover:text-foreground',
+   499→   499→                )}
+   500→   500→                style={done ? { backgroundColor: `${h.color}1f`, borderColor: `${h.color}66`, color: h.color } : undefined}
+   501→   501→              >
+   502→   502→                {done && <Check className="h-3 w-3" aria-hidden="true" />}
+   503→   503→                {h.name}
+   504→   504→              </button>
+   505→   505→            );
+   506→   506→          })}
+   507→   507→        </div>
+   508→   508→      )}
+   509→   509→    </div>
+   510→   510→  );
+   511→   511→
+   512→   512→  const renderWeekly = () => (
+   513→   513→    <ChartCard
+   514→   514→      title="Last 7 days"
+   515→   515→      subtitle="Total focused minutes per day"
+   516→   516→      option={weeklyOption}
+   517→   517→      csv={{ name: 'last-7-days-study', rows: weekData.map(({ day, minutes }) => ({ day, minutes })) }}
+   518→   518→    />
+   519→   519→  );
+   520→   520→
+   521→   521→  const renderDonut = () =>
+   522→   522→    donutData.total === 0 ? (
+   523→   523→      <div className="glass rounded-2xl p-4">
+   524→   524→        <h3 className="text-sm font-semibold tracking-tight">7-day allocation</h3>
+   525→   525→        <EmptyState icon={CalendarDays} title="No study time logged" hint="Log a session to see your category split." />
+   526→   526→      </div>
+   527→   527→    ) : (
+   528→   528→      <ChartCard title="7-day allocation" subtitle="Minutes by subject category" option={donutOption} height={300} />
+   529→   529→    );
+   530→   530→
+   531→   531→  const renderExams = () => (
+   532→   532→    <div className="glass rounded-2xl p-4">
+   533→   533→      <div className="mb-3 flex items-center justify-between gap-2">
+   534→   534→        <h3 className="text-sm font-semibold tracking-tight">Upcoming</h3>
+   535→   535→        <Badge variant="outline" className="text-[10px] text-muted-foreground">Next 14 days</Badge>
+   536→   536→      </div>
+   537→   537→      {upcoming.length === 0 ? (
+   538→   538→        <EmptyState icon={CalendarDays} title="No deadlines in the next 14 days" hint="Exams, assignments and task due dates will appear here." />
+   539→   539→      ) : (
+   540→   540→        <div className="slim-scroll max-h-96 space-y-1.5 overflow-y-auto pr-1">
+   541→   541→          {upcoming.map((item) => (
+   542→   542→            <button
+   543→   543→              key={item.id}
+   544→   544→              type="button"
+   545→   545→              onClick={() => setActiveModule('calendar')}
+   546→   546→              className="flex w-full items-center gap-3 rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-left transition-colors hover:border-primary/30 hover:bg-muted/40"
+   547→   547→            >
+   548→   548→              <span className="shrink-0 rounded-lg bg-primary/10 px-2 py-1 font-mono text-[10px] leading-none text-primary">
+   549→   549→                {fmtDayNum(item.date)}
+   550→   550→              </span>
+   551→   551→              <span className="min-w-0 flex-1 truncate text-sm">{item.title}</span>
+   552→   552→              <span className="flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground">
+   553→   553→                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} aria-hidden="true" />
+   554→   554→                {item.kind}
+   555→   555→              </span>
+   556→   556→            </button>
+   557→   557→          ))}
+   558→   558→        </div>
+   559→   559→      )}
+   560→   560→    </div>
+   561→   561→  );
+   562→   562→
+   563→   563→  const renderWidget = (id: string): ReactNode => {
+   564→   564→    switch (id) {
+   565→   565→      case 'hero': return renderHero();
+   566→   566→      case 'kpis': return renderKpis();
+   567→   567→      case 'focus': return renderFocus();
+   568→   568→      case 'habits': return renderHabits();
+   569→   569→      case 'weekly': return renderWeekly();
+   570→   570→      case 'donut': return renderDonut();
+   571→   571→      case 'exams': return renderExams();
+   572→   572→      default: return null;
+   573→   573→    }
+   574→   574→  };
+   575→   575→
+   576→   576→  return (
+   577→   577→    <div className="space-y-6">
+   578→   578→      <ModuleHeader
+   579→   579→        icon={LayoutDashboard}
+   580→   580→        title="Overview Dashboard"
+   581→   581→        subtitle={`${profile.university} · Semester ${profile.semester}`}
+   582→   582→        actions={
+   583→   583→          <Popover>
+   584→   584→            <PopoverTrigger asChild>
+   585→   585→              <Button variant="outline" size="sm" className="gap-1.5">
+   586→   586→                <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" /> Customize widgets
+   587→   587→              </Button>
+   588→   588→            </PopoverTrigger>
+   589→   589→            <PopoverContent align="end" className="w-64 p-3">
+   590→   590→              <p className="mb-2 text-xs font-medium text-muted-foreground">Toggle & reorder dashboard widgets</p>
+   591→   591→              <div className="space-y-0.5">
+   592→   592→                {enabledWidgets.map((id, i) => (
+   593→   593→                  <div key={id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/50">
+   594→   594→                    <Checkbox
+   595→   595→                      checked
+   596→   596→                      onCheckedChange={(v) => {
+   597→   597→                        if (!v) toggleWidget(id, false);
+   598→   598→                      }}
+   599→   599→                      aria-label={`Hide ${WIDGET_META[id]?.label ?? id}`}
+   600→   600→                    />
+   601→   601→                    <span className="flex-1 text-xs">{WIDGET_META[id]?.label ?? id}</span>
+   602→   602→                    <Button
+   603→   603→                      variant="ghost"
+   604→   604→                      size="icon"
+   605→   605→                      className="h-6 w-6"
+   606→   606→                      disabled={i === 0}
+   607→   607→                      onClick={() => moveWidget(i, -1)}
+   608→   608→                      aria-label={`Move ${WIDGET_META[id]?.label ?? id} up`}
+   609→   609→                    >
+   610→   610→                      <ArrowUp className="h-3 w-3" aria-hidden="true" />
+   611→   611→                    </Button>
+   612→   612→                    <Button
+   613→   613→                      variant="ghost"
+   614→   614→                      size="icon"
+   615→   615→                      className="h-6 w-6"
+   616→   616→                      disabled={i === enabledWidgets.length - 1}
+   617→   617→                      onClick={() => moveWidget(i, 1)}
+   618→   618→                      aria-label={`Move ${WIDGET_META[id]?.label ?? id} down`}
+   619→   619→                    >
+   620→   620→                      <ArrowDown className="h-3 w-3" aria-hidden="true" />
+   621→   621→                    </Button>
+   622→   622→                  </div>
+   623→   623→                ))}
+   624→   624→                {DASHBOARD_WIDGETS_DEFAULT.filter((id) => !enabledWidgets.includes(id)).map((id) => (
+   625→   625→                  <div key={id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 opacity-60 hover:bg-muted/50">
+   626→   626→                    <Checkbox
+   627→   627→                      checked={false}
+   628→   628→                      onCheckedChange={(v) => {
+   629→   629→                        if (v) toggleWidget(id, true);
+   630→   630→                      }}
+   631→   631→                      aria-label={`Show ${WIDGET_META[id]?.label ?? id}`}
+   632→   632→                    />
+   633→   633→                    <span className="flex-1 text-xs">{WIDGET_META[id]?.label ?? id}</span>
+   634→   634→                  </div>
+   635→   635→                ))}
+   636→   636→              </div>
+   637→   637→            </PopoverContent>
+   638→   638→          </Popover>
+   639→   639→        }
+   640→   640→      />
+   641→   641→      {enabledWidgets.length === 0 ? (
+   642→   642→        <EmptyState
+   643→   643→          icon={LayoutDashboard}
+   644→   644→          title="All widgets are hidden"
+   645→   645→          hint="Use the Customize widgets button to bring sections back."
+   646→   646→        />
+   647→   647→      ) : (
+   648→   648→        <div className="space-y-6">
+   649→   649→          {enabledWidgets.map((id) => (
+   650→   650→            <div key={id}>{renderWidget(id)}</div>
+   651→   651→          ))}
+   652→   652→        </div>
+   653→   653→      )}
+   654→   654→    </div>
+   655→   655→  );
+   656→   656→}
+   657→   657→

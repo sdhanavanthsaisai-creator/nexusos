@@ -88,14 +88,14 @@ function TaskCard({ task, onEdit }: { task: Task; onEdit: (id: ID) => void }) {
 
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         <span
-          className="rounded px-1.5 py-0.5 text-[10px] font-medium"
-          style={{ color: area.color, backgroundColor: `${area.color}1a` }}
+          className="rounded bg-foreground/[0.08] px-1.5 py-0.5 text-[10px] font-medium"
+          style={{ color: area.color }}
         >
           {area.label}
         </span>
         {task.dueDate && (
           <span
-            className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium', overdue ? 'bg-rose-500/15 text-rose-400' : 'bg-muted text-muted-foreground')}
+            className={cn('rounded px-1.5 py-0.5 text-[10px] font-medium tabular-nums', overdue ? 'bg-foreground/[0.08] text-foreground font-medium' : 'bg-muted text-muted-foreground')}
           >
             {fmtDayNum(task.dueDate)}
           </span>

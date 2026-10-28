@@ -9,6 +9,7 @@ import type {
   Subtask, Task, TaskArea, TaskPriority, TaskStatus, UserProfile,
 } from './types';
 import { buildSeed } from './seed';
+import { INK_VARS } from './constants';
 import { addDays, addDaysKey, dateKey, todayKey, uid } from './utils';
 
 const STORAGE_KEY = 'nexusos-data-v1';
@@ -397,7 +398,19 @@ export const useNexus = create<NexusStore>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 1,
+      version: 2,
+      migrate: (persisted, version) => {
+        const s = persisted as NexusStore;
+        if (version < 2) {
+          // Roboto® RB/25 re-skin: remap entity colors onto the monochrome ink ramp.
+          try {
+            s.subjects = (s.subjects ?? []).map((x, i) => ({ ...x, color: INK_VARS[i % INK_VARS.length] }));
+            s.habits = (s.habits ?? []).map((x, i) => ({ ...x, color: INK_VARS[i % INK_VARS.length] }));
+            s.skills = (s.skills ?? []).map((x, i) => ({ ...x, color: INK_VARS[i % INK_VARS.length] }));
+          } catch { /* best-effort migration */ }
+        }
+        return s;
+      },
       partialize: (s) => {
         const { _hydrated: _h, setHydrated: _sh, ...rest } = s;
         void _h; void _sh;

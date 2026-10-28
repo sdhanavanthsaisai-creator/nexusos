@@ -1,15 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+/**
+ * Roboto® RB/25 typography:
+ * - Aeonik (commercial) → Inter as the sanctioned web substitute (--font-rb-sans)
+ * - IBM Plex Mono → --font-rb-mono
+ * - Times New Roman → system serif via `.font-editorial` (globals.css)
+ */
+const rbSans = Inter({
+  variable: "--font-rb-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const rbMono = IBM_Plex_Mono({
+  variable: "--font-rb-mono",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -37,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${rbSans.variable} ${rbMono.variable} antialiased bg-background text-foreground`}
       >
         {children}
       </body>

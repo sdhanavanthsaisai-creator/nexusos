@@ -157,7 +157,7 @@ export default function SessionsModule() {
       />
 
       {/* ── Focus timer ─────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl bg-gradient-to-r from-cyan-400/50 via-violet-500/50 to-fuchsia-500/50 p-px">
+      <div className="rounded-2xl bg-foreground/20 p-px">
         <section className="glass flex flex-col items-center gap-6 rounded-[15px] p-5 sm:p-6 md:flex-row md:items-stretch md:justify-between">
           <div className="flex w-full flex-col gap-4 md:max-w-64">
             <div>
@@ -234,7 +234,7 @@ export default function SessionsModule() {
               value={(elapsedSeconds / (RING_MINUTES * 60)) * 100}
               size={248}
               stroke={11}
-              color={timer.running ? '#34d399' : timer.accumulatedMs > 0 ? '#fbbf24' : 'var(--primary)'}
+              color={timer.running ? 'var(--ink-1)' : timer.accumulatedMs > 0 ? 'var(--ink-5)' : 'var(--primary)'}
               label={`${Math.floor(elapsedSeconds / 60)} of ${RING_MINUTES} minutes`}
             >
               <span className="font-mono text-4xl font-semibold tabular-nums tracking-tight sm:text-5xl">
@@ -271,7 +271,7 @@ export default function SessionsModule() {
           value={
             <>
               {weekSessions.length ? avgConcentration.toFixed(1) : '—'}
-              <span className="ml-0.5 text-amber-400">★</span>
+              <span className="ml-0.5 text-foreground">★</span>
             </>
           }
           sub="focus quality this week"
@@ -365,7 +365,7 @@ export default function SessionsModule() {
                           <span className="flex items-center gap-2 text-xs font-medium">
                             <span
                               className="h-2 w-2 shrink-0 rounded-full"
-                              style={{ background: subj?.color ?? '#94a3b8' }}
+                              style={{ background: subj?.color ?? 'var(--ink-4)' }}
                               aria-hidden="true"
                             />
                             {subj?.name ?? 'Deleted subject'}
@@ -406,7 +406,7 @@ export default function SessionsModule() {
                               <AlertDialogTrigger asChild>
                                 <Button
                                   variant="ghost" size="icon"
-                                  className="h-7 w-7 text-muted-foreground hover:bg-rose-400/10 hover:text-rose-400"
+                                  className="h-7 w-7 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                                   aria-label={`Delete session on ${s.date}`}
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -423,7 +423,7 @@ export default function SessionsModule() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                                   <AlertDialogAction
-                                    className="bg-rose-500 text-white hover:bg-rose-600"
+                                    className="bg-foreground text-background hover:bg-foreground/90"
                                     onClick={() => {
                                       deleteSession(s.id);
                                       toast.success('Session deleted');

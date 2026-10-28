@@ -75,7 +75,7 @@ export function FocusView() {
     if (isLastUrgent && !celebratedRef.current) {
       celebratedRef.current = true;
       if (confettiEnabled) {
-        void confetti({ particleCount: 180, spread: 80, origin: { y: 0.6 } });
+        void confetti({ particleCount: 180, spread: 80, origin: { y: 0.6 }, colors: ['#FFFFFF', '#C9C9C9', '#F1F1F1'] });
         toast.success('All clear for today! 🎉');
       }
     }
@@ -120,7 +120,7 @@ export function FocusView() {
                       {PRIORITY_META[t.priority].label}
                     </span>
                     {t.dueDate && (
-                      <span className={cn(isOverdue(t) && 'font-medium text-rose-400')}>
+                      <span className={cn('tabular-nums', isOverdue(t) && 'font-medium text-foreground')}>
                         {fmtDayNum(t.dueDate)}
                       </span>
                     )}

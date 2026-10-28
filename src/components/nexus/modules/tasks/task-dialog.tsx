@@ -377,7 +377,7 @@ function TaskDialogInner({ open, onOpenChange, task, defaultDueDate = null }: Ta
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={removeTask}
-                    className="bg-destructive text-white hover:bg-destructive/90"
+                    className="bg-destructive text-background hover:bg-destructive/90"
                   >
                     Delete
                   </AlertDialogAction>

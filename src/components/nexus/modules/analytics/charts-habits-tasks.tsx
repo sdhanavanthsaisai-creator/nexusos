@@ -44,8 +44,8 @@ export function TaskCompletionTrendChart() {
     },
     series: [{
       name: 'Tasks completed', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, showSymbol: false,
-      lineStyle: { width: 2, color: '#34d399' }, itemStyle: { color: '#34d399' },
-      areaStyle: { color: areaGradient('#34d399') },
+      lineStyle: { width: 2, color: theme.palette[0] }, itemStyle: { color: theme.palette[0] },
+      areaStyle: { color: areaGradient(theme.dark ? '#ffffff' : '#000000') },
       data: rows.map((r) => r.count),
     }],
   }), [theme, rows]);
@@ -103,7 +103,11 @@ export function HabitConsistencyHeatmapChart() {
         min: 0, max: 100, orient: 'horizontal', left: 'center', bottom: 4,
         itemWidth: 10, itemHeight: 72, text: ['on track', 'off track'],
         textStyle: { color: theme.subtext, fontSize: 10 },
-        inRange: { color: theme.dark ? ['#15251e', '#22c07a', '#6ee7b7'] : ['#e9f6ee', '#6ee7b7', '#059669'] },
+        inRange: {
+          color: theme.dark
+            ? ['rgba(255,255,255,0.03)', 'rgba(255,255,255,0.20)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.72)', 'rgba(255,255,255,0.95)']
+            : ['rgba(0,0,0,0.03)', 'rgba(0,0,0,0.18)', 'rgba(0,0,0,0.42)', 'rgba(0,0,0,0.70)', 'rgba(0,0,0,0.92)'],
+        },
       },
       series: [{
         name: 'Consistency', type: 'heatmap',
@@ -158,8 +162,8 @@ export function TaskBurndownChart() {
     },
     series: [{
       name: 'Open tasks', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, showSymbol: false,
-      lineStyle: { width: 2, color: '#f472b6' }, itemStyle: { color: '#f472b6' },
-      areaStyle: { color: areaGradient('#f472b6') },
+      lineStyle: { width: 2, color: theme.palette[0] }, itemStyle: { color: theme.palette[0] },
+      areaStyle: { color: areaGradient(theme.dark ? '#ffffff' : '#000000') },
       data: rows.map((r) => r.open),
     }],
   }), [theme, rows]);
@@ -256,21 +260,21 @@ export function SemesterGoalProgress() {
       </div>
 
       <div className="mt-3 flex flex-col items-center gap-5 sm:flex-row sm:items-center">
-        <RingProgress value={overall} size={116} stroke={10} color="#a78bfa" label={`${overall}% of semester goal`}>
+        <RingProgress value={overall} size={116} stroke={10} color="currentColor" label={`${overall}% of semester goal`}>
           <span className="font-mono text-xl font-semibold tabular-nums">{overall}%</span>
           <span className="text-[10px] text-muted-foreground">of goal</span>
         </RingProgress>
         <div className="w-full flex-1 space-y-3.5">
           <GoalBar
-            label="Daily target adherence" value={data.adherence} color="#22d3ee"
+            label="Daily target adherence" value={data.adherence} color="var(--ink-2)"
             detail={`${data.metDays} of ${data.totalDays} days hit ${minutesToHM(profile.dailyTargetHours * 60)}`}
           />
           <GoalBar
-            label="Coding weekly target" value={data.codingPct} color="#34d399"
+            label="Coding weekly target" value={data.codingPct} color="var(--ink-3)"
             detail={`${minutesToHM(data.codingMin)} of ${profile.weeklyCodingTargetHours}h this week`}
           />
           <GoalBar
-            label="Habit score (this month)" value={data.habitScore} color="#fbbf24"
+            label="Habit score (this month)" value={data.habitScore} color="var(--ink-4)"
             detail={`${data.habitScore}% avg completion across ${habits.length} habits`}
           />
         </div>

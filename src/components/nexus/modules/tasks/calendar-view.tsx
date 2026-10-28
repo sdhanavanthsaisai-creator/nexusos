@@ -153,11 +153,10 @@ export function CalendarView({ onEdit, onAddOnDay }: CalendarProps) {
                       }}
                       title={t.title}
                       className={cn(
-                        'truncate rounded px-1 text-left text-[10px] leading-4 hover:brightness-110',
+                        'truncate rounded bg-foreground/[0.08] px-1 text-left text-[10px] leading-4 hover:brightness-110',
                         done && 'line-through opacity-55',
                       )}
                       style={{
-                        backgroundColor: `${c}22`,
                         color: done ? 'var(--muted-foreground)' : c,
                       }}
                     >
@@ -218,12 +217,12 @@ export function CalendarView({ onEdit, onAddOnDay }: CalendarProps) {
                       {t.title}
                     </span>
                     {isOverdue(t) && (
-                      <span className="text-[10px] font-medium text-rose-400">overdue</span>
+                      <span className="text-[10px] font-medium tabular-nums text-foreground">overdue</span>
                     )}
                     <Badge
                       variant="outline"
-                      className="h-4 shrink-0 px-1.5 text-[9px]"
-                      style={{ color: status.color, borderColor: `${status.color}55` }}
+                      className="h-4 shrink-0 border-foreground/25 px-1.5 text-[9px]"
+                      style={{ color: status.color }}
                     >
                       {status.label}
                     </Badge>

@@ -173,9 +173,9 @@ export default function CalendarModule() {
           <>
             <span className="mr-1 hidden items-center gap-3 text-[11px] text-muted-foreground md:flex">
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" />Tasks</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-rose-400" />Exams</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-400" />Sessions</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" />Habit perfect</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-foreground" />Exams</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full border-2 border-foreground bg-transparent" />Sessions</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-foreground/45" />Habit perfect</span>
             </span>
             <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={openExamDialog}>
               <Plus className="h-3.5 w-3.5" /> Add event
@@ -233,35 +233,30 @@ export default function CalendarModule() {
                       return (
                         <span
                           key={t.id}
-                          className={`flex items-center gap-1 truncate rounded px-1 py-px text-[10px] leading-tight ${done ? 'text-muted-foreground line-through' : ''}`}
-                          style={{ background: `${PRIORITY_META[t.priority].color}22` }}
+                          className={`flex items-center gap-1 truncate rounded bg-foreground/[0.08] px-1 py-px text-[10px] leading-tight ${done ? 'text-muted-foreground line-through' : ''}`}
                         >
-                          {done && <Check className="h-2.5 w-2.5 shrink-0 text-emerald-400" aria-hidden="true" />}
+                          {done && <Check className="h-2.5 w-2.5 shrink-0 text-foreground" aria-hidden="true" />}
                           <span className="truncate">{t.title}</span>
                         </span>
                       );
                     })}
-                    {cellExams.slice(0, 1).map((e) => {
-                      const meta = EXAM_TYPE_META[e.type] ?? EXAM_TYPE_META.exam;
-                      return (
-                        <span
-                          key={e.id}
-                          className="flex items-center gap-1 truncate rounded px-1 py-px text-[10px] font-medium leading-tight"
-                          style={{ background: `${meta.color}26`, color: meta.color }}
-                        >
-                          <BookOpen className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
-                          <span className="truncate">{e.title}</span>
-                        </span>
-                      );
-                    })}
+                    {cellExams.slice(0, 1).map((e) => (
+                      <span
+                        key={e.id}
+                        className="flex items-center gap-1 truncate rounded bg-foreground/[0.08] px-1 py-px text-[10px] font-medium leading-tight text-foreground"
+                      >
+                        <BookOpen className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
+                        <span className="truncate">{e.title}</span>
+                      </span>
+                    ))}
                     {minutes > 0 && (
-                      <span className="flex items-center gap-1 truncate rounded border border-emerald-400/25 bg-emerald-400/15 px-1 py-px text-[10px] font-medium leading-tight text-emerald-400">
+                      <span className="flex items-center gap-1 truncate rounded border border-foreground/25 bg-foreground/[0.08] px-1 py-px text-[10px] font-medium leading-tight tabular-nums text-foreground">
                         <Timer className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
                         {minutesToLabel(minutes)}
                       </span>
                     )}
                     {perfect && (
-                      <span className="flex items-center rounded px-1 py-px text-[10px] leading-tight text-amber-400">
+                      <span className="flex items-center rounded px-1 py-px text-[10px] leading-tight text-foreground/80">
                         <Flame className="h-2.5 w-2.5" aria-label="All habits done" />
                       </span>
                     )}
@@ -331,13 +326,13 @@ export default function CalendarModule() {
                   const meta = EXAM_TYPE_META[e.type] ?? EXAM_TYPE_META.exam;
                   return (
                     <li key={e.id} className="flex items-center gap-2 rounded-lg border border-border/50 px-2 py-1.5">
-                      <Badge variant="outline" className="shrink-0 border-transparent px-1.5 text-[10px]" style={{ background: `${meta.color}26`, color: meta.color }}>
+                      <Badge variant="outline" className="shrink-0 border-transparent bg-foreground/[0.08] px-1.5 text-[10px] text-foreground">
                         {meta.label}
                       </Badge>
                       <span className="min-w-0 flex-1 truncate text-xs font-medium">{e.title}</span>
                       <Button
                         variant="ghost" size="icon"
-                        className="h-6 w-6 shrink-0 text-muted-foreground hover:bg-rose-400/10 hover:text-rose-400"
+                        className="h-6 w-6 shrink-0 text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
                         onClick={() => {
                           deleteExam(e.id);
                           toast.success('Event removed');
@@ -367,12 +362,12 @@ export default function CalendarModule() {
                     const subj = subjects.find((x) => x.id === s.subjectId);
                     return (
                       <li key={s.id} className="flex items-center gap-2 rounded-lg border border-border/50 px-2 py-1.5">
-                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: subj?.color ?? '#94a3b8' }} aria-hidden="true" />
+                        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: subj?.color ?? 'var(--ink-4)' }} aria-hidden="true" />
                         <span className="min-w-0 flex-1 truncate text-xs font-medium">{subj?.name ?? 'Deleted subject'}</span>
                         <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
                           {s.startTime}–{s.endTime || '—'}
                         </span>
-                        <Badge variant="outline" className="shrink-0 px-1.5 font-mono text-[10px] tabular-nums text-emerald-400">
+                        <Badge variant="outline" className="shrink-0 px-1.5 font-mono text-[10px] tabular-nums text-foreground">
                           {minutesToLabel(s.durationMin)}
                         </Badge>
                       </li>

@@ -152,7 +152,7 @@ export default function DailyTrackerModule() {
               <p className="text-xs text-muted-foreground">{fmtDayFull(selectedDate)}</p>
             </div>
             <span
-              className={`text-[11px] font-medium text-emerald-400 transition-opacity duration-300 ${saved ? 'animate-pulse-glow opacity-100' : 'opacity-0'}`}
+              className={`text-[11px] font-medium text-foreground transition-opacity duration-300 ${saved ? 'animate-pulse-glow opacity-100' : 'opacity-0'}`}
               aria-live="polite"
             >
               Saved ✓
@@ -289,7 +289,7 @@ export default function DailyTrackerModule() {
                         <div className="flex items-center gap-1">
                           <Button
                             variant="ghost" size="icon"
-                            className="h-6 w-6 text-emerald-400 hover:bg-emerald-400/15 hover:text-emerald-300"
+                            className="h-6 w-6 text-foreground/70 hover:bg-foreground/10 hover:text-foreground"
                             disabled={isFuture}
                             onClick={() => bump(s.id, 15)}
                             aria-label={`Add 15 minutes to ${s.name}`}
@@ -298,7 +298,7 @@ export default function DailyTrackerModule() {
                           </Button>
                           <Button
                             variant="ghost" size="icon"
-                            className="h-6 w-6 text-cyan-400 hover:bg-cyan-400/15 hover:text-cyan-300"
+                            className="h-6 w-6 text-foreground/70 hover:bg-foreground/10 hover:text-foreground"
                             disabled={isFuture}
                             onClick={() => bump(s.id, 30)}
                             aria-label={`Add 30 minutes to ${s.name}`}
@@ -307,7 +307,7 @@ export default function DailyTrackerModule() {
                           </Button>
                           <Button
                             variant="ghost" size="icon"
-                            className="h-6 w-6 text-rose-400 hover:bg-rose-400/15 hover:text-rose-300"
+                            className="h-6 w-6 text-foreground/70 hover:bg-foreground/10 hover:text-foreground"
                             disabled={isFuture || mins === 0}
                             onClick={() => bump(s.id, -15)}
                             aria-label={`Remove 15 minutes from ${s.name}`}
@@ -330,10 +330,10 @@ export default function DailyTrackerModule() {
           <div className="mt-5 flex items-center justify-between gap-4 border-t border-border/50 pt-4">
             <div>
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Total focus time</p>
-              <p className="font-mono text-3xl font-semibold tabular-nums tracking-tight text-gradient">{minutesToHM(total)}</p>
+              <p className="font-mono text-3xl font-black tabular-nums tracking-tight text-gradient">{minutesToHM(total)}</p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">Target {minutesToHM(targetMin)} · 0–600 min per subject</p>
             </div>
-            <RingProgress value={pct} size={92} stroke={9} color={total >= targetMin ? '#34d399' : 'var(--primary)'} label={`${pct}% of daily target`}>
+            <RingProgress value={pct} size={92} stroke={9} color={total >= targetMin ? 'var(--ink-1)' : 'var(--primary)'} label={`${pct}% of daily target`}>
               <span className="font-mono text-lg font-bold tabular-nums">{pct}%</span>
             </RingProgress>
           </div>

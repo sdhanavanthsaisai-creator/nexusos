@@ -37,7 +37,7 @@ export default function StatusBar() {
           ⏱ Today <b className="font-mono tabular-nums text-foreground/85">{minutesToHM(todayMinutes)}</b>
         </span>
         <span className="hidden items-center gap-1 sm:flex" title="Current streak">
-          <Flame className="h-3 w-3 text-amber-400" aria-hidden="true" />
+          <Flame className="h-3 w-3 text-foreground" aria-hidden="true" />
           <b className="font-mono tabular-nums text-foreground/85">{streak}d streak</b>
         </span>
         {timerActive && (
@@ -45,7 +45,7 @@ export default function StatusBar() {
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-            className="glass-chip flex items-center gap-1 rounded-full px-2 py-0.5 text-cyan-300"
+            className="glass-chip flex items-center gap-1 rounded-full px-2 py-0.5 text-foreground"
             title="Focus timer"
           >
             <Timer className={timer.running ? 'h-3 w-3 animate-pulse' : 'h-3 w-3'} aria-hidden="true" />
@@ -59,8 +59,8 @@ export default function StatusBar() {
         <span className="flex items-center gap-1"><span className="kbd">⌘K</span> palette</span>
         <span className="flex items-center gap-1"><span className="kbd">N</span> new task</span>
         <span className="flex items-center gap-1"><span className="kbd">S</span> timer</span>
-        <span className="flex items-center gap-1 text-emerald-400" title="All data stored locally in your browser">
-          <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-emerald-400" aria-hidden="true" />
+        <span className="flex items-center gap-1 text-foreground/80" title="All data stored locally in your browser">
+          <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-foreground" aria-hidden="true" />
           local sync on
         </span>
         <Command className="h-3 w-3 opacity-40" aria-hidden="true" />

@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { ChartCard, EmptyState, ModuleHeader } from '../ui-bits';
 import { baseTooltip, useChartTheme } from '../echarts-wrapper';
-import { CHART_PALETTE } from '@/lib/nexus/constants';
+import { INK_VARS } from '@/lib/nexus/constants';
 import { useNexus } from '@/lib/nexus/store';
 import { addDays, clamp, dateKey, fmtDayNum, startOfWeek, todayKey } from '@/lib/nexus/utils';
 import type { EChartsOption } from 'echarts';
@@ -51,7 +51,7 @@ function HabitDialog({
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('sunrise');
   const [target, setTarget] = useState('5');
-  const [color, setColor] = useState(CHART_PALETTE[0]);
+  const [color, setColor] = useState(INK_VARS[0]);
 
   // sync form state when the dialog opens for a (different) habit — render-time adjustment
   const [syncKey, setSyncKey] = useState<string | null>(null);
@@ -67,7 +67,7 @@ function HabitDialog({
       setName('');
       setIcon('sunrise');
       setTarget('5');
-      setColor(CHART_PALETTE[0]);
+      setColor(INK_VARS[0]);
     }
   }
 
@@ -149,7 +149,7 @@ function HabitDialog({
           <div className="space-y-1.5">
             <Label>Colour</Label>
             <div className="flex flex-wrap gap-2">
-              {CHART_PALETTE.map((c) => (
+              {INK_VARS.map((c) => (
                 <button
                   key={c}
                   type="button"
@@ -212,7 +212,7 @@ export default function HabitsModule() {
       doneCount === active.length
     ) {
       if (confettiEnabled) {
-        void confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 } });
+        void confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: ['#FFFFFF', '#C9C9C9', '#F1F1F1'] });
         toast.success('All habits done! 🎉');
       }
     }
@@ -265,9 +265,9 @@ export default function HabitsModule() {
           name: 'Consistency',
           type: 'bar',
           barMaxWidth: 12,
-          data: rows.map((r) => ({
+          data: rows.map((r, i) => ({
             value: r.pct,
-            itemStyle: { color: r.habit.color, borderRadius: 6 },
+            itemStyle: { color: theme.palette[i % theme.palette.length], borderRadius: 6 },
           })),
           label: { show: true, position: 'right', formatter: '{c}%', color: theme.subtext, fontSize: 10 },
         },
@@ -328,8 +328,8 @@ export default function HabitsModule() {
                     className={cn(
                       'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:scale-[1.03]',
                       !done && 'border-border/70 text-muted-foreground hover:border-foreground/30',
+                      done && 'border-foreground/40 bg-foreground/[0.08] text-foreground',
                     )}
-                    style={done ? { borderColor: h.color, backgroundColor: `${h.color}1a`, color: h.color } : undefined}
                   >
                     {done && <Check className="h-3 w-3" aria-hidden="true" />}
                     <Icon className="h-3.5 w-3.5" aria-hidden="true" />

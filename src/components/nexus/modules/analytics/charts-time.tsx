@@ -45,12 +45,12 @@ export function DailyMinutesChart({ range }: ChartProps) {
     dataZoom: days.length > 31 ? dataZoomStyled(theme) : undefined,
     series: [{
       name: 'Study minutes', type: 'line', smooth: true, symbol: 'none',
-      lineStyle: { width: 2, color: '#22d3ee' }, itemStyle: { color: '#22d3ee' },
-      areaStyle: { color: areaGradient('#22d3ee') },
+      lineStyle: { width: 2, color: theme.palette[0] }, itemStyle: { color: theme.palette[0] },
+      areaStyle: { color: areaGradient(theme.dark ? '#ffffff' : '#000000') },
       markLine: {
         silent: true, symbol: 'none',
-        lineStyle: { type: 'dashed', color: '#fbbf24', width: 1 },
-        label: { formatter: 'target', color: '#fbbf24', fontSize: 10, position: 'insideEndTop' },
+        lineStyle: { type: 'dashed', color: theme.dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', width: 1 },
+        label: { formatter: 'target', color: theme.dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', fontSize: 10, position: 'insideEndTop' },
         data: [{ yAxis: dailyTargetMinutes }],
       },
       data: rows.map((r) => r.minutes),
@@ -94,7 +94,7 @@ export function WeeklyTotalsChart() {
     },
     series: [{
       name: 'Weekly minutes', type: 'bar', barMaxWidth: 26,
-      itemStyle: { color: '#22d3ee', borderRadius: [6, 6, 0, 0] },
+      itemStyle: { color: theme.palette[0], borderRadius: [6, 6, 0, 0] },
       data: rows.map((r) => r.minutes),
     }],
   }), [theme, rows]);
@@ -118,9 +118,9 @@ export function CollegeVsCodingChart({ range }: ChartProps) {
 
   const option = useMemo<EChartsOption>(() => {
     const groups: { name: string; color: string; pick: (r: DayCategorySplit) => number }[] = [
-      { name: CATEGORY_META.college.label, color: CATEGORY_META.college.color, pick: (r) => r.college },
-      { name: CATEGORY_META.coding.label, color: CATEGORY_META.coding.color, pick: (r) => r.coding },
-      { name: 'Other', color: '#fbbf24', pick: (r) => r.language + r.music + r.fitness + r.dsa },
+      { name: CATEGORY_META.college.label, color: theme.palette[0], pick: (r) => r.college },
+      { name: CATEGORY_META.coding.label, color: theme.palette[1], pick: (r) => r.coding },
+      { name: 'Other', color: theme.palette[2], pick: (r) => r.language + r.music + r.fitness + r.dsa },
     ];
     return {
       tooltip: {
@@ -144,7 +144,7 @@ export function CollegeVsCodingChart({ range }: ChartProps) {
       series: groups.map((g) => ({
         name: g.name, type: 'line', stack: 'focus', smooth: true, symbol: 'none',
         lineStyle: { width: 1.5, color: g.color }, itemStyle: { color: g.color },
-        areaStyle: { color: areaGradient(g.color) }, emphasis: { focus: 'series' },
+        areaStyle: { color: areaGradient(theme.dark ? '#ffffff' : '#000000') }, emphasis: { focus: 'series' },
         data: rows.map((r) => g.pick(r)),
       })),
     };
@@ -190,11 +190,15 @@ export function StudyHeatmapChart() {
       min: 0, max: maxMinutes, orient: 'horizontal', left: 'center', bottom: 2,
       itemWidth: 10, itemHeight: 72, text: ['more', 'less'],
       textStyle: { color: theme.subtext, fontSize: 10 },
-      inRange: { color: [theme.dark ? '#1a1a20' : '#eef0f3', '#22d3ee', '#a78bfa'] },
+      inRange: {
+        color: theme.dark
+          ? ['rgba(255,255,255,0.03)', 'rgba(255,255,255,0.20)', 'rgba(255,255,255,0.45)', 'rgba(255,255,255,0.72)', 'rgba(255,255,255,0.95)']
+          : ['rgba(0,0,0,0.03)', 'rgba(0,0,0,0.18)', 'rgba(0,0,0,0.42)', 'rgba(0,0,0,0.70)', 'rgba(0,0,0,0.92)'],
+      },
     },
     calendar: {
       top: 30, left: 'center', cellSize: 14, range: [win.startKey, win.endKey],
-      itemStyle: { color: theme.dark ? '#1a1a20' : '#eef0f3', borderColor: theme.bg, borderWidth: 3 },
+      itemStyle: { color: theme.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderColor: theme.bg, borderWidth: 3 },
       splitLine: { show: false },
       dayLabel: { color: theme.subtext, fontSize: 10, margin: 6 },
       monthLabel: { color: theme.subtext, fontSize: 10 },
@@ -237,7 +241,7 @@ export function WeeklyFocusByCategoryChart() {
       ...baseTooltip(theme), trigger: 'axis', axisPointer: { type: 'shadow' },
       valueFormatter: (v) => minutesToHM(asNum(v)),
     },
-    color: present.map((c) => CATEGORY_META[c].color),
+    color: present.map((_, i) => theme.palette[i % theme.palette.length]),
     legend: { top: 0, left: 0, itemWidth: 10, itemHeight: 10, textStyle: { color: theme.text, fontSize: 11 } },
     grid: { left: 44, right: 14, top: 30, bottom: 24 },
     xAxis: {
@@ -249,9 +253,9 @@ export function WeeklyFocusByCategoryChart() {
       type: 'value', splitLine: { lineStyle: { color: theme.split } },
       axisLabel: { color: theme.subtext, fontSize: 11, formatter: (v) => minutesToLabel(asNum(v)) },
     },
-    series: present.map((c) => ({
+    series: present.map((c, i) => ({
       name: CATEGORY_META[c].label, type: 'bar', stack: 'focus', barMaxWidth: 24,
-      itemStyle: { color: CATEGORY_META[c].color }, emphasis: { focus: 'series' },
+      itemStyle: { color: theme.palette[i % theme.palette.length] }, emphasis: { focus: 'series' },
       data: rows.map((r) => r.cats[c]),
     })),
   }), [theme, rows, present]);
@@ -298,8 +302,8 @@ export function CumulativeHoursChart({ range }: ChartProps) {
     dataZoom: days.length > 31 ? dataZoomStyled(theme) : undefined,
     series: [{
       name: 'Cumulative hours', type: 'line', smooth: true, symbol: 'none',
-      lineStyle: { width: 2, color: '#a78bfa' }, itemStyle: { color: '#a78bfa' },
-      areaStyle: { color: areaGradient('#a78bfa') },
+      lineStyle: { width: 2, color: theme.palette[0] }, itemStyle: { color: theme.palette[0] },
+      areaStyle: { color: areaGradient(theme.dark ? '#ffffff' : '#000000') },
       data: rows.map((r) => r.hours),
     }],
   }), [theme, days.length, rows]);
@@ -347,18 +351,18 @@ export function ForecastTrackingChart({ range }: ChartProps) {
     series: [
       {
         name: 'Actual', type: 'line', smooth: true, symbol: 'none', connectNulls: false,
-        lineStyle: { width: 2, color: '#22d3ee' }, itemStyle: { color: '#22d3ee' },
-        areaStyle: { color: areaGradient('#22d3ee') },
+        lineStyle: { width: 2, color: theme.palette[0] }, itemStyle: { color: theme.palette[0] },
+        areaStyle: { color: areaGradient(theme.dark ? '#ffffff' : '#000000') },
         data: actualData,
       },
       {
         name: 'Forecast', type: 'line', smooth: true, symbol: 'none', connectNulls: false,
-        lineStyle: { width: 2, type: 'dashed', color: '#a78bfa' }, itemStyle: { color: '#a78bfa' },
+        lineStyle: { width: 2, type: 'dashed', color: theme.palette[1] }, itemStyle: { color: theme.palette[1] },
         data: forecast,
       },
       {
         name: 'Target', type: 'line', symbol: 'none', silent: true,
-        lineStyle: { width: 1, type: 'dashed', color: '#fbbf24', opacity: 0.8 }, itemStyle: { color: '#fbbf24' },
+        lineStyle: { width: 1, type: 'dashed', color: theme.dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)', opacity: 0.8 }, itemStyle: { color: theme.dark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.55)' },
         data: allDays.map(() => targetMinutes),
       },
     ],
@@ -415,8 +419,8 @@ export function EnergyTrendChart({ range }: ChartProps) {
     series: [{
       name: 'Energy', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, showSymbol: false,
       connectNulls: true,
-      lineStyle: { width: 2, color: '#fbbf24' }, itemStyle: { color: '#fbbf24' },
-      areaStyle: { color: areaGradient('#fbbf24') },
+      lineStyle: { width: 2, color: theme.palette[0] }, itemStyle: { color: theme.palette[0] },
+      areaStyle: { color: areaGradient(theme.dark ? '#ffffff' : '#000000') },
       data: rows.map((r) => r.energy),
     }],
   }), [theme, days.length, rows]);

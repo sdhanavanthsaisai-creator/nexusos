@@ -123,9 +123,9 @@ export default function SessionDialog({ open, onOpenChange, session }: SessionDi
         <div className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-2">
           <span className="text-xs text-muted-foreground">Duration (computed)</span>
           {invalidTime ? (
-            <span className="text-xs font-medium text-rose-400">End must be after start</span>
+            <span className="text-xs font-medium text-foreground">End must be after start</span>
           ) : (
-            <span className="font-mono text-sm font-semibold tabular-nums text-emerald-400">{minutesToLabel(duration)}</span>
+            <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{minutesToLabel(duration)}</span>
           )}
         </div>
 

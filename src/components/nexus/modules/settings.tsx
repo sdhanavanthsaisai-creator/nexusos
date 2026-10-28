@@ -8,7 +8,7 @@ import {
 import { toast } from 'sonner';
 import type { Settings, Subject, SubjectCategory, ThemeId } from '@/lib/nexus/types';
 import { useNexus } from '@/lib/nexus/store';
-import { CHART_PALETTE, CATEGORY_META } from '@/lib/nexus/constants';
+import { CATEGORY_META, INK_VARS } from '@/lib/nexus/constants';
 import { buildAiStats } from '@/lib/nexus/ai-context';
 import { clamp } from '@/lib/nexus/utils';
 import { ModuleHeader } from '../ui-bits';
@@ -31,10 +31,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 // ─── Theme previews (swatch hexes hardcoded per spec) ─────────────────────────
 const THEME_PREVIEWS: { id: ThemeId; label: string; swatches: string[] }[] = [
-  { id: 'dark', label: 'Obsidian Cyber Glass', swatches: ['#05070d', '#22d3ee', '#a78bfa'] },
-  { id: 'light', label: 'Frost Light', swatches: ['#eef2f9', '#0891b2', '#7c3aed'] },
-  { id: 'oled', label: 'OLED Void', swatches: ['#000000', '#00e5ff', '#b18cff'] },
-  { id: 'cyberpunk', label: 'Neon Cyberpunk', swatches: ['#0b0312', '#e879f9', '#22d3ee'] },
+  { id: 'dark', label: 'Obsidian Cyber Glass', swatches: ['#000000', '#FFFFFF', '#C9C9C9'] },
+  { id: 'light', label: 'Frost Light', swatches: ['#F1F1F1', '#000000', '#C9C9C9'] },
+  { id: 'oled', label: 'OLED Void', swatches: ['#000000', '#FFFFFF', '#C9C9C9'] },
+  { id: 'cyberpunk', label: 'Graphite Fog', swatches: ['#000000', '#C9C9C9', '#FFFFFF'] },
 ];
 
 function CardShell({ icon: Icon, title, hint, children, className }: {
@@ -327,7 +327,7 @@ function SubjectDialog({ initial, onClose }: { initial: Subject | null; onClose:
   const updateSubject = useNexus((s) => s.updateSubject);
   const [name, setName] = useState(initial?.name ?? '');
   const [category, setCategory] = useState<SubjectCategory>(initial?.category ?? 'college');
-  const [color, setColor] = useState(initial?.color ?? CHART_PALETTE[0]);
+  const [color, setColor] = useState(initial?.color ?? INK_VARS[0]);
 
   const save = () => {
     if (!name.trim()) {
@@ -370,7 +370,7 @@ function SubjectDialog({ initial, onClose }: { initial: Subject | null; onClose:
           <div className="space-y-1.5">
             <span className="text-xs font-medium">Color</span>
             <div className="flex flex-wrap gap-1.5">
-              {CHART_PALETTE.map((c) => (
+              {INK_VARS.map((c) => (
                 <button
                   key={c}
                   type="button"
@@ -409,13 +409,13 @@ function SubjectsCard() {
             <div key={s.id} className="flex items-center gap-2 rounded-xl border border-border/50 bg-muted/20 px-3 py-2">
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: s.color }} aria-hidden="true" />
               <span className="min-w-0 flex-1 truncate text-xs font-medium">{s.name}</span>
-              <Badge variant="outline" className="shrink-0 text-[9px]" style={{ color: meta.color, borderColor: `${meta.color}55` }}>
+              <Badge variant="outline" className="shrink-0 text-[9px]" style={{ color: meta.color, borderColor: `color-mix(in srgb, ${meta.color} 33%, transparent)` }}>
                 {meta.label}
               </Badge>
               <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setDialog({ mode: 'edit', subject: s })} aria-label={`Edit ${s.name}`}>
                 <Pencil className="h-3 w-3" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-rose-400 hover:bg-rose-400/10 hover:text-rose-400" onClick={() => setDeleting(s)} aria-label={`Delete ${s.name}`}>
+              <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 text-foreground font-medium hover:bg-foreground/[0.08]" onClick={() => setDeleting(s)} aria-label={`Delete ${s.name}`}>
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
@@ -447,7 +447,7 @@ function SubjectsCard() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-rose-500/90 text-white hover:bg-rose-500"
+                className="bg-foreground text-background hover:bg-foreground/90"
                 onClick={() => {
                   deleteSubject(deleting.id);
                   toast.success(`Subject "${deleting.name}" removed`);
@@ -503,9 +503,9 @@ function DangerCard() {
   }, [state]);
 
   return (
-    <section className="space-y-4 rounded-2xl border border-rose-400/30 bg-rose-400/[0.03] p-5">
+    <section className="space-y-4 rounded-2xl border border-foreground/25 bg-foreground/[0.04] p-5">
       <header className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-400/10 text-rose-400">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/[0.08] text-foreground">
           <TriangleAlert className="h-3.5 w-3.5" aria-hidden="true" />
         </span>
         <div>
@@ -564,7 +564,7 @@ function DangerCard() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-rose-500/90 text-white hover:bg-rose-500"
+                className="bg-foreground text-background hover:bg-foreground/90"
                 onClick={() => {
                   state.clearAllData();
                   toast.success('All data wiped — fresh start');

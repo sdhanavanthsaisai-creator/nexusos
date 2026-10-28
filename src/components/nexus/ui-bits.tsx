@@ -38,13 +38,13 @@ export function ModuleHeader({
 
 // ─── KPI card ─────────────────────────────────────────────────────────────────
 const TONES: Record<string, { text: string; bg: string; ring: string }> = {
-  cyan: { text: 'text-cyan-400', bg: 'bg-cyan-400/10', ring: 'ring-cyan-400/30' },
-  violet: { text: 'text-violet-400', bg: 'bg-violet-400/10', ring: 'ring-violet-400/30' },
-  emerald: { text: 'text-emerald-400', bg: 'bg-emerald-400/10', ring: 'ring-emerald-400/30' },
-  pink: { text: 'text-pink-400', bg: 'bg-pink-400/10', ring: 'ring-pink-400/30' },
-  amber: { text: 'text-amber-400', bg: 'bg-amber-400/10', ring: 'ring-amber-400/30' },
-  rose: { text: 'text-rose-400', bg: 'bg-rose-400/10', ring: 'ring-rose-400/30' },
-  slate: { text: 'text-slate-400', bg: 'bg-slate-400/10', ring: 'ring-slate-400/30' },
+  cyan: { text: 'text-foreground', bg: 'bg-foreground/[0.08]', ring: 'ring-foreground/25' },
+  violet: { text: 'text-foreground/85', bg: 'bg-foreground/[0.06]', ring: 'ring-foreground/20' },
+  emerald: { text: 'text-foreground', bg: 'bg-foreground/[0.10]', ring: 'ring-foreground/30' },
+  pink: { text: 'text-foreground/80', bg: 'bg-foreground/[0.05]', ring: 'ring-foreground/15' },
+  amber: { text: 'text-foreground/75', bg: 'bg-foreground/[0.05]', ring: 'ring-foreground/15' },
+  rose: { text: 'text-foreground', bg: 'bg-foreground/[0.12]', ring: 'ring-foreground/40' },
+  slate: { text: 'text-foreground/70', bg: 'bg-foreground/[0.04]', ring: 'ring-foreground/10' },
 };
 
 export function KpiCard({
@@ -261,7 +261,7 @@ export function StarRating({ value, onChange, max = 5 }: { value: number; onChan
           className={cn(
             'h-6 w-6 rounded text-sm transition-colors',
             onChange && 'hover:scale-110',
-            i <= value ? 'text-amber-400' : 'text-muted-foreground/35',
+            i <= value ? 'text-foreground' : 'text-muted-foreground/35',
           )}
         >
           ★
