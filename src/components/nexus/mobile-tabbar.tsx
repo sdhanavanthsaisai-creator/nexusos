@@ -75,8 +75,8 @@ export default function MobileTabBar() {
         transition={{ type: 'spring', stiffness: 380, damping: 26 }}
         className={cn(
           'fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background shadow-[0_12px_30px_-8px_rgba(0,0,0,0.55)] md:hidden',
-          // sits 74px above the viewport bottom (64px bar + margin), respects safe area
-          'bottom-[calc(env(safe-area-inset-bottom,0px)+74px)]',
+          // Float above the detached bottom dock, leaving a clear 12px gap.
+          'bottom-[calc(env(safe-area-inset-bottom,0px)+86px)]',
         )}
       >
         <span className="sr-only">Quick add</span>
@@ -92,8 +92,7 @@ export default function MobileTabBar() {
       {/* Bottom tab bar — glass, 64px, icon + 11px label, spring-animated pill */}
       <nav
         aria-label="Mobile primary navigation"
-        className="glass fixed inset-x-0 bottom-0 z-50 md:hidden"
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 0.35rem)' }}
+        className="glass fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] z-50 rounded-full md:hidden"
       >
         <ul className="mx-auto grid h-16 max-w-lg grid-cols-5 items-stretch px-1">
           {TABS.map((t) => {
