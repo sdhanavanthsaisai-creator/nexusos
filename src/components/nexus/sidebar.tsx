@@ -2,7 +2,7 @@
 
 import {
   LayoutDashboard, CalendarCheck2, Timer, ListChecks, Flame, BarChart3,
-  Map, Braces, CalendarDays, NotebookPen, FileBarChart2, Settings2,
+  Map, Braces, CalendarDays, CalendarRange, NotebookPen, FileBarChart2, Settings2,
   Hexagon, PanelLeftClose, PanelLeftOpen, Lock, type LucideIcon,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -22,6 +22,7 @@ const ICONS: Record<ModuleId, LucideIcon> = {
   roadmap: Map,
   dsa: Braces,
   calendar: CalendarDays,
+  timetable: CalendarRange,
   notes: NotebookPen,
   reports: FileBarChart2,
   settings: Settings2,
