@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 
 function Splash() {
@@ -21,6 +22,17 @@ const NexusApp = dynamic(() => import('@/components/nexus/nexus-app'), {
   loading: () => <Splash />,
 });
 
+const AuthGate = dynamic(() => import('@/components/nexus/auth-gate'), {
+  ssr: false,
+  loading: () => <Splash />,
+});
+
 export default function Page() {
-  return <NexusApp />;
+  return (
+    <Suspense fallback={<Splash />}>
+      <AuthGate>
+        <NexusApp />
+      </AuthGate>
+    </Suspense>
+  );
 }
