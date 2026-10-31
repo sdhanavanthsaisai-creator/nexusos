@@ -54,3 +54,8 @@ server.log
 # Skills directory
 /skills/# local state
 /db/custom.db
+
+# Android signing material (never commit keys)
+android/keystore/
+android/**/build/
+*.apk

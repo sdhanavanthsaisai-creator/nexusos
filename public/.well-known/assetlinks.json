@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.nexusos.student",
+      "sha256_cert_fingerprints": [
+        "FC:52:8A:3B:59:4D:79:38:C4:D4:CF:B9:C8:A9:20:7E:BC:55:FC:62:E2:F2:4A:52:8D:8B:8E:5D:4A:E5:6A:92"
+      ]
+    }
+  }
+]
