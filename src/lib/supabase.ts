@@ -55,6 +55,16 @@ export function createEmptySnapshot(): NexusData {
   const seed = buildSeed();
   return {
     ...seed,
+    profile: {
+      name: '',
+      university: '',
+      degree: '',
+      semester: 1,
+      dailyTargetHours: 4,
+      weeklyCodingTargetHours: 15,
+    },
+    subjects: [],
+    skills: [],
     dailyLogs: {},
     sessions: [],
     tasks: [],
