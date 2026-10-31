@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import {
-  ArrowLeft, ArrowRight, BookOpen, Check, Code2, Dumbbell, LoaderCircle, Plus,
+  ArrowLeft, ArrowRight, BookOpen, Check, Code2, Dumbbell, LoaderCircle, Minus, Plus,
   Target, Trash2, UserRound, type LucideIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { useNexus, useUI } from '@/lib/nexus/store';
 import { CATEGORY_META, HABIT_SEED, INK_VARS, SKILL_SEED } from '@/lib/nexus/constants';
 import type { Habit, Skill, Subject, SubjectCategory } from '@/lib/nexus/types';
@@ -82,6 +83,49 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
+function TargetControl({
+  label, hint, value, min, max, step, unit, presets, onChange,
+}: {
+  label: string; hint: string; value: number; min: number; max: number; step: number;
+  unit: string; presets: number[]; onChange: (next: number) => void;
+}) {
+  const clamp = (next: number) => Math.min(max, Math.max(min, Math.round(next / step) * step));
+  const display = Number.isInteger(value) ? String(value) : value.toFixed(1);
+
+  return (
+    <div className="rounded-3xl border border-border/60 bg-background/35 p-5">
+      <label className="block text-sm font-medium" htmlFor={`target-${label.replace(/\s+/g, '-').toLowerCase()}`}>{label}</label>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{hint}</p>
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <Button type="button" variant="outline" size="icon" onClick={() => onChange(clamp(value - step))} disabled={value <= min} aria-label={`Decrease ${label}`} className="h-10 w-10 shrink-0 rounded-full border-border/70 bg-background/60">
+          <Minus className="h-4 w-4" />
+        </Button>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-4xl font-semibold tabular-nums tracking-tight">{display}</span>
+          <span className="text-xs font-medium text-muted-foreground">{unit}</span>
+        </div>
+        <Button type="button" variant="outline" size="icon" onClick={() => onChange(clamp(value + step))} disabled={value >= max} aria-label={`Increase ${label}`} className="h-10 w-10 shrink-0 rounded-full border-border/70 bg-background/60">
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      <Slider
+        id={`target-${label.replace(/\s+/g, '-').toLowerCase()}`}
+        className="mt-6"
+        min={min}
+        max={max}
+        step={step}
+        value={[value]}
+        onValueChange={(next) => onChange(clamp(next[0] ?? value))}
+      />
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {presets.map((preset) => (
+          <Chip key={preset} active={preset === value} onClick={() => onChange(preset)}>{preset}{unit.startsWith('hours') ? 'h' : ` ${unit}`}</Chip>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ToggleCard({ checked, onToggle, title, detail }: { checked: boolean; onToggle: () => void; title: string; detail?: string }) {
   return (
     <button type="button" onClick={onToggle} aria-pressed={checked} className={`flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition ${checked ? 'border-primary/45 bg-primary/[0.09]' : 'border-border/60 bg-background/35 hover:bg-accent/50'}`}>
@@ -114,8 +158,8 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
   const [habits, setHabits] = useState<Habit[]>([]);
   const [habitDraft, setHabitDraft] = useState('');
 
-  const [dailyTarget, setDailyTarget] = useState('4');
-  const [codingTarget, setCodingTarget] = useState('15');
+  const [dailyTarget, setDailyTarget] = useState(4);
+  const [codingTarget, setCodingTarget] = useState(15);
 
   const addSubject = (name: string, category: SubjectCategory) => {
     const trimmed = name.trim();
@@ -220,8 +264,8 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
       if (duplicateSubjects) throw new Error('Subject names must be unique.');
       if (habits.some((habit) => !habit.name.trim())) throw new Error('Give every habit a name or remove it.');
       if (habits.some((habit) => !Number.isFinite(habit.targetPerWeek) || habit.targetPerWeek < 0 || habit.targetPerWeek > 7)) throw new Error('Habit goals must be between 0 and 7 days per week.');
-      if (!Number.isFinite(Number(dailyTarget)) || Number(dailyTarget) < 0.5 || Number(dailyTarget) > 24) throw new Error('Daily study target must be between 0.5 and 24 hours.');
-      if (!Number.isFinite(Number(codingTarget)) || Number(codingTarget) < 0 || Number(codingTarget) > 168) throw new Error('Weekly coding target must be between 0 and 168 hours.');
+      if (!Number.isFinite(dailyTarget) || dailyTarget < 0.5 || dailyTarget > 24) throw new Error('Daily study target must be between 0.5 and 24 hours.');
+      if (!Number.isFinite(codingTarget) || codingTarget < 0 || codingTarget > 168) throw new Error('Weekly coding target must be between 0 and 168 hours.');
       if (!Number.isFinite(Number(semester)) || Number(semester) < 1 || Number(semester) > 8) throw new Error('Semester or year must be between 1 and 8.');
 
       const supabase = (await import('@/lib/supabase')).getSupabaseClient();
@@ -265,8 +309,8 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
         university: university.trim(),
         degree: degree.trim(),
         semester: Math.min(8, Math.max(1, Math.round(Number(semester) || 1))),
-        dailyTargetHours: Number(dailyTarget),
-        weeklyCodingTargetHours: Number(codingTarget),
+        dailyTargetHours: dailyTarget,
+        weeklyCodingTargetHours: codingTarget,
       };
 
       const data = {
@@ -493,9 +537,9 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
 
         {step === 4 && (
           <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium"><span>Daily study target (hours)</span><Input type="number" min="0.5" max="24" step="0.5" value={dailyTarget} onChange={(event) => setDailyTarget(event.target.value)} className="h-11 rounded-xl bg-background/45" /><span className="block text-xs font-normal text-muted-foreground">A steady, achievable daily focus goal.</span></label>
-              <label className="space-y-2 text-sm font-medium"><span>Weekly coding target (hours)</span><Input type="number" min="0" max="168" step="0.5" value={codingTarget} onChange={(event) => setCodingTarget(event.target.value)} className="h-11 rounded-xl bg-background/45" /><span className="block text-xs font-normal text-muted-foreground">Time set aside for building skills.</span></label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <TargetControl label="Daily study target" hint="A steady, achievable daily focus goal." value={dailyTarget} min={0.5} max={12} step={0.5} unit="hours / day" presets={[2, 3, 4, 6]} onChange={setDailyTarget} />
+              <TargetControl label="Weekly coding target" hint="Time set aside for building skills." value={codingTarget} min={0} max={40} step={1} unit="hours / week" presets={[5, 10, 15, 20]} onChange={setCodingTarget} />
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-background/35 p-4">
