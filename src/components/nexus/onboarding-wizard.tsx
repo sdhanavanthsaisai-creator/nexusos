@@ -126,6 +126,70 @@ function TargetControl({
   );
 }
 
+function SemesterControl({ value, onChange }: { value: number; onChange: (next: number) => void }) {
+  const clamp = (next: number) => Math.min(8, Math.max(1, Math.round(next)));
+
+  return (
+    <div className="rounded-3xl border border-border/60 bg-background/35 p-5 sm:col-span-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-medium">Semester / year</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Where you are in your program — it also shapes when DSA unlocks.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" size="icon" onClick={() => onChange(clamp(value - 1))} disabled={value <= 1} aria-label="Previous semester" className="h-10 w-10 shrink-0 rounded-full border-border/70 bg-background/60">
+            <Minus className="h-4 w-4" />
+          </Button>
+          <span className="min-w-10 text-center text-4xl font-semibold tabular-nums tracking-tight">{value}</span>
+          <Button type="button" variant="outline" size="icon" onClick={() => onChange(clamp(value + 1))} disabled={value >= 8} aria-label="Next semester" className="h-10 w-10 shrink-0 rounded-full border-border/70 bg-background/60">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-8 gap-1.5">
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((option) => (
+          <button
+            key={option}
+            type="button"
+            onClick={() => onChange(option)}
+            aria-pressed={value === option}
+            aria-label={`Semester ${option}`}
+            className={`rounded-xl border py-2 text-xs font-medium tabular-nums transition ${value === option ? 'border-primary/50 bg-primary/[0.12] text-foreground' : 'border-border/60 bg-background/40 text-muted-foreground hover:text-foreground'}`}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HabitTarget({ name, value, onChange }: { name: string; value: number; onChange: (next: number) => void }) {
+  const clamp = (next: number) => Math.min(7, Math.max(0, Math.round(next)));
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-1" role="group" aria-label={`${name || 'Habit'} days per week`}>
+        {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+          <button
+            key={day}
+            type="button"
+            onClick={() => onChange(day)}
+            aria-label={`${day} ${day === 1 ? 'day' : 'days'} per week`}
+            aria-pressed={value === day}
+            className={`h-1.5 w-4 rounded-full transition ${day <= value ? 'bg-primary' : 'bg-muted'} ${value === day ? 'ring-2 ring-primary/25 ring-offset-1 ring-offset-background' : ''}`}
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-1 rounded-full border border-border/60 bg-background/50 p-0.5">
+        <button type="button" onClick={() => onChange(clamp(value - 1))} disabled={value <= 0} aria-label={`Decrease days per week for ${name || 'habit'}`} className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground transition hover:text-foreground disabled:opacity-40"><Minus className="h-3 w-3" /></button>
+        <span className="min-w-8 text-center text-xs font-semibold tabular-nums">{value}<span className="text-[10px] font-normal text-muted-foreground">/7</span></span>
+        <button type="button" onClick={() => onChange(clamp(value + 1))} disabled={value >= 7} aria-label={`Increase days per week for ${name || 'habit'}`} className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground transition hover:text-foreground disabled:opacity-40"><Plus className="h-3 w-3" /></button>
+      </div>
+    </div>
+  );
+}
+
 function ToggleCard({ checked, onToggle, title, detail }: { checked: boolean; onToggle: () => void; title: string; detail?: string }) {
   return (
     <button type="button" onClick={onToggle} aria-pressed={checked} className={`flex w-full items-center gap-3 rounded-2xl border px-3.5 py-3 text-left transition ${checked ? 'border-primary/45 bg-primary/[0.09]' : 'border-border/60 bg-background/35 hover:bg-accent/50'}`}>
@@ -143,7 +207,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
   const [profileName, setProfileName] = useState('');
   const [university, setUniversity] = useState('');
   const [degree, setDegree] = useState('');
-  const [semester, setSemester] = useState('1');
+  const [semester, setSemester] = useState(1);
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [subjectDraft, setSubjectDraft] = useState('');
@@ -266,7 +330,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
       if (habits.some((habit) => !Number.isFinite(habit.targetPerWeek) || habit.targetPerWeek < 0 || habit.targetPerWeek > 7)) throw new Error('Habit goals must be between 0 and 7 days per week.');
       if (!Number.isFinite(dailyTarget) || dailyTarget < 0.5 || dailyTarget > 24) throw new Error('Daily study target must be between 0.5 and 24 hours.');
       if (!Number.isFinite(codingTarget) || codingTarget < 0 || codingTarget > 168) throw new Error('Weekly coding target must be between 0 and 168 hours.');
-      if (!Number.isFinite(Number(semester)) || Number(semester) < 1 || Number(semester) > 8) throw new Error('Semester or year must be between 1 and 8.');
+      if (!Number.isFinite(semester) || semester < 1 || semester > 8) throw new Error('Semester or year must be between 1 and 8.');
 
       const supabase = (await import('@/lib/supabase')).getSupabaseClient();
       if (supabase) {
@@ -308,7 +372,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
         name: profileName.trim(),
         university: university.trim(),
         degree: degree.trim(),
-        semester: Math.min(8, Math.max(1, Math.round(Number(semester) || 1))),
+        semester,
         dailyTargetHours: dailyTarget,
         weeklyCodingTargetHours: codingTarget,
       };
@@ -408,7 +472,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
             <label className="space-y-2 text-sm font-medium"><span>Your name</span><Input autoComplete="name" value={profileName} onChange={(event) => setProfileName(event.target.value)} placeholder="Name shown on your dashboard" className="h-11 rounded-xl bg-background/45" /></label>
             <label className="space-y-2 text-sm font-medium"><span>University or school</span><Input autoComplete="organization" value={university} onChange={(event) => setUniversity(event.target.value)} placeholder="Optional" className="h-11 rounded-xl bg-background/45" /></label>
             <label className="space-y-2 text-sm font-medium"><span>Degree or program</span><Input value={degree} onChange={(event) => setDegree(event.target.value)} placeholder="Optional — e.g. Computer Science" className="h-11 rounded-xl bg-background/45" /></label>
-            <label className="space-y-2 text-sm font-medium"><span>Semester / year (1–8)</span><Input type="number" min="1" max="8" value={semester} onChange={(event) => setSemester(event.target.value)} className="h-11 rounded-xl bg-background/45" /></label>
+            <SemesterControl value={semester} onChange={setSemester} />
             <p className="text-xs text-muted-foreground sm:col-span-2">Only your name is required. Everything else can be changed later in Settings.</p>
           </div>
         )}
@@ -522,10 +586,9 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Your tracked habits</p>
                 {habits.map((habit) => (
-                  <div key={habit.id} className="flex items-center gap-2 rounded-2xl border border-border/60 bg-background/35 p-3">
+                  <div key={habit.id} className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-background/35 p-3 sm:flex-row sm:items-center">
                     <Input value={habit.name} onChange={(event) => setHabits((items) => items.map((item) => item.id === habit.id ? { ...item, name: event.target.value } : item))} aria-label={`${habit.name || 'Habit'} name`} className="h-10 min-w-0 flex-1 rounded-xl" />
-                    <Input type="number" min="0" max="7" value={habit.targetPerWeek} onChange={(event) => setHabits((items) => items.map((item) => item.id === habit.id ? { ...item, targetPerWeek: Number(event.target.value) } : item))} aria-label={`${habit.name || 'Habit'} days per week`} className="h-10 w-20 rounded-xl" />
-                    <span className="text-xs text-muted-foreground">days/wk</span>
+                    <HabitTarget name={habit.name} value={habit.targetPerWeek} onChange={(next) => setHabits((items) => items.map((item) => item.id === habit.id ? { ...item, targetPerWeek: next } : item))} />
                     <Button type="button" variant="ghost" size="icon" onClick={() => removeHabit(habit.id)} aria-label={`Remove ${habit.name || 'habit'}`}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 ))}
