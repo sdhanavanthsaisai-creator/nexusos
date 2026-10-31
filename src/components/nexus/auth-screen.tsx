@@ -201,13 +201,13 @@ export default function AuthScreen({
             <div className="mt-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-sm">
               {mode === 'signin' ? (
                 <>
-                  <button type="button" onClick={() => resetForm('forgot')} className="text-muted-foreground transition hover:text-foreground">Forgot password?</button>
-                  <button type="button" onClick={() => resetForm('signup')} className="font-medium text-primary transition hover:text-primary/80">Create an account</button>
+                  <button type="button" onClick={() => resetForm('forgot')} className="touch-expand text-muted-foreground transition hover:text-foreground">Forgot password?</button>
+                  <button type="button" onClick={() => resetForm('signup')} className="touch-expand font-medium text-primary transition hover:text-primary/80">Create an account</button>
                 </>
               ) : mode === 'signup' ? (
-                <button type="button" onClick={() => resetForm('signin')} className="inline-flex items-center gap-1.5 text-muted-foreground transition hover:text-foreground"><ArrowLeft className="h-3.5 w-3.5" /> Back to sign in</button>
+                <button type="button" onClick={() => resetForm('signin')} className="touch-expand inline-flex items-center gap-1.5 text-muted-foreground transition hover:text-foreground"><ArrowLeft className="h-3.5 w-3.5" /> Back to sign in</button>
               ) : (
-                <button type="button" onClick={() => resetForm('signin')} className="inline-flex items-center gap-1.5 text-muted-foreground transition hover:text-foreground"><ArrowLeft className="h-3.5 w-3.5" /> Back to sign in</button>
+                <button type="button" onClick={() => resetForm('signin')} className="touch-expand inline-flex items-center gap-1.5 text-muted-foreground transition hover:text-foreground"><ArrowLeft className="h-3.5 w-3.5" /> Back to sign in</button>
               )}
             </div>
           )}
