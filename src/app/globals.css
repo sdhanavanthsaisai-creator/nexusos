@@ -716,3 +716,20 @@
     font-size: 16px; /* kills iOS auto-zoom on focus */
   }
 }
+
+/* Expand the tappable area of small icon controls to ~44px without moving
+   anything in the layout. Coarse pointers only, so desktop is untouched. */
+@media (pointer: coarse) {
+  .touch-expand {
+    position: relative;
+  }
+  .touch-expand::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}

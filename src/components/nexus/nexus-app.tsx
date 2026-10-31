@@ -112,7 +112,7 @@ export default function NexusApp() {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar />
-          <main id="nexus-main" className="slim-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pt-14 pb-20 [scrollbar-width:thin] md:p-6 md:pt-16 md:pb-6" tabIndex={-1}>
+          <main id="nexus-main" className="slim-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pt-14 pb-28 [scrollbar-width:thin] sm:p-5 sm:pt-14 sm:pb-28 lg:p-6 lg:pt-16 lg:pb-6" tabIndex={-1}>
             {/* Spring-physics module transitions */}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div

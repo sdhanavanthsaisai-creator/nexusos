@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type MouseEvent } from 'react';
+import { useMemo, useState, useSyncExternalStore, type MouseEvent } from 'react';
 import {
   ArrowRightLeft, CalendarRange, Check, Clock, MapPin, Plus, Settings2, X,
 } from 'lucide-react';
@@ -21,6 +21,24 @@ import TimetableSettingsDialog from './timetable/settings-dialog';
 const PX_PER_MINUTE = 0.85;
 const DAY_BY_WEEKDAY = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
+/**
+ * Phones, foldables and portrait tablets get a single-day schedule; only wide
+ * screens have room for seven readable columns. The week view is unchanged
+ * above this breakpoint.
+ */
+const WIDE_GRID = '(min-width: 1024px)';
+const subscribeWide = (onChange: () => void) => {
+  const mql = window.matchMedia(WIDE_GRID);
+  mql.addEventListener('change', onChange);
+  return () => mql.removeEventListener('change', onChange);
+};
+const useWideGrid = () =>
+  useSyncExternalStore(
+    subscribeWide,
+    () => window.matchMedia(WIDE_GRID).matches,
+    () => false,
+  );
+
 type DialogState =
   | { mode: 'new'; event: null; defaults: { dayId: string; start: string; end: string } }
   | { mode: 'edit'; event: TimetableEvent; defaults: { dayId: string; start: string; end: string } }
@@ -32,6 +50,8 @@ export default function TimetableModule() {
 
   const [dialog, setDialog] = useState<DialogState>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const wideGrid = useWideGrid();
+  const [pickedDay, setPickedDay] = useState<string | null>(null);
 
   const { startMin, endMin, totalMin } = timeline(settings);
   const rowMins = useMemo(() => gridRows(settings), [settings]);
@@ -43,6 +63,12 @@ export default function TimetableModule() {
 
   const todayId = DAY_BY_WEEKDAY[new Date().getDay()];
   const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+  const selectedDayId = pickedDay && days.some((d) => d.id === pickedDay)
+    ? pickedDay
+    : days.some((d) => d.id === todayId)
+      ? todayId
+      : (days[0]?.id ?? '');
+  const visibleDays = wideGrid ? days : days.filter((d) => d.id === selectedDayId);
 
   const byDay = useMemo(() => {
     const map: Record<string, TimetableEvent[]> = {};
@@ -121,7 +147,7 @@ export default function TimetableModule() {
       <ModuleHeader
         icon={CalendarRange}
         title="Timetable"
-        subtitle="Weekly class schedule — click any slot to add a class, click a class to edit it."
+        subtitle="Weekly class schedule — tap any slot to add a class, tap a class to edit it."
         actions={
           <>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSettingsOpen(true)}>
@@ -184,16 +210,53 @@ export default function TimetableModule() {
           </div>
         </div>
 
-        <div className="slim-scroll overflow-x-auto pb-1">
-          <div className="min-w-[52rem]">
-            {/* Header row */}
-            <div className="flex border-b border-border/60 pb-2">
+        {/* Day switcher — phones, foldables and portrait tablets show one day */}
+        {!wideGrid && (
+          <div
+            className="mb-3 grid gap-1"
+            style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
+            role="tablist"
+            aria-label="Schedule day"
+          >
+            {days.map((d) => {
+              const dayEvents = byDay[d.id] ?? [];
+              const isPicked = d.id === selectedDayId;
+              const isToday = d.id === todayId;
+              return (
+                <button
+                  key={d.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isPicked}
+                  onClick={() => setPickedDay(d.id)}
+                  className={cn(
+                    'flex h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border px-1 text-center transition-colors',
+                    isPicked
+                      ? 'border-foreground/25 bg-foreground text-background'
+                      : 'border-border/60 text-muted-foreground active:bg-accent',
+                  )}
+                >
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.1em]">{d.short}</span>
+                  <span className="flex items-center gap-1 text-[10px] tabular-nums leading-none opacity-80">
+                    {dayEvents.length}
+                    {isToday && <span className={cn('h-1 w-1 rounded-full', isPicked ? 'bg-background' : 'bg-primary')} aria-hidden="true" />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className={cn(wideGrid && 'slim-scroll overflow-x-auto pb-1')}>
+          <div className={cn(wideGrid && 'min-w-0')}>
+            {/* Header row — week view only; the day switcher replaces it below lg */}
+            <div className={cn('flex border-b border-border/60 pb-2', !wideGrid && 'hidden')}>
               <div className="w-14 shrink-0" aria-hidden="true" />
-              {days.map((d) => {
+              {visibleDays.map((d) => {
                 const dayEvents = byDay[d.id] ?? [];
                 const isToday = d.id === todayId;
                 return (
-                  <div key={d.id} className="min-w-[7.5rem] flex-1 px-1 text-center">
+                  <div key={d.id} className="min-w-[4.5rem] flex-1 px-1 text-center">
                     <p
                       className={cn(
                         'text-[10px] font-semibold uppercase tracking-[0.14em]',
@@ -211,13 +274,12 @@ export default function TimetableModule() {
                     <div className="mt-1 flex items-center justify-center gap-1">
                       <span className="rounded-full bg-muted/60 px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">
                         {dayEvents.length}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => openNew(d.id)}
-                        className="rounded-md p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        aria-label={`Add class on ${d.label}`}
-                      >
+                      </span>                          <button
+                            type="button"
+                            onClick={() => openNew(d.id)}
+                            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                            aria-label={`Add class on ${d.label}`}
+                          >
                         <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                       </button>
                     </div>
@@ -245,7 +307,7 @@ export default function TimetableModule() {
               </div>
 
               {/* Day columns */}
-              {days.map((d) => {
+              {visibleDays.map((d) => {
                 const dayEvents = byDay[d.id] ?? [];
                 const isToday = d.id === todayId;
                 return (
@@ -254,7 +316,10 @@ export default function TimetableModule() {
                     role="group"
                     aria-label={`${d.label} schedule`}
                     onClick={(e) => onColumnClick(e, d.id)}
-                    className="relative min-w-[7.5rem] flex-1 cursor-copy border-l border-border/40"
+                    className={cn(
+                      'relative flex-1 cursor-copy border-l border-border/40',
+                      wideGrid ? 'min-w-[4.5rem]' : 'min-w-0',
+                    )}
                     style={{ height: totalMin * PX_PER_MINUTE }}
                   >
                     {/* Slot lines */}

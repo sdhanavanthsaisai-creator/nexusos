@@ -63,14 +63,40 @@ export function EChart({ option, height = 280, className, onClick }: EChartProps
   }, [onClick]);
 
   useEffect(() => {
-    if (!ref.current) return;
-    const chart = echarts.init(ref.current, undefined, { renderer: 'canvas' });
+    const host = ref.current;
+    if (!host) return;
+    const chart = echarts.init(host, undefined, { renderer: 'canvas' });
     chartRef.current = chart;
-    const ro = new ResizeObserver(() => chart.resize());
-    ro.observe(ref.current);
+
+    // Match the canvas to the live container box. ECharts keeps its own fixed
+    // pixel width, so folding a phone, rotating a tablet or resizing the window
+    // would otherwise leave a canvas wider than the card and scroll the page.
+    let frame = 0;
+    const fit = () => {
+      frame = 0;
+      const width = host.clientWidth;
+      const height = host.clientHeight;
+      if (!width || !height) return;
+      if (chart.getWidth() === width && chart.getHeight() === height) return;
+      chart.resize({ width, height });
+    };
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(fit);
+    };
+
+    const ro = new ResizeObserver(schedule);
+    ro.observe(host);
+    window.addEventListener('resize', schedule);
+    window.addEventListener('orientationchange', schedule);
+    schedule();
+
     chart.on('click', (p) => clickRef.current?.(p));
     return () => {
+      window.cancelAnimationFrame(frame);
       ro.disconnect();
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('orientationchange', schedule);
       chart.dispose();
       chartRef.current = null;
     };

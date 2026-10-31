@@ -414,8 +414,9 @@ export default function ReportsModule() {
             </div>
           </header>
 
-          {/* KPI table */}
-          <Table>
+          {/* KPI table — scrolls sideways on very narrow screens instead of clipping */}
+          <div className="slim-scroll -mx-1 overflow-x-auto px-1">
+          <Table className="min-w-[16rem]">
             <TableBody>
               <ReportRow
                 label="Study time"
@@ -449,6 +450,7 @@ export default function ReportsModule() {
               <ReportRow label="Avg energy" value={`${r.avgEnergy}/5`} right={<span className="text-muted-foreground/60">in window</span>} />
             </TableBody>
           </Table>
+          </div>
 
           {/* Charts */}
           <div className="mt-4 grid gap-3 lg:grid-cols-2">

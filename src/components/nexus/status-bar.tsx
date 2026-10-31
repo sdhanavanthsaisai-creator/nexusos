@@ -21,7 +21,7 @@ export default function StatusBar() {
 
   return (
     <footer
-      className="glass sticky bottom-0 z-30 hidden h-9 shrink-0 items-center gap-3 overflow-x-auto border-x-0 border-b-0 px-3 pb-[env(safe-area-inset-bottom)] text-[11px] text-muted-foreground no-scrollbar md:flex md:px-5"
+      className="glass sticky bottom-0 z-30 hidden h-9 shrink-0 items-center gap-3 overflow-x-auto border-x-0 border-b-0 px-3 pb-[env(safe-area-inset-bottom)] text-[11px] text-muted-foreground no-scrollbar lg:flex md:px-5"
       role="contentinfo"
       aria-label="NexusOS status bar"
     >
@@ -55,13 +55,13 @@ export default function StatusBar() {
         )}
       </span>
 
-      <span className="hidden items-center gap-2 md:flex">
+      <span className="hidden items-center gap-2 lg:flex">
         <span className="flex items-center gap-1"><span className="kbd">⌘K</span> palette</span>
         <span className="flex items-center gap-1"><span className="kbd">N</span> new task</span>
         <span className="flex items-center gap-1"><span className="kbd">S</span> timer</span>
-        <span className="flex items-center gap-1 text-foreground/80" title="All data stored locally in your browser">
+        <span className="flex items-center gap-1 text-foreground/80" title="Your workspace syncs to your own account">
           <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-foreground" aria-hidden="true" />
-          local sync on
+          cloud sync on
         </span>
         <Command className="h-3 w-3 opacity-40" aria-hidden="true" />
       </span>

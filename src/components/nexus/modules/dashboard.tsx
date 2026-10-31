@@ -356,13 +356,13 @@ export default function DashboardModule() {
         </div>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="pointer-events-auto flex flex-wrap gap-2">
-            <Button size="sm" className="glow-soft gap-1.5" onClick={goLogStudy}>
+            <Button size="sm" className="glow-soft h-10 gap-1.5 sm:h-8" onClick={goLogStudy}>
               <BookOpenCheck className="h-3.5 w-3.5" aria-hidden="true" /> Log study
             </Button>
-            <Button size="sm" variant="outline" className="border-border/60 bg-background/50 backdrop-blur" onClick={goNewTask}>
+            <Button size="sm" variant="outline" className="h-10 border-border/60 bg-background/50 backdrop-blur sm:h-8" onClick={goNewTask}>
               <Plus className="h-3.5 w-3.5" aria-hidden="true" /> New task
             </Button>
-            <Button size="sm" variant="outline" className="border-border/60 bg-background/50 backdrop-blur" onClick={goStartTimer}>
+            <Button size="sm" variant="outline" className="h-10 border-border/60 bg-background/50 backdrop-blur sm:h-8" onClick={goStartTimer}>
               <Play className="h-3.5 w-3.5" aria-hidden="true" /> Start timer
             </Button>
           </div>
@@ -378,7 +378,7 @@ export default function DashboardModule() {
   );
 
   const renderKpis = () => (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4">
       <KpiCard
         icon={Clock}
         label="Today's study"
@@ -448,9 +448,9 @@ export default function DashboardModule() {
           {focusTasks.map((t) => {
             const overdue = !!t.dueDate && t.dueDate < today;
             return (
-              <div key={t.id} className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-background/40 px-3 py-2">
+              <div key={t.id} className="flex min-h-11 items-center gap-2.5 rounded-xl border border-border/60 bg-background/40 px-3 py-2">
                 <Checkbox
-                  className="mt-0.5"
+                  className="touch-expand mt-0.5"
                   onCheckedChange={(v) => {
                     if (!v) return;
                     completeTask(t.id);
@@ -598,7 +598,7 @@ export default function DashboardModule() {
         actions={
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" size="sm" className="h-10 gap-1.5 sm:h-8">
                 <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" /> Customize widgets
               </Button>
             </PopoverTrigger>

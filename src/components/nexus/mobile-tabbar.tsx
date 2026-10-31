@@ -74,7 +74,7 @@ export default function MobileTabBar() {
         whileTap={{ scale: 0.92 }}
         transition={{ type: 'spring', stiffness: 380, damping: 26 }}
         className={cn(
-          'fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background shadow-[0_12px_30px_-8px_rgba(0,0,0,0.55)] md:hidden',
+          'fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-background shadow-[0_12px_30px_-8px_rgba(0,0,0,0.55)] lg:hidden',
           // Float above the detached bottom dock, leaving a clear 12px gap.
           'bottom-[calc(env(safe-area-inset-bottom,0px)+86px)]',
         )}
@@ -92,7 +92,7 @@ export default function MobileTabBar() {
       {/* Bottom tab bar — glass, 64px, icon + 11px label, spring-animated pill */}
       <nav
         aria-label="Mobile primary navigation"
-        className="glass fixed inset-x-3 bottom-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] z-50 rounded-full md:hidden"
+        className="glass fixed bottom-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] left-1/2 z-50 w-[min(32rem,calc(100dvw-1.5rem))] -translate-x-1/2 rounded-full lg:hidden"
       >
         <ul className="mx-auto grid h-16 max-w-lg grid-cols-5 items-stretch px-1">
           {TABS.map((t) => {
@@ -171,7 +171,7 @@ export default function MobileTabBar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMoreOpen(false)}
-              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] md:hidden"
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] lg:hidden"
               aria-hidden="true"
             />
             <motion.div
@@ -181,7 +181,7 @@ export default function MobileTabBar() {
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="glass-strong fixed inset-x-0 bottom-0 z-50 max-h-[75dvh] overflow-y-auto overscroll-contain rounded-t-3xl pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] md:hidden slim-scroll"
+              className="glass-strong fixed inset-x-0 bottom-0 z-50 max-h-[75dvh] overflow-y-auto overscroll-contain rounded-t-3xl pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] lg:hidden slim-scroll"
             >
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/60 rounded-t-3xl bg-background/55 px-4 py-3 backdrop-blur-xl">
                 <p className="text-sm font-bold text-gradient">All modules</p>
@@ -314,7 +314,7 @@ function QuickAddSheet({ open, onClose }: { open: boolean; onClose: () => void }
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] md:hidden"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] lg:hidden"
             aria-hidden="true"
           />
           <motion.div
@@ -324,7 +324,7 @@ function QuickAddSheet({ open, onClose }: { open: boolean; onClose: () => void }
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 340, damping: 32 }}
-            className="glass-strong fixed inset-x-0 bottom-0 z-50 rounded-t-3xl pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pt-3 md:hidden"
+            className="glass-strong fixed inset-x-0 bottom-0 z-50 rounded-t-3xl pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pt-3 lg:hidden"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-foreground/25" aria-hidden="true" />
             <p className="px-4 pb-2 text-sm font-bold text-gradient">Quick add</p>

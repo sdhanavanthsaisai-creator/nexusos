@@ -402,11 +402,11 @@ function SubjectsCard() {
 
   return (
     <CardShell icon={GraduationCap} title="Subjects manager" hint={`${subjects.length} subjects across college, coding & life`}>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {subjects.map((s) => {
           const meta = CATEGORY_META[s.category];
           return (
-            <div key={s.id} className="flex items-center gap-2 rounded-xl border border-border/50 bg-muted/20 px-3 py-2">
+            <div key={s.id} className="flex min-w-0 items-center gap-2 rounded-xl border border-border/50 bg-muted/20 px-3 py-2">
               <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: s.color }} aria-hidden="true" />
               <span className="min-w-0 flex-1 truncate text-xs font-medium">{s.name}</span>
               <Badge variant="outline" className="shrink-0 text-[9px]" style={{ color: meta.color, borderColor: `color-mix(in srgb, ${meta.color} 33%, transparent)` }}>

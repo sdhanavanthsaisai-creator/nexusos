@@ -71,7 +71,7 @@ export default function Topbar() {
       {/* Mobile nav */}
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-full md:hidden" aria-label="Open navigation">
+          <Button variant="ghost" size="icon" className="h-11 w-11 min-h-11 min-w-11 shrink-0 rounded-full lg:hidden" aria-label="Open navigation">
             <Menu className="h-5 w-5" aria-hidden="true" />
           </Button>
         </SheetTrigger>

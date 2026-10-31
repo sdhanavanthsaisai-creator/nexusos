@@ -122,7 +122,7 @@ export default function HabitCard({ habit, records, onEdit }: HabitCardProps) {
   };
 
   return (
-    <div className="glass flex flex-col gap-3 rounded-2xl p-4 transition-all hover:-translate-y-0.5 hover:glow-soft">
+    <div className="glass flex min-w-0 flex-col gap-3 rounded-2xl p-4 transition-all hover:-translate-y-0.5 hover:glow-soft">
       {/* header: icon / name / streak */}
       <div className="flex items-center gap-2.5">
         <span
@@ -145,7 +145,7 @@ export default function HabitCard({ habit, records, onEdit }: HabitCardProps) {
       </div>
 
       {/* this-week ring + last-7-days toggles */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <RingProgress
           value={ringValue}
           size={64}
@@ -167,9 +167,8 @@ export default function HabitCard({ habit, records, onEdit }: HabitCardProps) {
                 onClick={() => toggleHabitDate(habit.id, k)}
                 title={`${fmtDayNum(k)}${done ? ' — done' : ''}`}
                 aria-label={`Toggle ${fmtDayNum(k)} for ${habit.name}`}
-                aria-pressed={done}
-                className={cn(
-                  'flex h-7 w-7 items-center justify-center rounded-md border transition-all hover:scale-105',
+                aria-pressed={done}                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-md border transition-all hover:scale-105 sm:h-7 sm:w-7',
                   done ? 'border-transparent' : 'border-border/70 text-muted-foreground/70 hover:border-foreground/30',
                 )}
                 style={done ? { backgroundColor: habit.color } : undefined}
@@ -213,7 +212,7 @@ export default function HabitCard({ habit, records, onEdit }: HabitCardProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="touch-expand h-7 w-7 text-muted-foreground hover:text-foreground"
             onClick={() => onEdit(habit)}
             aria-label={`Edit ${habit.name}`}
           >

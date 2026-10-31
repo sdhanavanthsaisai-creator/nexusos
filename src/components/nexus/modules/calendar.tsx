@@ -195,12 +195,12 @@ export default function CalendarModule() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* ── Month grid ─────────────────────────────────────────────────── */}
-        <section className="glass rounded-2xl p-3 sm:p-4 lg:col-span-2">
+        <section className="glass min-w-0 rounded-2xl p-2 sm:p-4 lg:col-span-2">
           <div className="mb-2 flex items-center justify-between">
             <h3 className="text-sm font-semibold tracking-tight">{fmtMonthYear(new Date(viewYearMonth.y, viewYearMonth.m, 1))}</h3>
             <span className="text-[11px] text-muted-foreground">Click a day for details</span>
           </div>
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {WEEKDAYS.map((w) => (
               <div key={w} className="pb-1 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <span className="hidden sm:inline">{w}</span>
@@ -220,37 +220,47 @@ export default function CalendarModule() {
                   onClick={() => setSelectedDay(key)}
                   aria-label={`${fmtDayFull(key)} — open details`}
                   aria-current={isToday ? 'date' : undefined}
-                  className={`flex min-h-20 flex-col gap-1 rounded-lg border border-border/50 p-1.5 text-left transition-colors hover:bg-muted/40 md:min-h-24 ${
+                  className={`flex min-h-14 min-w-0 flex-col gap-1 overflow-hidden rounded-lg border border-border/50 p-1 text-left transition-colors hover:bg-muted/40 sm:min-h-20 sm:p-1.5 md:min-h-24 ${
                     inMonth ? '' : 'opacity-40'
                   } ${isToday ? 'ring-1 ring-primary bg-primary/5' : ''} ${isSelected && !isToday ? 'border-primary/60 bg-primary/[0.03]' : ''}`}
                 >
                   <span className={`text-[11px] font-medium leading-none ${isToday ? 'font-bold text-primary' : 'text-muted-foreground'}`}>
                     {d.getDate()}
                   </span>
-                  <span className="flex min-w-0 flex-col gap-0.5">
+                  {/* Phones: dot markers keep every cell legible in a 7-column grid */}
+                  <span className="flex min-w-0 items-center gap-[3px] sm:hidden" aria-hidden="true">
+                    {visibleTasks.map((t) => (
+                      <span key={t.id} className={`h-1 w-1 shrink-0 rounded-full ${t.status === 'done' ? 'bg-muted-foreground/50' : 'bg-primary'}`} />
+                    ))}
+                    {cellExams.length > 0 && <span className="h-1 w-1 shrink-0 rounded-full bg-foreground" />}
+                    {minutes > 0 && <span className="h-1 w-1 shrink-0 rounded-full border border-foreground/60" />}
+                    {perfect && <Flame className="h-2 w-2 shrink-0" aria-hidden="true" />}
+                    {overflow > 0 && <span className="ml-px text-[8px] leading-none text-muted-foreground">+{overflow}</span>}
+                  </span>
+
+                  <span className="hidden min-w-0 w-full flex-col gap-0.5 sm:flex">
                     {visibleTasks.map((t) => {
                       const done = t.status === 'done';
                       return (
                         <span
                           key={t.id}
-                          className={`flex items-center gap-1 truncate rounded bg-foreground/[0.08] px-1 py-px text-[10px] leading-tight ${done ? 'text-muted-foreground line-through' : ''}`}
+                          className={`flex w-full min-w-0 items-center gap-1 truncate rounded bg-foreground/[0.08] px-1 py-px text-[10px] leading-tight ${done ? 'text-muted-foreground line-through' : ''}`}
                         >
                           {done && <Check className="h-2.5 w-2.5 shrink-0 text-foreground" aria-hidden="true" />}
-                          <span className="truncate">{t.title}</span>
+                          <span className="min-w-0 truncate">{t.title}</span>
                         </span>
                       );
                     })}
                     {cellExams.slice(0, 1).map((e) => (
                       <span
-                        key={e.id}
-                        className="flex items-center gap-1 truncate rounded bg-foreground/[0.08] px-1 py-px text-[10px] font-medium leading-tight text-foreground"
+                        key={e.id}                          className="flex w-full min-w-0 items-center gap-1 truncate rounded bg-foreground/[0.08] px-1 py-px text-[10px] font-medium leading-tight text-foreground"
                       >
                         <BookOpen className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
-                        <span className="truncate">{e.title}</span>
+                        <span className="min-w-0 truncate">{e.title}</span>
                       </span>
                     ))}
                     {minutes > 0 && (
-                      <span className="flex items-center gap-1 truncate rounded border border-foreground/25 bg-foreground/[0.08] px-1 py-px text-[10px] font-medium leading-tight tabular-nums text-foreground">
+                      <span className="flex w-full min-w-0 items-center gap-1 truncate rounded border border-foreground/25 bg-foreground/[0.08] px-1 py-px text-[10px] font-medium leading-tight tabular-nums text-foreground">
                         <Timer className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />
                         {minutesToLabel(minutes)}
                       </span>
@@ -273,7 +283,7 @@ export default function CalendarModule() {
         </section>
 
         {/* ── Day details ────────────────────────────────────────────────── */}
-        <section className="glass rounded-2xl p-4 sm:p-5">
+        <section className="glass min-w-0 rounded-2xl p-4 sm:p-5">
           <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold tracking-tight">{fmtDayFull(selectedDay)}</h3>
             {selectedDay === today && (

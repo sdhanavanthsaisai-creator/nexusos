@@ -155,18 +155,18 @@ function SkillCard({ skill, weekMinutes, onEdit }: { skill: Skill; weekMinutes: 
   const meta = SKILL_STATUS[skill.status];
 
   return (
-    <div className="glass space-y-3 rounded-2xl p-4 transition-all duration-300 hover:-translate-y-0.5 hover:glow-soft">
+    <div className="glass min-w-0 space-y-3 rounded-2xl p-4 transition-all duration-300 hover:-translate-y-0.5 hover:glow-soft">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold">{skill.name}</h3>
           <Badge variant="outline" className={cn('mt-1 text-[10px]', meta.cls)}>{meta.label}</Badge>
         </div>
-        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={onEdit} aria-label={`Edit ${skill.name}`}>
+        <Button variant="ghost" size="icon" className="touch-expand h-7 w-7 shrink-0" onClick={onEdit} aria-label={`Edit ${skill.name}`}>
           <Pencil className="h-3.5 w-3.5" />
         </Button>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         <RingProgress value={pctToward} size={76} stroke={7} color={skill.color} label={`${skill.name} progress to target`}>
           <span className="font-mono text-sm font-semibold tabular-nums" style={{ color: skill.color }}>
             {skill.currentLevel}%
