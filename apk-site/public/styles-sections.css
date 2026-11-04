@@ -222,8 +222,11 @@ footer {
   .button { width: 100%; min-height: 54px; }
   .fly-slot { flex: 1 1 100%; max-width: none; }
   .fly-slot .flying-button { min-height: 152px; }
-  .fly-hint { font-size: 11px; }
+  /* Same size as desktop: this is the one line people came for, so it wraps rather than shrinks. */
   .fly-hint strong { white-space: normal; }
+  /* Thumb-sized targets: the copy pill and the footer links were 26px and 20px tall. */
+  .copy { min-height: 32px; padding: 6px 14px; }
+  .foot-links a { display: inline-flex; align-items: center; min-height: 32px; }
   .meta { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 40px; }
   .meta > div:nth-child(4) { grid-column: 1 / -1; }
   .grid { grid-template-columns: 1fr; }

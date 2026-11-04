@@ -81,7 +81,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px max(20px, env(safe-area-inset-left)) 14px max(20px, env(safe-area-inset-right));
+  /* The viewport is laid out with viewport-fit=cover, so keep the bar clear of the notch and the
+     status bar in standalone and landscape instead of tucking the wordmark underneath it. */
+  padding: max(14px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-left)) 14px
+    max(20px, env(safe-area-inset-right));
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
