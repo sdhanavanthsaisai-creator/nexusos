@@ -1,7 +1,7 @@
 'use client';
 
 // ─── Mobile shell: bottom tab bar + "More" sheet + FAB quick-add ─────────────
-// Mobile is the baseline at NexusOS: destinations are Home · Track · Tasks ·
+// Mobile is the baseline at Study Hall: destinations are Home · Track · Tasks ·
 // Analytics · More; secondary modules live in the More sheet; a glass FAB on
 // the right opens the quick-add bottom sheet (log session / add task / habit).
 // Desktop keeps the full sidebar from `md` up — tab bar is hidden there.

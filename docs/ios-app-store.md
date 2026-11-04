@@ -1,4 +1,4 @@
-# Shipping NexusOS on iOS (App Store)
+# Shipping Study Hall on iOS (App Store)
 
 This is the practical release guide for this repository. It assumes the app stays a
 Next.js web app served from `https://nexusos-sigma.vercel.app` and ships to the App
@@ -43,7 +43,7 @@ the shape of the whole plan.
 ```bash
 npm i @capacitor/core @capacitor/cli @capacitor/ios
 npm i @capacitor/haptics @capacitor/preferences @capacitor/share
-npx cap init "NexusOS" app.nexusos.student --web-dir=public
+npx cap init "Study Hall" app.studyhall.student --web-dir=public
 ```
 
 > Bundle id must match what you register in App Store Connect. `app.nexusos.student`
@@ -56,7 +56,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.nexusos.student',
-  appName: 'NexusOS',
+  appName: 'Study Hall',
   // The shell ships a tiny local page; the real UI is the deployed app.
   webDir: 'public',
   server: {
@@ -216,7 +216,7 @@ override func capacitorDidLoad() {
 }
 ```
 
-Because NexusOS is a single-page app, also wire the gesture to your own history so it
+Because Study Hall is a single-page app, also wire the gesture to your own history so it
 does not exit the app:
 
 ```ts
@@ -289,7 +289,7 @@ instead of a download.
 ### 2.1 Sign in with Apple (Guideline 4.8)
 
 **Current status: not required.** 4.8 is triggered by offering a *third-party* login
-(Google, Facebook, GitHub…). NexusOS only offers email + password, which Apple
+(Google, Facebook, GitHub…). Study Hall only offers email + password, which Apple
 explicitly accepts as the primary account mechanism. Adding Sign in with Apple now is
 optional and cannot hurt you.
 
@@ -379,7 +379,7 @@ must tell the user to cancel it in iOS Settings before deleting.
 
 ### 2.3 Privacy declarations
 
-Declare **only** what the app actually uses. Today NexusOS touches no camera, photos,
+Declare **only** what the app actually uses. Today Study Hall touches no camera, photos,
 contacts or location, so `Info.plist` needs **none** of those strings — adding unused
 usage descriptions is an easy review flag.
 
@@ -387,13 +387,13 @@ If you later add profile photos, add exactly these:
 
 ```xml
 <key>NSCameraUsageDescription</key>
-<string>NexusOS uses the camera so you can take a profile photo.</string>
+<string>Study Hall uses the camera so you can take a profile photo.</string>
 <key>NSPhotoLibraryUsageDescription</key>
-<string>NexusOS needs access to your photos so you can choose a profile picture.</string>
+<string>Study Hall needs access to your photos so you can choose a profile picture.</string>
 <key>NSPhotoLibraryAddUsageDescription</key>
-<string>NexusOS saves images you export to your photo library.</string>
+<string>Study Hall saves images you export to your photo library.</string>
 <key>NSMicrophoneUsageDescription</key>
-<string>NexusOS uses the microphone when you record a voice note.</string>
+<string>Study Hall uses the microphone when you record a voice note.</string>
 ```
 
 Also required:
@@ -414,7 +414,7 @@ Also required:
 ### 3.1 Info.plist
 
 ```xml
-<key>CFBundleDisplayName</key><string>NexusOS</string>
+<key>CFBundleDisplayName</key><string>Study Hall</string>
 <key>CFBundleShortVersionString</key><string>1.0.0</string>
 <key>CFBundleVersion</key><string>1</string>
 <key>UILaunchScreen</key>
@@ -533,9 +533,9 @@ npx cap sync ios
 cd ios/App
 xcodebuild -workspace App.xcworkspace -scheme App \
   -configuration Release -destination 'generic/platform=iOS' \
-  -archivePath build/NexusOS.xcarchive clean archive
+  -archivePath build/StudyHall.xcarchive clean archive
 
-xcodebuild -exportArchive -archivePath build/NexusOS.xcarchive \
+xcodebuild -exportArchive -archivePath build/StudyHall.xcarchive \
   -exportOptionsPlist ExportOptions.plist -exportPath build/ipa
 ```
 

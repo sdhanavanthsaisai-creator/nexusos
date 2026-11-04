@@ -42,7 +42,7 @@ export function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavig
 
   return (
     <TooltipProvider delayDuration={200}>
-      <nav aria-label="NexusOS modules" className="flex-1 space-y-4 overflow-y-auto px-2 py-3 slim-scroll">
+      <nav aria-label="Study Hall modules" className="flex-1 space-y-4 overflow-y-auto px-2 py-3 slim-scroll">
         {groups.map((g) => (
           <div key={g.key}>
             {!collapsed && (
@@ -133,11 +133,11 @@ export default function Sidebar() {
           transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         >
           <Hexagon className="h-8 w-8 text-primary" strokeWidth={1.5} aria-hidden="true" />
-          <span className="absolute text-[11px] font-black text-primary">N</span>
+          <span className="absolute text-[11px] font-black text-primary">S</span>
         </motion.div>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="truncate text-sm font-black tracking-tight text-gradient">NEXUS OS</p>
+            <p className="truncate text-sm font-black tracking-tight text-gradient">STUDY HALL</p>
             <p className="truncate text-[10px] text-muted-foreground">Student Productivity OS</p>
           </div>
         )}

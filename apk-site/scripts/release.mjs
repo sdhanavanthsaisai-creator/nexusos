@@ -5,7 +5,8 @@ import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { readManifest } from './apk-manifest.mjs';
 
-const IS_APK = /^NexusOS-.*\.apk$/i;
+// Study Hall is the name; NexusOS-*.apk is still accepted so a build made before the rename keeps working.
+const IS_APK = /^(StudyHall|NexusOS)-.*\.apk$/i;
 
 /** Human size, one decimal: 1230391 → "1.2 MB". */
 const sizeLabel = bytes => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -22,7 +23,7 @@ const findApk = async rootDir => {
     const apkFile = files.filter(name => IS_APK.test(name)).sort().pop();
     if (apkFile) return { dir, apkFile };
   }
-  throw new Error(`No NexusOS-*.apk found in ${rootDir} or ${rootDir}/public`);
+  throw new Error(`No StudyHall-*.apk found in ${rootDir} or ${rootDir}/public`);
 };
 
 /** Version, version code, package, size and SHA-256 of the APK the download buttons serve. */
@@ -39,7 +40,7 @@ export const readRelease = async rootDir => {
   }
 
   // The file name carries the version too, which is the fallback when the manifest is unreadable.
-  const version = manifest?.versionName ?? apkFile.match(/^NexusOS-(.+)\.apk$/i)?.[1];
+  const version = manifest?.versionName ?? apkFile.match(/^(?:StudyHall|NexusOS)-(.+)\.apk$/i)?.[1];
   if (!version) throw new Error(`Could not determine the version of ${apkFile}`);
   const versionCode = manifest?.versionCode;
 

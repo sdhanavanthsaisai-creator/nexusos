@@ -1,6 +1,6 @@
 # Roboto® RB/25 — Design System (design.md)
 
-> Applied to: **NexusOS — Student Productivity & Coding OS** (single `/` route, client-rendered)
+> Applied to: **Study Hall — Student Productivity & Coding OS** (single `/` route, client-rendered)
 
 ## Overview
 
@@ -24,7 +24,7 @@
 | --color-3 | `#C9C9C9` | Text Light (secondary) |
 | --color-4 | `#F1F1F1` | Text Light (fog surfaces) |
 
-**NexusOS mapping (application adaptation):**
+**Study Hall mapping (application adaptation):**
 
 | Mood | Background | Foreground | Secondary | Accent |
 |------|-----------|------------|-----------|--------|

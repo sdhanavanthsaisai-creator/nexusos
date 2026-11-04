@@ -124,9 +124,9 @@ export default function DynamicIsland() {
   const titleNow = useTimerTick(titlePomoActive || titleFreeActive);
   useEffect(() => {
     if (titlePomoActive && pomo.endsAt !== null) {
-      document.title = `${fmtIslandClock(titleNow, pomo.endsAt)} focus — NexusOS`;
+      document.title = `${fmtIslandClock(titleNow, pomo.endsAt)} focus — Study Hall`;
     } else if (titleFreeActive) {
-      document.title = `${secondsToClock(timerElapsedMs(timer) / 1000)} focus — NexusOS`;
+      document.title = `${secondsToClock(timerElapsedMs(timer) / 1000)} focus — Study Hall`;
     } else {
       document.title = BASE_TITLE;
     }
@@ -154,7 +154,7 @@ export default function DynamicIsland() {
   );
 }
 
-const BASE_TITLE = 'NexusOS — Student Productivity OS';
+const BASE_TITLE = 'Study Hall — Student Productivity OS';
 const fmtIslandClock = (nowMs: number, endsAt: number) =>
   `${Math.floor((endsAt - nowMs) / 60000)}:${pad2(Math.max(0, Math.floor((endsAt - nowMs) / 1000) % 60))}`;
 

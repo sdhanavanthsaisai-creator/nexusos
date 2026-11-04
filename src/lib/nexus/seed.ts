@@ -194,7 +194,7 @@ export function buildSeed(): NexusData {
     t({ title: 'Practice guitar — chord transitions', area: 'personal', priority: 'low', status: 'next', daysFromNow: 1, recurrence: 'weekly' }),
     t({ title: 'Solve 10 C++ STL problems', area: 'coding', priority: 'normal', daysFromNow: 7, estimatedHours: 3 }),
     t({ title: 'Bio: cell diagram notes', area: 'college', priority: 'normal', status: 'inbox', daysFromNow: 5 }),
-    t({ title: 'Set up Notion import to NexusOS', area: 'admin', priority: 'low', status: 'inbox' }),
+    t({ title: 'Set up Notion import to Study Hall', area: 'admin', priority: 'low', status: 'inbox' }),
     t({ title: 'JavaScript: closures kata set', area: 'coding', priority: 'important', status: 'next', daysFromNow: 2, estimatedHours: 2 }),
     t({ title: 'Email professor about project topic', area: 'admin', priority: 'important', status: 'waiting', daysFromNow: 1 }),
     t({ title: 'Maths tutorial sheet 5', area: 'college', priority: 'normal', status: 'done', daysFromNow: -1, completedAt: iso(addDays(now, -1)), actualHours: 1.5 }),

@@ -50,8 +50,8 @@ const DARK_THEMES = ['dark', 'oled', 'cyberpunk'];
 function BootScreen() {
   return (
     <div className="grid-bg flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
-      <div className="animate-pulse-glow text-3xl font-bold tracking-tight text-gradient">NEXUS OS</div>
-      <div className="flex items-center gap-1.5" aria-label="Loading NexusOS">
+      <div className="animate-pulse-glow text-3xl font-bold tracking-tight text-gradient">STUDY HALL</div>
+      <div className="flex items-center gap-1.5" aria-label="Loading Study Hall">
         {[0, 1, 2].map((i) => (
           <span key={i} className="h-2 w-2 animate-bounce rounded-full bg-primary" style={{ animationDelay: `${i * 140}ms` }} />
         ))}

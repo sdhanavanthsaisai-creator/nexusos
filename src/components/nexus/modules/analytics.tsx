@@ -1,6 +1,6 @@
 'use client';
 
-// ─── NexusOS · Analytics Suite module (22 interactive charts) ────────────────
+// ─── Study Hall · Analytics Suite module (22 interactive charts) ────────────────
 
 import { useMemo, useState } from 'react';
 import { Activity, BarChart3, BatteryCharging, Clock, Flame, Timer } from 'lucide-react';

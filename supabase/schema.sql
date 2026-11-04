@@ -1,4 +1,4 @@
--- NexusOS Supabase schema
+-- Study Hall Supabase schema
 -- Run this script in Supabase SQL Editor. Keep email confirmation enabled in
 -- Authentication → Providers → Email and add your app URLs under URL Configuration.
 

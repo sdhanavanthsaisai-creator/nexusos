@@ -86,7 +86,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'messages[] required' }, { status: 400 });
   }
 
-  const system = context ? buildSystemPrompt(context) : 'You are Nexus Coach, a concise, encouraging study coach. Answer in under 200 words with markdown.';
+  const system = context ? buildSystemPrompt(context) : 'You are Study Hall Coach, a concise, encouraging study coach. Answer in under 200 words with markdown.';
 
   // 1) Gemini (bring-your-own-key)
   if (body.provider === 'gemini' && body.apiKey) {

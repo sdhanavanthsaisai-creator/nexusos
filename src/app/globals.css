@@ -322,7 +322,7 @@
   }
 }
 
-/* ─── NexusOS custom utilities ────────────────────────────────────────────── */
+/* ─── Study Hall custom utilities ────────────────────────────────────────────── */
 .text-gradient {
   background: linear-gradient(92deg, var(--foreground), color-mix(in oklab, var(--foreground) 45%, transparent) 60%, var(--foreground) 95%);
   -webkit-background-clip: text;

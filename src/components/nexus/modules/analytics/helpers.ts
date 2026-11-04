@@ -33,7 +33,7 @@ export const areaGradient = (hex: string) => ({
   ],
 });
 
-/** NexusOS-styled dataZoom pair (inside + slider) — monochrome RB/25. */
+/** Study Hall-styled dataZoom pair (inside + slider) — monochrome RB/25. */
 export const dataZoomStyled = (theme: ChartThemeInfo): EChartsOption['dataZoom'] => [
   { type: 'inside' },
   {

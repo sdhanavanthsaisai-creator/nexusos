@@ -77,7 +77,7 @@ export default function Topbar() {
         </SheetTrigger>
         <SheetContent side="left" className="glass-strong w-64 p-0">
           <SheetHeader className="px-4 pb-0 pt-4">
-            <SheetTitle className="text-left text-sm font-bold text-gradient">NEXUS OS</SheetTitle>
+            <SheetTitle className="text-left text-sm font-bold text-gradient">STUDY HALL</SheetTitle>
           </SheetHeader>
           <div className="px-3 pt-2">
             <button

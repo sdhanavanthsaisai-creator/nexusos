@@ -17,5 +17,6 @@
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
   <rect width="512" height="512" rx="112" fill="url(#glow)"/>
   <rect x="18" y="18" width="476" height="476" rx="96" fill="none" stroke="#ffffff" stroke-opacity="0.10" stroke-width="2"/>
-  <path fill="url(#mark)" fill-rule="evenodd" d="M150 366 V146 H214 L298 268 V146 H362 V366 H298 L214 244 V366 Z"/>
+  <path fill="none" stroke="url(#mark)" stroke-width="58" stroke-linecap="round" stroke-miterlimit="10"
+        d="M338 198C324 170 298 156 264 156C216 156 188 178 188 210C188 242 214 256 262 262C310 268 336 282 336 314C336 346 308 368 260 368C216 368 190 352 176 324"/>
 </svg>

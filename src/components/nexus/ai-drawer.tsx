@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * AIDrawer — Nexus Coach side sheet. Chat with the AI productivity coach;
+ * AIDrawer — Study Hall Coach side sheet. Chat with the AI productivity coach;
  * falls back to the built-in deterministic coach when no provider is reachable.
  */
 
@@ -53,7 +53,7 @@ function EmptyChatState() {
         <Sparkles className="h-6 w-6" aria-hidden="true" />
       </span>
       <div>
-        <p className="text-sm font-semibold">Meet Nexus Coach</p>
+        <p className="text-sm font-semibold">Meet Study Hall Coach</p>
         <p className="mt-1 text-xs text-muted-foreground">A coach that actually knows your live stats.</p>
       </div>
       <ul className="mt-1 space-y-1.5 text-left text-xs text-muted-foreground">
@@ -134,7 +134,7 @@ export default function AIDrawer() {
   return (
     <Sheet open={open} onOpenChange={setAiOpen}>
       <SheetContent side="right" className="glass-strong w-full gap-0 p-0 sm:w-[420px] sm:max-w-none">
-        <SheetTitle className="sr-only">Nexus Coach</SheetTitle>
+        <SheetTitle className="sr-only">Study Hall Coach</SheetTitle>
         <SheetDescription className="sr-only">Chat with your AI productivity coach</SheetDescription>
 
         {/* Header */}
@@ -144,7 +144,7 @@ export default function AIDrawer() {
               <Sparkles className="h-5 w-5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold tracking-tight">Nexus Coach</p>
+              <p className="text-sm font-semibold tracking-tight">Study Hall Coach</p>
               <p className="truncate text-[11px] text-muted-foreground">{providerLabel}</p>
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function AIDrawer() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onTextareaKeyDown}
               placeholder="Ask your coach anything…"
-              aria-label="Message Nexus Coach"
+              aria-label="Message Study Hall Coach"
               disabled={loading}
               className="min-h-0 flex-1 resize-none text-sm"
             />

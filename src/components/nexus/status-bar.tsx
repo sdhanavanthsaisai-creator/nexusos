@@ -23,11 +23,11 @@ export default function StatusBar() {
     <footer
       className="glass sticky bottom-0 z-30 hidden h-9 shrink-0 items-center gap-3 overflow-x-auto border-x-0 border-b-0 px-3 pb-[env(safe-area-inset-bottom)] text-[11px] text-muted-foreground no-scrollbar lg:flex md:px-5"
       role="contentinfo"
-      aria-label="NexusOS status bar"
+      aria-label="Study Hall status bar"
     >
       <span className="flex items-center gap-1.5 font-semibold text-foreground/80">
         <Database className="h-3 w-3 text-primary" aria-hidden="true" />
-        NexusOS v1.0
+        Study Hall v1.0
       </span>
       <span className="hidden sm:inline">·</span>
       <span className="hidden truncate sm:inline">{profile.name} · {profile.degree} · Sem {profile.semester}</span>

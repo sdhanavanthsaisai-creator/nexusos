@@ -121,7 +121,7 @@ export default function AuthScreen({
         ? 'Reset your password'
         : 'Welcome back';
   const subheading = recovering
-    ? 'Set a new password for your NexusOS account.'
+    ? 'Set a new password for your Study Hall account.'
     : mode === 'signup'
       ? 'Your study system, synced securely across devices.'
       : mode === 'forgot'
@@ -143,7 +143,7 @@ export default function AuthScreen({
             <Hexagon className="h-7 w-7" strokeWidth={1.5} aria-hidden="true" />
           </span>
           <div>
-            <p className="text-lg font-black tracking-tight text-gradient">NEXUS OS</p>
+            <p className="text-lg font-black tracking-tight text-gradient">STUDY HALL</p>
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Your study workspace</p>
           </div>
         </div>

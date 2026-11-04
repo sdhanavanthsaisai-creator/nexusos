@@ -151,7 +151,7 @@ export default function ReportsModule() {
   // ── Markdown rendering of the report ──
   const markdown = (() => {
     const L: string[] = [
-      `# NexusOS Productivity Report — ${periodLabel}`,
+      `# Study Hall Productivity Report — ${periodLabel}`,
       `_Generated ${new Date().toLocaleString()}_`,
       `_Window: ${fmtDayFull(dateKey(report.start))} → ${fmtDayFull(todayKey())}_`,
       '',
@@ -405,7 +405,7 @@ export default function ReportsModule() {
           <header className="flex flex-wrap items-start justify-between gap-2 border-b border-border/60 pb-4">
             <div>
               <h2 className="text-base font-semibold tracking-tight md:text-lg">
-                NexusOS Productivity Report — {periodLabel}
+                Study Hall Productivity Report — {periodLabel}
               </h2>
               <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <CalendarRange className="h-3 w-3" aria-hidden="true" />
@@ -560,7 +560,7 @@ export default function ReportsModule() {
             accept=".json,application/json"
             className="hidden"
             onChange={handleImport}
-            aria-label="Import NexusOS data JSON"
+            aria-label="Import Study Hall data JSON"
           />
           <p className="text-[11px] text-muted-foreground">
             Restore a <span className="font-mono">nexusos-backup-*.json</span> file — it merges into your current data.

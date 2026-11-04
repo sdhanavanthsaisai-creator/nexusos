@@ -28,16 +28,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "NexusOS — Student Productivity & Coding OS",
+  title: "Study Hall — Student Productivity & Coding OS",
   description:
     "Personal student productivity, coding mastery and habit tracking operating system: 3D dashboard, 20+ analytics charts, tasks, habits, AI coach and more.",
-  keywords: ["NexusOS", "student productivity", "study tracker", "habit tracker", "coding roadmap", "analytics", "AI coach"],
-  authors: [{ name: "NexusOS" }],
+  keywords: ["Study Hall", "student productivity", "study tracker", "habit tracker", "coding roadmap", "analytics", "AI coach"],
+  authors: [{ name: "Study Hall" }],
   manifest: "/manifest.webmanifest",
-  applicationName: "NexusOS",
+  applicationName: "Study Hall",
   appleWebApp: {
     capable: true,
-    title: "NexusOS",
+    title: "Study Hall",
     statusBarStyle: "black-translucent",
   },
   icons: {
@@ -49,9 +49,9 @@ export const metadata: Metadata = {
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
-    title: "NexusOS — Student Productivity & Coding OS",
+    title: "Study Hall — Student Productivity & Coding OS",
     description: "Study tracking, habits, tasks, analytics and an AI coach in one immersive dashboard.",
-    siteName: "NexusOS",
+    siteName: "Study Hall",
     type: "website",
   },
 };

@@ -3,14 +3,14 @@ name: design-system-roboto-rb-25
 description: >
   Apply the Roboto® RB/25 design system when building or updating UI.
   Use when creating components, choosing colors or typography,
-  or reviewing designs for the NexusOS application surface.
+  or reviewing designs for the Study Hall application surface.
 ---
 
 # Roboto® RB/25 — Design System Skill
 
 ## When to Use
 
-- Building new UI components for NexusOS.
+- Building new UI components for Study Hall.
 - Reviewing or updating existing component styles.
 - Choosing colors, typography, or spacing.
 - Checking designs against the extracted token set.
@@ -18,7 +18,7 @@ description: >
 ## Context
 
 - **Product:** Roboto® RB/25 — https://webdev-team-3.vercel.app/
-- **Surface:** marketing system adapted to the NexusOS application
+- **Surface:** marketing system adapted to the Study Hall application
 - **Character:** Conversion-focused presence with a balanced monochrome color system and 3 typefaces.
 
 ## Tokens

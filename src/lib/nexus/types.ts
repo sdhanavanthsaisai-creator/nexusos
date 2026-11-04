@@ -1,4 +1,4 @@
-// ─── NexusOS core domain types ────────────────────────────────────────────────
+// ─── Study Hall core domain types ────────────────────────────────────────────────
 export type ID = string;
 
 export type ThemeId = 'dark' | 'light' | 'oled' | 'cyberpunk';

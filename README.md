@@ -1,4 +1,4 @@
-# NexusOS — Student Productivity OS
+# Study Hall — Student Productivity OS
 
 A fully local-first study dashboard: 12 modules (Dashboard, Daily Tracker, Sessions, Tasks, Habits, Calendar, **Timetable**, Roadmap, DSA Plan, Notes, Analytics, Reports, Settings) rendered in a monochrome "Glass OS" shell with a 3D hero and an AI study coach.
 
@@ -16,7 +16,7 @@ Built with Next.js 16 (App Router), React 19, Zustand 5 (persisted to `localStor
 
 ## Accounts and privacy
 
-NexusOS is a public, multi-user app: the live site opens on a sign-in screen, and every visitor gets their own private workspace. A short setup questionnaire (name, university, degree, semester, study targets, tracked habits and coding goals) builds the initial workspace, so no shared demo data is ever shown. Answers and workspace edits are stored per account in Supabase and protected by row-level security, so one account can never read another's data.
+Study Hall is a public, multi-user app: the live site opens on a sign-in screen, and every visitor gets their own private workspace. A short setup questionnaire (name, university, degree, semester, study targets, tracked habits and coding goals) builds the initial workspace, so no shared demo data is ever shown. Answers and workspace edits are stored per account in Supabase and protected by row-level security, so one account can never read another's data.
 
 There is no shared or seeded account. Sign up with any email to start.
 

@@ -462,7 +462,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
       <section className="glass-strong relative z-10 w-full max-w-2xl rounded-[28px] border border-border/60 p-5 shadow-2xl sm:p-8">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><StepIcon className="h-5 w-5" /></span><div><p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Setup questions · {step + 1} of {STEPS.length}</p><h1 className="text-lg font-semibold sm:text-xl">{current.question}</h1></div></div>
-          <span className="hidden text-xs text-muted-foreground sm:block">NEXUS OS</span>
+          <span className="hidden text-xs text-muted-foreground sm:block">STUDY HALL</span>
         </div>
         <div className="mb-6 h-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${((step + 1) / STEPS.length) * 100}%` }} /></div>
         <p className="mb-5 text-sm text-muted-foreground">{current.subtitle}</p>

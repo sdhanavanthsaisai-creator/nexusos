@@ -138,7 +138,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     }
 
     // Supabase is optional while developing and remains an offline, local-first
-    // NexusOS when the project keys have not been configured.
+    // Study Hall when the project keys have not been configured.
     // Without Supabase, never fall back to a shared browser-local workspace for
     // public users. Authentication and per-account persistence are required.
     setSyncState('error');
@@ -292,7 +292,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     setUser(null);
     hydratedUserRef.current = null;
     setGate('auth');
-    toast.success('Signed out of NexusOS');
+    toast.success('Signed out of Study Hall');
   };
 
   return (

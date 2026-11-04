@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "NexusOS — Student Productivity OS",
-  "short_name": "NexusOS",
+  "name": "Study Hall — Student Productivity OS",
+  "short_name": "Study Hall",
   "description": "Personal study workspace: subjects, timetable, tasks, habits, coding roadmap and analytics. Sign in to open your own workspace.",
   "start_url": "/",
   "scope": "/",
