@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { ArrowLeft, ArrowRight, Hexagon, KeyRound, LoaderCircle, Mail, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, KeyRound, LoaderCircle, Mail, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getSupabaseClient } from '@/lib/supabase';
@@ -140,7 +140,7 @@ export default function AuthScreen({
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-7 flex items-center justify-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-border/70 bg-card/60 text-primary shadow-lg backdrop-blur-xl">
-            <Hexagon className="h-7 w-7" strokeWidth={1.5} aria-hidden="true" />
+            <img src="/logo.svg" alt="" width={26} height={26} aria-hidden="true" />
           </span>
           <div>
             <p className="text-lg font-black tracking-tight text-gradient">STUDY HALL</p>
