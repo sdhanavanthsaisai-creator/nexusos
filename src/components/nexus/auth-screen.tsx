@@ -210,10 +210,17 @@ export default function AuthScreen({
                 <button type="button" onClick={() => resetForm('signin')} className="touch-expand inline-flex items-center gap-1.5 text-muted-foreground transition hover:text-foreground"><ArrowLeft className="h-3.5 w-3.5" /> Back to sign in</button>
               )}
             </div>
-          )}
+          )}          <p className="mt-5 text-center text-[11px] leading-relaxed text-muted-foreground">
+            {mode === 'signup' && !recovering ? 'By creating an account you agree to our ' : 'By continuing you agree to our '}
+            <a href="/terms" className="underline decoration-foreground/30 underline-offset-2 transition hover:text-foreground">Terms of Service</a>
+            {' and '}
+            <a href="/privacy" className="underline decoration-foreground/30 underline-offset-2 transition hover:text-foreground">Privacy Policy</a>
+            .
+          </p>
 
-          <div className="mt-7 flex items-center justify-center gap-1.5 border-t border-border/50 pt-4 text-[11px] text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" /> Your study data is private to your account.
+          <div className="mt-4 flex items-center justify-center gap-1.5 border-t border-border/50 pt-4 text-[11px] text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            Your study data is private to your account.
           </div>
         </section>
         <p className="mt-5 text-center text-[11px] text-muted-foreground">Built for focus. Designed for your flow.</p>

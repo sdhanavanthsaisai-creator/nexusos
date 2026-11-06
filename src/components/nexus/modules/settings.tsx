@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import {
-  Braces, Eye, EyeOff, GraduationCap, Loader2, Palette, Pencil, PlugZap, Plus, RotateCcw,
+  Braces, Eye, EyeOff, FileText, GraduationCap, Loader2, Palette, Pencil, PlugZap, Plus, RotateCcw,
   Settings2, SlidersHorizontal, Sparkles, Trash2, TriangleAlert, User,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -489,6 +489,39 @@ function DsaCard() {
   );
 }
 
+// ─── Legal ────────────────────────────────────────────────────────────────────
+const LEGAL_LINKS = [
+  { href: '/terms', label: 'Terms of Service', hint: 'Account, free service and acceptable use' },
+  { href: '/privacy', label: 'Privacy Policy', hint: 'What we store, why, and your rights' },
+  { href: '/refund-policy', label: 'Refunds', hint: 'Optional contributions and refunds' },
+  { href: '/contact', label: 'Contact & Grievance', hint: 'Support and formal complaints' },
+  { href: '/support', label: 'Support Study Hall', hint: 'Optional contribution — unlocks nothing' },
+];
+
+function LegalCard() {
+  return (
+    <CardShell icon={FileText} title="Legal & support" hint="Open in a new tab">
+      <div className="space-y-2">
+        {LEGAL_LINKS.map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-muted/20 px-3 py-2.5 transition-colors hover:border-foreground/30 hover:bg-muted/30"
+          >
+            <span className="min-w-0">
+              <span className="block text-xs font-medium">{link.label}</span>
+              <span className="block truncate text-[11px] text-muted-foreground">{link.hint}</span>
+            </span>
+            <span className="shrink-0 font-mono text-[10px] text-muted-foreground">↗</span>
+          </a>
+        ))}
+      </div>
+    </CardShell>
+  );
+}
+
 // ─── Danger zone ──────────────────────────────────────────────────────────────
 function DangerCard() {
   const state = useNexus();
@@ -592,6 +625,7 @@ export default function SettingsModule() {
         <PreferencesCard />
         <AiCard />
         <DsaCard />
+        <LegalCard />
       </div>
       <SubjectsCard />
       <DangerCard />
