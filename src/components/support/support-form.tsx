@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle2, HeartHandshake, Loader2, Lock } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { CheckCircle2, HeartHandshake, Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { CONTRIBUTION, formatInr } from '@/lib/support/config';
 import { cn } from '@/lib/utils';
 
@@ -64,6 +65,9 @@ export default function SupportForm() {
   const [useCustom, setUseCustom] = useState(false);
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
+  // Stays true while the Razorpay modal is open, so a second click cannot
+  // create a duplicate order behind it.
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const selectedPreset = CONTRIBUTION.presets.find((p) => p.id === presetId);
   const shownAmount = useCustom ? Number.parseInt(custom, 10) : (selectedPreset?.amountInr ?? 0);
@@ -117,6 +121,7 @@ export default function SupportForm() {
         theme: { color: '#000000' },
         notes: { purpose: CONTRIBUTION.purpose },
         handler: (response) => {
+          setPanelOpen(false);
           void (async () => {
             const verify = await fetch('/api/support/verify', {
               method: 'POST',
@@ -126,7 +131,14 @@ export default function SupportForm() {
             const result = (await verify.json().catch(() => ({ ok: false }))) as { ok?: boolean };
             if (result.ok) {
               setStatus('done');
-              setMessage(`Thank you — ${formatInr(order.amount / 100)} received.`);
+              setMessage(`${formatInr(order.amount / 100)} received. A receipt is on its way from Razorpay.`);
+              void confetti({
+                particleCount: 120,
+                spread: 75,
+                origin: { y: 0.65 },
+                colors: ['#FFFFFF', '#C9C9C9', '#F1F1F1'],
+                disableForReducedMotion: true,
+              });
             } else {
               setStatus('error');
               setMessage(
@@ -137,16 +149,21 @@ export default function SupportForm() {
         },
         modal: {
           confirm_close: true,
-          ondismiss: () => setStatus('idle'),
+          ondismiss: () => {
+            setPanelOpen(false);
+            setStatus('idle');
+          },
         },
       });
 
       checkout.on('payment.failed', () => {
+        setPanelOpen(false);
         setStatus('error');
         setMessage('That payment failed. Nothing was charged — you can try again.');
       });
 
       checkout.open();
+      setPanelOpen(true);
       setStatus('idle');
     } catch {
       setStatus('error');
@@ -157,8 +174,10 @@ export default function SupportForm() {
   if (status === 'done') {
     return (
       <div className="rounded-2xl border border-border/60 bg-foreground/[0.04] p-6 text-center">
-        <CheckCircle2 className="mx-auto h-8 w-8" aria-hidden="true" />
-        <p className="mt-3 text-sm font-semibold">Contribution received</p>
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-foreground/20 bg-foreground/[0.06]">
+          <CheckCircle2 className="h-6 w-6" aria-hidden="true" />
+        </span>
+        <p className="mt-3 text-sm font-semibold">Thank you — contribution received</p>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{message}</p>
         <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
           Nothing changes in your account — Study Hall stays exactly as free as it was. A receipt is emailed by
@@ -237,19 +256,42 @@ export default function SupportForm() {
       <button
         type="button"
         onClick={() => void contribute()}
-        disabled={status === 'loading' || !amountValid}
+        disabled={status === 'loading' || panelOpen || !amountValid}
+        aria-busy={status === 'loading'}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {status === 'loading' ? (
+        {status === 'loading' || panelOpen ? (
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
         ) : (
           <HeartHandshake className="h-4 w-4" aria-hidden="true" />
         )}
-        {amountValid ? `Contribute ${formatInr(shownAmount)}` : 'Enter an amount'}
+        {status === 'loading'
+          ? 'Opening secure checkout…'
+          : panelOpen
+            ? 'Payment window open'
+            : amountValid
+              ? `Contribute ${formatInr(shownAmount)}`
+              : 'Enter an amount'}
       </button>
 
+      <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[10px] text-muted-foreground">
+        <span className="flex items-center gap-1">
+          <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+          Secured by Razorpay
+        </span>
+        <span aria-hidden="true">•</span>
+        <span className="flex items-center gap-1">
+          <Lock className="h-3 w-3" aria-hidden="true" />
+          256-bit SSL encrypted
+        </span>
+      </p>
+
       {status === 'error' && message && (
-        <p className="rounded-xl border border-border/60 bg-foreground/[0.04] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+        <p
+          role="status"
+          aria-live="polite"
+          className="rounded-xl border border-border/60 bg-foreground/[0.04] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground"
+        >
           {message}
         </p>
       )}

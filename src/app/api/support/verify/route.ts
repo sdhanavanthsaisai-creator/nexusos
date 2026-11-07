@@ -1,9 +1,16 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { razorpayKeySecret } from '@/lib/support/config';
+import { recordPaymentVerified } from '@/lib/support/transactions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/**
+ * Compares two hex digests without leaking how much of the value matched.
+ * Buffers of unequal length are rejected before timingSafeEqual, which throws
+ * on a length mismatch.
+ */
 function safeEqualHex(expected: string, received: string): boolean {
   const a = Buffer.from(expected, 'utf8');
   const b = Buffer.from(received, 'utf8');
@@ -19,7 +26,7 @@ function safeEqualHex(expected: string, received: string): boolean {
  * page can say "thank you" truthfully instead of trusting the browser.
  */
 export async function POST(request: Request) {
-  const secret = process.env.RAZORPAY_KEY_SECRET;
+  const secret = razorpayKeySecret();
   if (!secret) {
     return NextResponse.json({ ok: false, error: 'not_configured' }, { status: 503 });
   }
@@ -49,6 +56,8 @@ export async function POST(request: Request) {
     console.warn('[support] signature mismatch for order', orderId);
     return NextResponse.json({ ok: false, error: 'signature_mismatch' }, { status: 400 });
   }
+
+  await recordPaymentVerified({ orderId, paymentId });
 
   return NextResponse.json({ ok: true, paymentId });
 }

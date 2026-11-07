@@ -44,11 +44,40 @@ export function normaliseCustomAmount(value: unknown): number | null {
   return rounded;
 }
 
+/** Razorpay expects the smallest currency unit, so rupees become paise. */
+export function amountToPaise(amountInr: number): number {
+  return Math.round(amountInr * 100);
+}
+
 export function formatInr(amountInr: number): string {
   return `₹${amountInr.toLocaleString('en-IN')}`;
 }
 
+/** First non-empty environment value from the given names. */
+function readEnv(...names: string[]): string | undefined {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value && value.trim()) return value.trim();
+  }
+  return undefined;
+}
+
+/**
+ * Publishable key id, sent to Checkout by the order route.
+ *
+ * Accepts both the server-only name and the public alias so either style of
+ * Vercel configuration works. A key id is not a secret; the key secret is.
+ */
+export function razorpayKeyId(): string | undefined {
+  return readEnv('RAZORPAY_KEY_ID', 'NEXT_PUBLIC_RAZORPAY_KEY_ID');
+}
+
+/** Key secret used to sign orders and verify signatures. Never send this out. */
+export function razorpayKeySecret(): string | undefined {
+  return readEnv('RAZORPAY_KEY_SECRET', 'RAZORPAY_SECRET');
+}
+
 /** True when Razorpay credentials are present in the environment. */
 export function isRazorpayConfigured(): boolean {
-  return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
+  return Boolean(razorpayKeyId() && razorpayKeySecret());
 }

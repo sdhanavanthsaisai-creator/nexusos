@@ -2,9 +2,13 @@ import { NextResponse } from 'next/server';
 import {
   CONTRIBUTION,
   amountFromPreset,
+  amountToPaise,
   isRazorpayConfigured,
   normaliseCustomAmount,
+  razorpayKeyId,
+  razorpayKeySecret,
 } from '@/lib/support/config';
+import { recordOrderCreated } from '@/lib/support/transactions';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,8 +24,10 @@ interface OrderBody {
  * Creates a Razorpay order for a voluntary contribution.
  *
  * The amount is resolved and validated here — never trusted from the browser —
- * so a tampered request cannot charge an arbitrary amount or turn into a refund
- * vector.
+ * so a tampered request cannot charge an arbitrary amount, nor turn a
+ * contribution into a refund vector. Only whole rupees between
+ * CONTRIBUTION.minAmountInr and CONTRIBUTION.maxAmountInr reach Razorpay, always
+ * converted to paise and always bound to INR.
  */
 export async function POST(request: Request) {
   if (!isRazorpayConfigured()) {
@@ -54,9 +60,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const keyId = process.env.RAZORPAY_KEY_ID as string;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET as string;
+  const keyId = razorpayKeyId() as string;
+  const keySecret = razorpayKeySecret() as string;
+  const amountPaise = amountToPaise(amountInr);
   const receipt = `support_${Date.now().toString(36)}`;
+  const email = body.email?.slice(0, 200);
 
   const response = await fetch('https://api.razorpay.com/v1/orders', {
     method: 'POST',
@@ -65,12 +73,13 @@ export async function POST(request: Request) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      amount: amountInr * 100,
+      amount: amountPaise,
       currency: CONTRIBUTION.currency,
       receipt,
       notes: {
         purpose: CONTRIBUTION.purpose,
         source: 'studyhall-support-page',
+        ...(email ? { email } : {}),
       },
     }),
     cache: 'no-store',
@@ -87,6 +96,14 @@ export async function POST(request: Request) {
 
   const order = (await response.json()) as { id: string; amount: number; currency: string };
 
+  // Bookkeeping only: a missing service-role key must not block checkout.
+  await recordOrderCreated({
+    orderId: order.id,
+    amountPaise: order.amount,
+    currency: order.currency,
+    email,
+  });
+
   return NextResponse.json({
     orderId: order.id,
     amount: order.amount,
@@ -95,7 +112,7 @@ export async function POST(request: Request) {
     receipt,
     prefill: {
       name: (body.name ?? '').slice(0, 100),
-      email: (body.email ?? '').slice(0, 200),
+      email: email ?? '',
     },
     description: CONTRIBUTION.checkoutDescription,
   });
