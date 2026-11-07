@@ -23,7 +23,7 @@ export default function ContactPage() {
           <br />
           {OPERATOR.address}
           <br />
-          {OPERATOR.country} · GSTIN: {OPERATOR.gstin}
+          {OPERATOR.country} · GST: {OPERATOR.gstin}
         </p>
         <p>
           We trade as {BRAND}. {BRAND} is an independent study tool and is not affiliated with, or endorsed by, any

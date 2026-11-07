@@ -133,8 +133,7 @@ export default function TermsPage() {
             </>,
             <>
               Contributions are <strong>not charitable donations</strong>. We are not registered under section 12A or
-              80G of the Income Tax Act, and no contribution is eligible for any tax deduction. {OPERATOR.gstin} is
-              stated for identification only.
+              80G of the Income Tax Act, and no contribution is eligible for any tax deduction.
             </>,
             <>
               You must be 18 or older, or have a parent or guardian make the payment for you, to contribute.

@@ -78,7 +78,7 @@ export default function AboutPage() {
         <p>
           {OPERATOR.address}
           <br />
-          {OPERATOR.country} · GSTIN: {OPERATOR.gstin}
+          {OPERATOR.country} · GST: {OPERATOR.gstin}
         </p>
         <p>
           {BRAND} is an independent product and is not affiliated with, or endorsed by, any college, university, board or

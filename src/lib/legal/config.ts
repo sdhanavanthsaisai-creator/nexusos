@@ -16,38 +16,39 @@ export const APP_URL = 'https://nexusos-sigma.vercel.app';
 export const DOWNLOAD_URL = 'https://nexusos-download.vercel.app';
 
 /** Date these documents were last revised. Bump when the text changes. */
-export const LEGAL_UPDATED = '6 November 2026';
-export const LEGAL_EFFECTIVE = '6 November 2026';
+export const LEGAL_UPDATED = '7 November 2026';
+export const LEGAL_EFFECTIVE = '7 November 2026';
 
 /** The person or business that operates Study Hall and receives payments. */
 export const OPERATOR = {
   /** Registered / trade name that must appear on the website. */
-  legalName: '[LEGAL NAME OF THE BUSINESS OR PROPRIETOR]',
+  legalName: 'S DHANAVANTH SAI',
   /** e.g. "a sole proprietorship registered in India". */
-  legalForm: '[LEGAL FORM — e.g. sole proprietorship / private limited company]',
+  legalForm: 'a sole proprietorship (early-stage startup)',
   /** Principal geographic address of the head office. */
-  address: '[FULL POSTAL ADDRESS WITH PIN CODE]',
+  address:
+    'No. 14, Sakthi Nagar, 12th Cross Street Extension, Alapakkam, Chengalpattu 603002, Tamil Nadu',
   /** GSTIN if registered; otherwise state that you are not GST registered. */
-  gstin: '[GSTIN, or "Not GST registered"]',
+  gstin: 'Not GST registered',
   country: 'India',
 } as const;
 
 export const CONTACT = {
-  supportEmail: '[support@your-domain.com]',
-  privacyEmail: '[privacy@your-domain.com]',
+  supportEmail: 'sdhanavanthsaisai@gmail.com',
+  privacyEmail: 'sdhanavanthsaisai@gmail.com',
   /** Phone is required for the grievance officer disclosure. */
-  phone: '[+91 XXXXX XXXXX]',
+  phone: '+91 94980 04699',
 } as const;
 
 export const GRIEVANCE = {
-  officerName: '[NAME OF GRIEVANCE OFFICER]',
-  officerDesignation: '[DESIGNATION — e.g. Founder]',
+  officerName: 'S DHANAVANTH SAI',
+  officerDesignation: 'Founder',
   /** A responsible person, not necessarily a formally appointed DPO. */
-  dataProtectionContact: '[NAME / DESIGNATION OF THE PERSON RESPONSIBLE FOR DATA REQUESTS]',
+  dataProtectionContact: 'S DHANAVANTH SAI, Founder',
   acknowledgementHours: 48,
   resolutionDays: 30,
   /** Governing-law courts named in the Terms. */
-  jurisdictionCity: '[CITY, STATE]',
+  jurisdictionCity: 'Chengalpattu, Tamil Nadu',
 } as const;
 
 /** Optional contribution details. Study Hall has no paid plan. */
@@ -61,7 +62,7 @@ export const CONTRIBUTIONS = {
 } as const;
 
 export const THIRD_PARTIES = [
-  { name: 'Supabase', role: 'Account authentication and cloud database hosting (database region: [REGION])' },
+  { name: 'Supabase', role: 'Account authentication and cloud database hosting' },
   { name: 'Vercel', role: 'Web application hosting and content delivery' },
   { name: 'Razorpay', role: 'Payment processing for optional contributions (India)' },
   { name: 'Google (Gemini API)', role: 'AI coach replies when you choose the Gemini option' },
