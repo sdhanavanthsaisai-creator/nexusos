@@ -19,10 +19,16 @@ export function LegalShell({
   title,
   summary,
   children,
+  badge = 'Legal',
+  showDates = true,
 }: {
   title: string;
   summary: string;
   children: ReactNode;
+  /** Small pill in the top-right corner. */
+  badge?: string;
+  /** Revision/effective dates only make sense on the policy pages. */
+  showDates?: boolean;
 }) {
   return (
     <main className="relative min-h-screen bg-background px-4 py-10 text-foreground sm:py-14">
@@ -38,7 +44,7 @@ export function LegalShell({
           </Link>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
             <FileText className="h-3 w-3" aria-hidden="true" />
-            Legal
+            {badge}
           </span>
         </div>
 
@@ -46,9 +52,11 @@ export function LegalShell({
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{BRAND}</p>
           <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">{title}</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{summary}</p>
-          <p className="mt-3 font-mono text-[11px] text-muted-foreground">
-            Last updated {LEGAL_UPDATED} · Effective {LEGAL_EFFECTIVE}
-          </p>
+          {showDates && (
+            <p className="mt-3 font-mono text-[11px] text-muted-foreground">
+              Last updated {LEGAL_UPDATED} · Effective {LEGAL_EFFECTIVE}
+            </p>
+          )}
         </header>
 
         {hasUnfilledPlaceholders() && (
