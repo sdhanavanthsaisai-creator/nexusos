@@ -34,8 +34,8 @@ export const OPERATOR = {
 } as const;
 
 export const CONTACT = {
-  supportEmail: 'sdhanavanthsaisai@gmail.com',
-  privacyEmail: 'sdhanavanthsaisai@gmail.com',
+  supportEmail: 'dhanavanthsai.s@gmail.com',
+  privacyEmail: 'dhanavanthsai.s@gmail.com',
   /** Phone is required for the grievance officer disclosure. */
   phone: '+91 94980 04699',
 } as const;
