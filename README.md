@@ -22,8 +22,15 @@ There is no shared or seeded account. Sign up with any email to start.
 
 ## Getting started
 
-1. Create a Supabase project, then paste [`supabase/schema.sql`](supabase/schema.sql) into the SQL Editor and run it. It creates the tables, signup trigger, and per-user row-level security policies.
-2. Copy `.env.example` to `.env.local` and fill in both values from Supabase → Project Settings → API.
+1. Create a Supabase project, then apply the schema. Either paste the generated [`supabase/schema.sql`](supabase/schema.sql) into the SQL Editor, or run the real migrations so the database keeps a version ledger:
+
+```bash
+SUPABASE_DB_URL=postgres://... npm run db:migrate
+```
+
+`supabase/migrations/*.sql` is the source of truth; `supabase/schema.sql` and `npm run db:schema` are generated from it, and `npm run db:schema:check` fails when the two drift apart.
+2. Copy `.env.example` to `.env.local` and fill in the Supabase URL, anonymous key and service-role key from Supabase → Project Settings → API. The service-role key lets the server create a profile row during sign-up.
+3. Check the deployment against the schema at any time: `GET /api/health` returns `200` when every table and column the app uses is present, and `503` with a list of findings when it is not.
 3. Install and run:
 
 ```bash

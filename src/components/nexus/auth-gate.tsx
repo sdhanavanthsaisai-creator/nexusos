@@ -10,6 +10,8 @@ import AuthScreen from '@/components/nexus/auth-screen';
 import OnboardingWizard from '@/components/nexus/onboarding-wizard';
 import { CloudSyncContext, type CloudSyncState } from '@/components/nexus/cloud-context';
 import { createEmptySnapshot, getSupabaseClient, isCloudSnapshot, snapshotForCloud } from '@/lib/supabase';
+import { ensureWorkspace, saveWorkspaceProfile } from '@/lib/account/bootstrap';
+import { friendlyAccountError } from '@/lib/account/messages';
 import type { NexusData } from '@/lib/nexus/types';
 import { useNexus } from '@/lib/nexus/store';
 
@@ -77,20 +79,37 @@ export default function AuthGate({ children }: { children: ReactNode }) {
     const supabase = getSupabaseClient();
     let profileStatus: ProfileStatus | null = null;
     if (supabase) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('onboarding_completed, onboarding')
-        .eq('id', current.id)
-        .maybeSingle();
-      if (error && error.code !== 'PGRST116' && error.code !== '42P01') {
+      // The profile row is created by the server with the service-role key, so
+      // sign-up never depends on the browser holding GRANTs on public.profiles.
+      const workspace = await ensureWorkspace();
+      if (workspace.ok) {
+        profileStatus = {
+          exists: true,
+          completed: workspace.profile.onboardingCompleted,
+          plan: workspace.profile.onboarding,
+        };
+      } else if (workspace.kind === 'error') {
         setSyncState('error');
-        setNotice(`Could not read your account profile (${error.message}). Run supabase/schema.sql in your project and try again.`);
+        setNotice(workspace.message);
         setGate('auth');
         return;
+      } else {
+        // Deployment has no service-role key: read our own row directly.
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('onboarding_completed, onboarding')
+          .eq('id', current.id)
+          .maybeSingle();
+        if (error && error.code !== 'PGRST116' && error.code !== '42P01') {
+          setSyncState('error');
+          setNotice(friendlyAccountError(error));
+          setGate('auth');
+          return;
+        }
+        profileStatus = data
+          ? { exists: true, completed: data.onboarding_completed === true, plan: data.onboarding }
+          : null;
       }
-      profileStatus = data
-        ? { exists: true, completed: data.onboarding_completed === true, plan: data.onboarding }
-        : null;
       lastProfileRef.current = profileStatus;
 
       const { data: cloudRow, error: cloudError } = await supabase
@@ -110,7 +129,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         dirtyRef.current = false;
       } else if (cloudError && cloudError.code !== 'PGRST116' && cloudError.code !== '42P01') {
         setSyncState('error');
-        setNotice(`Could not load your cloud workspace (${cloudError.message}). Your on-device copy is preserved; run supabase/schema.sql, then retry.`);
+        setNotice('We could not load your saved workspace. Your on-device copy is safe — retry in a moment.');
         setGate('auth');
         return;
       } else if (!hasCloudSnapshot) {
@@ -169,7 +188,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
       if (error) {
         setSyncState('error');
         setGate('auth');
-        setNotice(error.message);
+        setNotice(friendlyAccountError(error));
       } else {
         setUserAndCheck(data.session?.user ?? null);
       }
@@ -199,7 +218,7 @@ export default function AuthGate({ children }: { children: ReactNode }) {
         void supabase.from('user_state').upsert({ user_id: user.id, payload }, { onConflict: 'user_id' }).then(({ error }) => {
           if (error) {
             setSyncState('error');
-            setNotice(`Cloud save failed. Your changes are saved on this device and will retry when connectivity returns. (${error.message})`);
+            setNotice('Your changes are saved on this device and will sync when the connection recovers.');
           } else {
             dirtyRef.current = false;
             setSyncState('synced');
@@ -238,22 +257,19 @@ export default function AuthGate({ children }: { children: ReactNode }) {
   const finishOnboarding = useCallback(() => {
     const profile = useNexus.getState().profile;
     if (user) {
-      void getSupabaseClient()?.from('profiles').upsert({
-        id: user.id,
-        email: user.email,
-        full_name: profile.name,
+      void saveWorkspaceProfile({
+        fullName: profile.name,
         university: profile.university,
         degree: profile.degree,
         semester: profile.semester,
-        daily_target_hours: profile.dailyTargetHours,
-        weekly_coding_target_hours: profile.weeklyCodingTargetHours,
-        theme_preference: useNexus.getState().settings.theme,
-        dsa_active: useNexus.getState().dsaActive,
-        onboarding_completed: true,
-      }).then(({ error }) => {
-        if (error) {
+        dailyTargetHours: profile.dailyTargetHours,
+        weeklyCodingTargetHours: profile.weeklyCodingTargetHours,
+        themePreference: useNexus.getState().settings.theme,
+        dsaActive: useNexus.getState().dsaActive,
+      }).then((result) => {
+        if (!result.ok) {
           setSyncState('error');
-          setNotice(`Your plan is saved locally, but the onboarding profile could not sync (${error.message}).`);
+          setNotice(result.message);
           toast.error('Profile sync needs attention');
         }
       });

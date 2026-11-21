@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { useNexus, useUI } from '@/lib/nexus/store';
+import { saveWorkspaceProfile } from '@/lib/account/bootstrap';
+import { AccountError, friendlyAccountError } from '@/lib/account/messages';
 import { CATEGORY_META, HABIT_SEED, INK_VARS, SKILL_SEED } from '@/lib/nexus/constants';
 import type { Habit, Skill, Subject, SubjectCategory } from '@/lib/nexus/types';
 import { uid } from '@/lib/nexus/utils';
@@ -403,19 +405,18 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
 
       const user = supabase ? (await supabase.auth.getUser()).data.user : null;
       if (supabase && user) {
-        const [profileResult, stateResult, roadmapResult] = await Promise.all([
-          supabase.from('profiles').upsert({
-            id: user.id,
-            email: user.email,
-            full_name: profile.name,
+        // The profile is written by the server with the service-role key, so a
+        // missing GRANT or policy cannot strand the user mid-onboarding.
+        const [profileSave, stateResult, roadmapResult] = await Promise.all([
+          saveWorkspaceProfile({
+            fullName: profile.name,
             university: profile.university,
             degree: profile.degree,
             semester: profile.semester,
-            daily_target_hours: profile.dailyTargetHours,
-            weekly_coding_target_hours: profile.weeklyCodingTargetHours,
-            theme_preference: state.settings.theme,
-            dsa_active: dsaActive,
-            onboarding_completed: true,
+            dailyTargetHours: profile.dailyTargetHours,
+            weeklyCodingTargetHours: profile.weeklyCodingTargetHours,
+            themePreference: state.settings.theme,
+            dsaActive,
             onboarding: {
               subjects: cleanedSubjects.map(({ id, name, category }) => ({ id, name, category })),
               skills: skills.map(({ id, name }) => ({ id, name })),
@@ -438,14 +439,15 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
             target_date: skill.targetDate,
           })), { onConflict: 'user_id,id' }) : Promise.resolve({ error: null }),
         ]);
-        const failure = profileResult.error ?? stateResult.error ?? roadmapResult.error;
-        if (failure) throw failure;
+        if (!profileSave.ok) throw new AccountError(profileSave.message);
+        const rowFailure = stateResult.error ?? roadmapResult.error;
+        if (rowFailure) throw rowFailure;
       }
 
       useUI.getState().setActiveModule('dashboard');
       onComplete();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not save your plan. Your answers are kept on this device; try again when connected.');
+      setError(cause instanceof AccountError ? cause.userMessage : friendlyAccountError(cause));
     } finally {
       setSaving(false);
     }

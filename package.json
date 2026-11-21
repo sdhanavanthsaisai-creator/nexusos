@@ -4,12 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
+    "prebuild": "node scripts/db-schema.mjs",
     "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:schema": "node scripts/db-schema.mjs",
+    "db:schema:check": "node scripts/db-schema.mjs --check",
     "db:push": "prisma db push --accept-data-loss",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:migrate:local": "prisma migrate dev",
     "db:reset": "prisma migrate reset"
   },
   "dependencies": {
