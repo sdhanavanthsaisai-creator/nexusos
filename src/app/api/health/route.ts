@@ -117,7 +117,14 @@ export async function GET(request: Request) {
         continue;
       }
 
-      const { error } = await probe.from(table).select(columns.join(','), { head: true, count: 'exact' });
+      // A plain GET with limit(1) rather than `head: true`: HEAD responses
+      // carry no body, so PostgREST's JSON error (the 42501 that explains a
+      // missing GRANT) never reaches the client and every failure looks like a
+      // network problem. No rows are kept or logged.
+      const { error } = await probe
+        .from(table)
+        .select(columns.join(','), { count: 'exact' })
+        .limit(1);
 
       if (!error) {
         tables[table] = 'ok';
