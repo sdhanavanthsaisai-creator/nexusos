@@ -62,10 +62,22 @@ const REQUIRED_TABLES: { table: string; columns: string[] }[] = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // ?verbose=1 adds the hostname and the first probe failure's name/code/status
+  // so a misconfigured URL can be told apart from a redacted-error account
+  // problem. It never includes key material or row data.
+  const verbose = new URL(request.url).searchParams.get('verbose') === '1';
+  const diagnostics: Record<string, unknown> = {};
+  if (verbose) {
+    try {
+      diagnostics.host = url ? new URL(url).host : null;
+    } catch {
+      diagnostics.host = 'invalid-url';
+    }
+  }
 
   const findings: Finding[] = [];
   const tables: Record<string, 'ok' | 'missing' | 'error' | 'skipped'> = {};
@@ -116,6 +128,15 @@ export async function GET() {
       // probing: nine identical findings hide the real cause.
       const detail = [error.code, error.message].filter(Boolean).join(' ').trim();
       const transport = !error.code && /fetch failed|network|ENOTFOUND|ECONNREFUSED|ECONNRESET|ETIMEDOUT/i.test(detail);
+      if (verbose && diagnostics.firstFailure === undefined) {
+        diagnostics.firstFailure = {
+          table,
+          name: error.name,
+          code: error.code,
+          message: error.message,
+          status: (error as { status?: number }).status,
+        };
+      }
       if (!detail || transport) {
         reachable = false;
         tables[table] = 'error';
@@ -169,6 +190,7 @@ export async function GET() {
       env,
       tables,
       findings,
+      ...(verbose ? { diagnostics } : {}),
     },
     {
       status: ok ? 200 : 503,
