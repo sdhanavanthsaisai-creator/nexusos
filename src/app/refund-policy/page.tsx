@@ -54,7 +54,7 @@ export default function RefundPolicyPage() {
             <><strong>Wrong amount</strong> — you typed ₹499 instead of ₹49, and tell us within {CONTRIBUTIONS.refundWindowDays} days of the payment. We refund the difference.</>,
             <><strong>Unauthorised use</strong> — the payment was made with your card or UPI without your permission. Report it to us and to your bank immediately.</>,
             <><strong>Debited but the page said it failed</strong> — your bank shows a debit but we never received a successful payment.</>,
-            <><strong>Payment succeeded and nothing was recorded</strong> — we trace it with Razorpay and refund it if it cannot be matched to a contribution.</>,
+            <><strong>Payment succeeded and nothing was recorded</strong> — we trace it with the processor that took it and refund it if it cannot be matched to a contribution.</>,
           ]}
         />
         <p>
@@ -76,7 +76,7 @@ export default function RefundPolicyPage() {
         </p>
         <Bullets
           items={[
-            <>the Razorpay payment ID from your receipt or bank statement (it looks like <Mono>pay_XXXXXXXXXXXX</Mono>);</>,
+            <>the payment reference from your receipt or bank statement — a Razorpay payment ID such as <Mono>pay_XXXXXXXXXXXX</Mono>, or the UPI reference (UTR) your bank shows;</>,
             <>the amount and the date;</>,
             <>the UPI ID, card ending or bank account the payment came from;</>,
             <>one line on what happened.</>,
@@ -84,15 +84,15 @@ export default function RefundPolicyPage() {
         />
         <p>
           We acknowledge every request within {GRIEVANCE.acknowledgementHours} hours and decide within{' '}
-          {GRIEVANCE.resolutionDays} days. Refunds go back through Razorpay to the original payment method — the same
-          card, UPI ID or bank account. We cannot send money anywhere else, and we will never ask you for your card
+          {GRIEVANCE.resolutionDays} days. Refunds go back through the same processor that took the payment — Razorpay
+          or the UPI gateway — to the original payment method: the same card, UPI ID or bank account. We cannot send money anywhere else, and we will never ask you for your card
           number, CVV, UPI PIN or an OTP to process a refund. Anyone who does is not us.
         </p>
       </Section>
 
       <Section id="timing" heading="5. How long it takes">
         <p>
-          Approved refunds are initiated within 2 business days. Razorpay and your bank then take about{' '}
+          Approved refunds are initiated within 2 business days. The processor and your bank then take about{' '}
           {CONTRIBUTIONS.refundProcessingDays}:
         </p>
         <Bullets
@@ -103,7 +103,7 @@ export default function RefundPolicyPage() {
           ]}
         />
         <p>
-          You will get a refund confirmation from Razorpay. If the money has not appeared after 10 business days, send us
+          You will get a refund confirmation from the processor. If the money has not appeared after 10 business days, send us
           the refund reference (ARN/RRN) and we will chase it with the processor.
         </p>
       </Section>
@@ -112,7 +112,7 @@ export default function RefundPolicyPage() {
         <Bullets
           items={[
             <>A failed payment is normally reversed by your bank within 5–7 business days. Nothing is charged and you do not need to ask us for a refund.</>,
-            <>If your bank shows a debit for a payment the checkout marked failed, send us the reference — we will have Razorpay trace and reverse it.</>,
+            <>If your bank shows a debit for a payment the checkout marked failed, send us the reference — we will have the processor trace and reverse it.</>,
             <>If the checkout keeps failing, try a different method (UPI usually works when a card is declined by the issuer) or write to us.</>,
           ]}
         />

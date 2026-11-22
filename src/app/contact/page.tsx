@@ -35,7 +35,7 @@ export default function ContactPage() {
         <Bullets
           items={[
             <><strong>General support, bugs and account help:</strong> {CONTACT.supportEmail} — {SUPPORT_HOURS}.</>,
-            <><strong>Contributions and refunds:</strong> {CONTACT.supportEmail} with “Contribution” in the subject. Include your Razorpay payment ID.</>,
+            <><strong>Contributions and refunds:</strong> {CONTACT.supportEmail} with “Contribution” in the subject. Include your payment reference — a Razorpay payment ID or the UPI reference (UTR).</>,
             <><strong>Privacy and data requests</strong> (access, correction, deletion, nomination): {CONTACT.privacyEmail}.</>,
             <><strong>Formal complaints and legal notices:</strong> {CONTACT.supportEmail} with “Grievance” or “Legal notice” in the subject.</>,
             <><strong>Phone:</strong> {CONTACT.phone}, {SUPPORT_HOURS}.</>,

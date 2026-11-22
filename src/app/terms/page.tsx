@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Bullets, Callout, LegalShell, Mono, Section } from '@/components/legal/legal-shell';
-import { BRAND, CONTACT, CONTRIBUTIONS, GRIEVANCE, OPERATOR, SUPPORT_HOURS } from '@/lib/legal/config';
+import { BRAND, CONTACT, CONTRIBUTIONS, GRIEVANCE, OPERATOR, PAYMENTS, SUPPORT_HOURS } from '@/lib/legal/config';
 
 export const metadata: Metadata = {
   title: `Terms of Service — ${BRAND}`,
-  description: `The agreement that governs your use of ${BRAND}: accounts, the free service, optional contributions through Razorpay, acceptable use and refunds.`,
+  description: `The agreement that governs your use of ${BRAND}: accounts, the free service, optional contributions by UPI or card, acceptable use and refunds.`,
   robots: { index: true, follow: true },
 };
 
@@ -123,9 +123,10 @@ export default function TermsPage() {
         <Bullets
           items={[
             <>
-              Contributions are processed by <strong>Razorpay</strong> on our behalf. Razorpay handles your card, UPI,
-              net-banking or wallet details; we never see or store your full card number, CVV, UPI PIN or bank
-              credentials.
+              Contributions are processed by <strong>Razorpay</strong> (cards, net banking and wallets) or by{' '}
+              <strong>{PAYMENTS.upiProcessor}</strong>, a UPI gateway we run ourselves. Between them they handle your
+              card, net-banking, wallet and UPI details; we never see or store your full card number, CVV, UPI PIN or
+              bank credentials.
             </>,
             <>
               There is no automatic renewal, mandate or saved instruction. Each contribution is a single payment you
@@ -209,7 +210,7 @@ export default function TermsPage() {
       <Section id="availability" heading="10. Availability and changes">
         <p>
           We work to keep {BRAND} available, but it is provided on an “as is” and “as available” basis. Maintenance,
-          third-party outages (including Supabase, Vercel, Razorpay and AI providers), and events outside our control can
+          third-party outages (including Supabase, Vercel, our payment processors and AI providers), and events outside our control can
           interrupt it. We do not promise uninterrupted or error-free operation, and we do not promise that any specific
           feature will remain available.
         </p>

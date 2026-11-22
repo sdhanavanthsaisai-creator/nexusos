@@ -62,8 +62,8 @@ export default function AboutPage() {
             support page
           </Link>{' '}
           for people who want to fund the hosting, database and model costs behind the app. It is entirely voluntary, it
-          does not unlock a feature, and it does not create a subscription. Contributions are processed by Razorpay; the
-          amounts and the refund window are described on the support and{' '}
+          does not unlock a feature, and it does not create a subscription. Contributions are processed by Razorpay or by
+          the UPI gateway we run ourselves; the amounts and the refund window are described on the support and{' '}
           <Link href="/refund-policy" className={linkClass}>
             refunds
           </Link>{' '}
@@ -94,7 +94,8 @@ export default function AboutPage() {
       <Section id="data" heading="4. Where your data lives">
         <p>
           Accounts and study data are stored with Supabase, the app is served by Vercel, and contributions are processed
-          by Razorpay. The full list, and what each of them receives, is in the{' '}
+          by Razorpay (cards, net banking, wallets) or by our self-hosted YOUPI PG UPI gateway. The full list, and what
+          each of them receives, is in the{' '}
           <Link href="/privacy" className={linkClass}>
             privacy policy
           </Link>

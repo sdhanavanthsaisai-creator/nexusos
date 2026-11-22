@@ -1,3 +1,5 @@
+import { APP_URL } from '@/lib/legal/config';
+
 /**
  * Support (contribution) configuration.
  *
@@ -80,4 +82,60 @@ export function razorpayKeySecret(): string | undefined {
 /** True when Razorpay credentials are present in the environment. */
 export function isRazorpayConfigured(): boolean {
   return Boolean(razorpayKeyId() && razorpayKeySecret());
+}
+
+/*
+ * YOUPI PG — the self-hosted UPI gateway (github.com/youpi-pg/YouPI-PG).
+ *
+ * This is the second checkout, offered next to the Razorpay one. It creates a
+ * session on a gateway the operator runs themselves and settles the money
+ * directly into their bank account, so there is no per-transaction platform
+ * fee. The gateway authenticates the payer on its own origin (WhatsApp OTP) and
+ * shows the UPI QR/deep link there, so neither this app nor the browser ever
+ * handles a card number, UPI PIN or bank credential.
+ *
+ * All three values are server-only and come from the YouPI merchant admin
+ * panel. None of them is prefixed with NEXT_PUBLIC_: the merchant id creates
+ * sessions and the webhook secret is what makes a confirmation trustworthy.
+ */
+
+/** Base origin of the gateway, e.g. https://pay.example.com. */
+export function youpiApiUrl(): string | undefined {
+  const raw = readEnv('YOUPI_API_URL');
+  if (!raw) return undefined;
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Publishable merchant UUID sent as the X-Merchant-Id header. */
+export function youpiMerchantId(): string | undefined {
+  return readEnv('YOUPI_MERCHANT_ID');
+}
+
+/** Signing secret for X-Gateway-Signature. Never send this out. */
+export function youpiWebhookSecret(): string | undefined {
+  return readEnv('YOUPI_WEBHOOK_SECRET');
+}
+
+/**
+ * True when a checkout session can be created. The webhook secret is checked
+ * separately, because a session is still usable (and pollable) before the
+ * gateway's webhook has been wired up.
+ */
+export function isYoupiConfigured(): boolean {
+  return Boolean(youpiApiUrl() && youpiMerchantId());
+}
+
+/**
+ * Absolute origin the gateway sends the payer back to.
+ *
+ * YOUPI PG only stores absolute http(s) return URLs, and a hosted deployment
+ * has its own domain, so this defaults to the canonical app URL. Point
+ * SUPPORT_RETURN_ORIGIN at http://localhost:3000 when testing locally.
+ */
+export function supportReturnOrigin(): string {
+  return (readEnv('SUPPORT_RETURN_ORIGIN') ?? APP_URL).replace(/\/+$/, '');
 }

@@ -16,8 +16,8 @@ export const APP_URL = 'https://nexusos-sigma.vercel.app';
 export const DOWNLOAD_URL = 'https://nexusos-download.vercel.app';
 
 /** Date these documents were last revised. Bump when the text changes. */
-export const LEGAL_UPDATED = '7 November 2026';
-export const LEGAL_EFFECTIVE = '7 November 2026';
+export const LEGAL_UPDATED = '22 November 2026';
+export const LEGAL_EFFECTIVE = '22 November 2026';
 
 /** The person or business that operates Study Hall and receives payments. */
 export const OPERATOR = {
@@ -61,10 +61,26 @@ export const CONTRIBUTIONS = {
   refundProcessingDays: '5–7 business days',
 } as const;
 
+/**
+ * Who takes a contribution.
+ *
+ * There are two checkouts, and neither is the only processor: Razorpay handles
+ * cards, net banking and wallets, and YOUPI PG is a UPI gateway the operator
+ * runs themselves. Legal text must name both, or it tells a contributor their
+ * UPI payment went somewhere it did not.
+ */
+export const PAYMENTS = {
+  /** Reads naturally as "processed by …". */
+  processors: 'Razorpay or our self-hosted YOUPI PG UPI gateway',
+  cardProcessor: 'Razorpay',
+  upiProcessor: 'YOUPI PG',
+} as const;
+
 export const THIRD_PARTIES = [
   { name: 'Supabase', role: 'Account authentication and cloud database hosting' },
   { name: 'Vercel', role: 'Web application hosting and content delivery' },
-  { name: 'Razorpay', role: 'Payment processing for optional contributions (India)' },
+  { name: 'Razorpay', role: 'Card, net-banking and wallet payments for optional contributions (India)' },
+  { name: 'YOUPI PG', role: 'UPI collections for optional contributions, run on infrastructure we operate' },
   { name: 'Google (Gemini API)', role: 'AI coach replies when you choose the Gemini option' },
   { name: 'z.ai', role: 'AI coach replies for the built-in coach' },
 ] as const;

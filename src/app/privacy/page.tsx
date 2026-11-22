@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Bullets, Callout, LegalShell, Mono, Section } from '@/components/legal/legal-shell';
-import { BRAND, CONTACT, GRIEVANCE, OPERATOR, THIRD_PARTIES } from '@/lib/legal/config';
+import { BRAND, CONTACT, GRIEVANCE, OPERATOR, PAYMENTS, THIRD_PARTIES } from '@/lib/legal/config';
 
 export const metadata: Metadata = {
   title: `Privacy Policy — ${BRAND}`,
@@ -51,9 +51,11 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>e. Payment data (only if you choose to contribute).</strong> Study Hall has no paid plan; a
-          contribution is optional and unlocks nothing. If you make one, Razorpay collects and processes your payment
-          instrument, and we receive only a payment identifier, the amount in rupees, the status, and the email you give
-          at checkout. <strong>We never receive or store your full card number, CVV, UPI PIN, net-banking password or
+          contribution is optional and unlocks nothing. If you make one, the option you pick decides who takes the
+          payment: Razorpay for cards, net banking and wallets, or {PAYMENTS.upiProcessor} — the UPI gateway we run
+          ourselves — for UPI. Either way we receive only a payment identifier, the amount in rupees, the status and the
+          email you give at checkout; for UPI we also receive the bank reference (UTR) the gateway reads from the
+          payment alert. <strong>We never receive or store your full card number, CVV, UPI PIN, net-banking password or
           wallet credentials.</strong>
         </p>
         <p>
@@ -78,7 +80,7 @@ export default function PrivacyPage() {
             <><strong>Creating and securing your account</strong> — verifying your email, signing you in, resetting your password, and protecting against unauthorised access.</>,
             <><strong>Providing the workspace</strong> — storing, syncing and displaying your study data across your devices, and calculating your analytics and reports.</>,
             <><strong>Answering your coach questions</strong> — sending your prompt and the study summary to the AI provider you selected, only when you send a message.</>,
-            <><strong>Processing optional contributions</strong> — taking a payment through Razorpay only when you start one, passing it to receipts, handling refunds and preventing payment fraud.</>,
+            <><strong>Processing optional contributions</strong> — taking a payment through Razorpay or {PAYMENTS.upiProcessor} only when you start one, passing it to receipts, handling refunds and preventing payment fraud.</>,
             <><strong>Support</strong> — responding to your emails and diagnosing problems you report.</>,
             <><strong>Safety and legal compliance</strong> — detecting abuse, enforcing our terms, and meeting record-keeping and tax obligations.</>,
             <><strong>Service improvement</strong> — understanding aggregate, non-identifying usage and error patterns to fix bugs. We do not use your study content or chats to train AI models.</>,
@@ -144,8 +146,9 @@ export default function PrivacyPage() {
         <p>
           Data is transmitted over HTTPS and stored in a database with row-level security, so each account can only read
           and write its own records. Access to production systems is limited to the people who need it. Passwords are
-          hashed by our authentication provider and payment credentials are handled entirely by Razorpay, a PCI-DSS Level
-          1 certified processor.
+          hashed by our authentication provider. Card, net-banking and wallet details are handled entirely by Razorpay,
+          a PCI-DSS Level 1 certified processor, and a UPI payment is authorised inside your own UPI app, so no UPI PIN
+          or bank credential ever reaches us.
         </p>
         <p>
           No system is perfectly secure. If a personal data breach occurs, we will notify the Data Protection Board of

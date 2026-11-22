@@ -60,6 +60,10 @@ const REQUIRED_TABLES: { table: string; columns: string[] }[] = [
     table: 'support_contributions',
     columns: ['razorpay_order_id', 'razorpay_payment_id', 'amount_paise', 'currency', 'status', 'failure_reason', 'payer_email', 'updated_at'],
   },
+  {
+    table: 'support_youpi_contributions',
+    columns: ['youpi_payment_id', 'order_id', 'amount_paise', 'currency', 'status', 'utr', 'updated_at'],
+  },
 ];
 
 export async function GET(request: Request) {

@@ -3,13 +3,13 @@ import Link from 'next/link';
 import { Coffee, HeartHandshake, Server, Sparkles } from 'lucide-react';
 import SupportForm from '@/components/support/support-form';
 import { BRAND, CONTACT } from '@/lib/legal/config';
-import { CONTRIBUTION, isRazorpayConfigured } from '@/lib/support/config';
+import { CONTRIBUTION, isRazorpayConfigured, isYoupiConfigured } from '@/lib/support/config';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: `Support ${BRAND}`,
-  description: `${BRAND} is free and stays free. If you would like to support development, you can leave an optional one-time contribution through Razorpay.`,
+  description: `${BRAND} is free and stays free. If you would like to support development, you can leave an optional one-time contribution by UPI or card.`,
   robots: { index: true, follow: true },
 };
 
@@ -20,7 +20,9 @@ const WHERE_IT_GOES = [
 ];
 
 export default function SupportPage() {
-  const live = isRazorpayConfigured();
+  const razorpayLive = isRazorpayConfigured();
+  const youpiLive = isYoupiConfigured();
+  const live = razorpayLive || youpiLive;
 
   return (
     <main className="relative min-h-screen bg-background px-4 py-10 text-foreground sm:py-14">
@@ -55,7 +57,7 @@ export default function SupportPage() {
               One-time, any amount, entirely optional. It unlocks nothing because there is nothing to unlock.
             </p>
             {live ? (
-              <SupportForm />
+              <SupportForm youpiAvailable={youpiLive} razorpayAvailable={razorpayLive} />
             ) : (
               <div className="rounded-2xl border border-dashed border-border/70 bg-foreground/[0.03] p-5 text-center">
                 <p className="text-xs font-semibold">Contributions aren&apos;t switched on yet</p>
@@ -95,7 +97,10 @@ export default function SupportPage() {
                   </Link>
                   .
                 </li>
-                <li>· {CONTRIBUTION.currency === 'INR' ? 'Indian rupees only' : CONTRIBUTION.currency}, processed by Razorpay.</li>
+                <li>
+                  · {CONTRIBUTION.currency === 'INR' ? 'Indian rupees only' : CONTRIBUTION.currency}, paid by UPI
+                  directly or processed by Razorpay.
+                </li>
               </ul>
             </div>
           </aside>
