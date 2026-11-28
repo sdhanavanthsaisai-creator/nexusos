@@ -188,6 +188,7 @@ function TaskDialogInner({ open, onOpenChange, task, defaultDueDate = null }: Ta
             </div>
             <div className="space-y-1.5">
               <Label>Priority</Label>
+              <p className="text-[11px] text-muted-foreground">Critical and Important keep a task in Focus today.</p>
               <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
                 <SelectTrigger className="w-full text-xs" aria-label="Priority">
                   <SelectValue />
@@ -206,6 +207,7 @@ function TaskDialogInner({ open, onOpenChange, task, defaultDueDate = null }: Ta
             </div>
             <div className="space-y-1.5">
               <Label>Area</Label>
+              <p className="text-[11px] text-muted-foreground">Which part of your life it belongs to — used by filters and charts.</p>
               <Select value={area} onValueChange={(v) => setArea(v as TaskArea)}>
                 <SelectTrigger className="w-full text-xs" aria-label="Area">
                   <SelectValue />

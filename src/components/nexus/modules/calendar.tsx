@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { ModuleHeader } from '../ui-bits';
 import { useNexus, useUI } from '@/lib/nexus/store';
-import { EXAM_TYPE_META, PRIORITY_META } from '@/lib/nexus/constants';
+import { EXAM_TYPE_META, PRIORITY_META, moduleMeta } from '@/lib/nexus/constants';
 import type { ExamEvent } from '@/lib/nexus/types';
 import {
   addDays, dateKey, dayTotalMinutes, fmtDayFull, fmtMonthYear, minutesToLabel,
@@ -167,11 +167,11 @@ export default function CalendarModule() {
     <div className="space-y-5">
       <ModuleHeader
         icon={CalendarDays}
-        title="Unified Calendar"
-        subtitle="Tasks · sessions · habits · exams in one timeline"
+        title={moduleMeta('calendar').label}
+        subtitle={moduleMeta('calendar').blurb}
         actions={
           <>
-            <span className="mr-1 hidden items-center gap-3 text-[11px] text-muted-foreground md:flex">
+            <span className="mr-1 flex basis-full flex-wrap items-center gap-3 text-[11px] text-muted-foreground md:basis-auto">
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" />Tasks</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-foreground" />Exams</span>
               <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full border-2 border-foreground bg-transparent" />Sessions</span>

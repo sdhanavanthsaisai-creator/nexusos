@@ -7,7 +7,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { KpiCard, ModuleHeader } from '@/components/nexus/ui-bits';
 import { useNexus } from '@/lib/nexus/store';
-import { TIMETABLE_STATUS_META } from '@/lib/nexus/constants';
+import { TIMETABLE_STATUS_META, moduleMeta } from '@/lib/nexus/constants';
 import {
   eventDuration, fmtTimeRange, gridRows, minutesLabel, snapToSlot, timeline,
 } from '@/lib/nexus/timetable';
@@ -122,8 +122,8 @@ export default function TimetableModule() {
       <div className="space-y-5">
         <ModuleHeader
           icon={CalendarRange}
-          title="Timetable"
-          subtitle="Weekly class schedule — every slot is yours to edit."
+          title={moduleMeta('timetable').label}
+          subtitle={moduleMeta('timetable').blurb}
         />
         <div className="glass rounded-2xl p-6 text-center">
           <CalendarRange className="mx-auto h-8 w-8 text-muted-foreground/60" aria-hidden="true" />
@@ -146,8 +146,8 @@ export default function TimetableModule() {
     <div className="space-y-5">
       <ModuleHeader
         icon={CalendarRange}
-        title="Timetable"
-        subtitle="Weekly class schedule — tap any slot to add a class, tap a class to edit it."
+        title={moduleMeta('timetable').label}
+        subtitle={moduleMeta('timetable').blurb}
         actions={
           <>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setSettingsOpen(true)}>

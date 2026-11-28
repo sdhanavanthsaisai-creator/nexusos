@@ -11,7 +11,7 @@ import dynamic from 'next/dynamic';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import {
-  ArrowDown, ArrowUp, BookOpenCheck, Brain, CalendarDays, Check, Clock, Code2,
+  ArrowDown, ArrowUp, BookOpenCheck, Brain, CalendarDays, Check, ChevronDown, Clock, Code2,
   Coffee, Flame, LayoutDashboard, ListTodo, Lock, Play, Plus, SlidersHorizontal,
 } from 'lucide-react';
 import { useNexus, useUI } from '@/lib/nexus/store';
@@ -22,8 +22,9 @@ import {
 } from '@/lib/nexus/utils';
 import {
   CATEGORY_META, DASHBOARD_WIDGETS_DEFAULT, EXAM_TYPE_META, PRIORITY_META,
-  STREAK_MILESTONES,
+  STREAK_MILESTONES, moduleMeta,
 } from '@/lib/nexus/constants';
+import StartHere from '../start-here';
 import {
   baseTooltip, ChartCard, EmptyState, KpiCard, ModuleHeader, RingProgress,
   useChartTheme, type EChartsOption,
@@ -59,11 +60,11 @@ function fireConfettiBurst() {
 
 const WIDGET_META: Record<string, { label: string }> = {
   hero: { label: '3D Hero' },
-  kpis: { label: 'KPI cards' },
+  starthere: { label: 'Start here guide' },
+  kpis: { label: 'Key numbers' },
   focus: { label: 'Focus today' },
   habits: { label: 'Habits today' },
-  weekly: { label: 'Last 7 days chart' },
-  donut: { label: '7-day allocation donut' },
+  weekly: { label: 'Charts (last 7 days)' },
   exams: { label: 'Upcoming deadlines' },
 };
 
@@ -234,6 +235,11 @@ export default function DashboardModule() {
     toast.success('All habits done! 🔥', { description: `${habitsDone}/${activeHabits.length} complete today.` });
   }, [allHabitsDone, settings.confettiEnabled, habitsDone, activeHabits.length]);
 
+  // ── first-screen disclosure ──
+  const [showMoreStats, setShowMoreStats] = useState(false);
+  // null = follow the data (closed until something has been logged)
+  const [chartsPreference, setChartsPreference] = useState<boolean | null>(null);
+
   // ── widget customization ──
   const enabledWidgets = useMemo(() => {
     const list = settings.dashboardWidgets?.length ? settings.dashboardWidgets : DASHBOARD_WIDGETS_DEFAULT;
@@ -378,59 +384,88 @@ export default function DashboardModule() {
   );
 
   const renderKpis = () => (
-    <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4">
-      <KpiCard
-        icon={Clock}
-        label="Today's study"
-        value={minutesToHM(todayMin)}
-        sub={`${todayPct}% of ${profile.dailyTargetHours}h target`}
-        tone="cyan"
-        progress={todayPct}
-      />
-      <KpiCard
-        icon={CalendarDays}
-        label="Last 7 days"
-        value={minutesToHM(weekMin)}
-        sub={`Avg ${minutesToHM(Math.round(weekMin / 7))}/day`}
-        tone="violet"
-        progress={pct(weekMin, targetMin * 7)}
-      />
-      <KpiCard
-        icon={ListTodo}
-        label="Tasks"
-        value={`${tasksDone}/${tasks.length}`}
-        sub={`${tasksPending} pending`}
-        tone="emerald"
-        progress={pct(tasksDone, tasks.length)}
-      />
-      <KpiCard
-        icon={Check}
-        label="Habit score"
-        value={`${habitScore}%`}
-        sub={`${habitsDone}/${activeHabits.length} habits today`}
-        tone="pink"
-        progress={habitScore}
-      />
-      <KpiCard icon={Flame} label="Current streak" value={`${streak.current}d`} sub={`Best: ${streak.best}d`} tone="amber" />
-      <KpiCard
-        icon={Code2}
-        label="Coding this week"
-        value={`${codingHours}h`}
-        sub={`Target ${profile.weeklyCodingTargetHours}h`}
-        tone="rose"
-        progress={pct(codingMinWeek, profile.weeklyCodingTargetHours * 60)}
-      />
-      {!dsaActive ? (
-        <button
-          type="button"
-          onClick={() => setActiveModule('dsa')}
-          aria-label="DSA plan is locked — open DSA module"
-          className="block w-full cursor-pointer rounded-2xl text-left transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-4">
+        <KpiCard
+          icon={Clock}
+          label="Today's study"
+          value={minutesToHM(todayMin)}
+          sub={`${todayPct}% of ${profile.dailyTargetHours}h target`}
+          tone="cyan"
+          progress={todayPct}
+        />
+        <KpiCard
+          icon={CalendarDays}
+          label="Last 7 days"
+          value={minutesToHM(weekMin)}
+          sub={`Avg ${minutesToHM(Math.round(weekMin / 7))}/day`}
+          tone="violet"
+          progress={pct(weekMin, targetMin * 7)}
+        />
+        <KpiCard
+          icon={ListTodo}
+          label="Tasks"
+          value={`${tasksDone}/${tasks.length}`}
+          sub={`${tasksPending} pending`}
+          tone="emerald"
+          progress={pct(tasksDone, tasks.length)}
+        />
+        <KpiCard
+          icon={Check}
+          label="Habits done today"
+          value={`${habitScore}%`}
+          sub={`${habitsDone}/${activeHabits.length} habits today`}
+          tone="pink"
+          progress={habitScore}
+        />
+      </div>
+
+      <div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 gap-1.5 text-xs text-muted-foreground"
+          aria-expanded={showMoreStats}
+          onClick={() => setShowMoreStats((v) => !v)}
         >
-          <KpiCard icon={Lock} label="DSA status" value="Locked" sub="Starts after Semester 1" tone="slate" />
-        </button>
-      ) : (
-        <KpiCard icon={Brain} label="DSA status" value={`${dsaSolved}`} sub="Problems solved" tone="slate" />
+          <ChevronDown
+            className={cn('h-3.5 w-3.5 transition-transform', showMoreStats && 'rotate-180')}
+            aria-hidden="true"
+          />
+          {showMoreStats ? 'Hide extra stats' : 'More stats'}
+        </Button>
+      </div>
+
+      {showMoreStats && (
+        <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 lg:grid-cols-3">
+          <KpiCard
+            icon={Flame}
+            label="Current streak"
+            value={`${streak.current}d`}
+            sub={`Best: ${streak.best}d`}
+            tone="amber"
+          />
+          <KpiCard
+            icon={Code2}
+            label="Coding this week"
+            value={`${codingHours}h`}
+            sub={`Target ${profile.weeklyCodingTargetHours}h`}
+            tone="rose"
+            progress={pct(codingMinWeek, profile.weeklyCodingTargetHours * 60)}
+          />
+          {!dsaActive ? (
+            <button
+              type="button"
+              onClick={() => setActiveModule('dsa')}
+              aria-label="DSA practice is off — open DSA Plan"
+              className="block w-full cursor-pointer rounded-2xl text-left transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+            >
+              <KpiCard icon={Lock} label="DSA practice" value="Off" sub="Turn on in Settings → DSA tracking" tone="slate" />
+            </button>
+          ) : (
+            <KpiCard icon={Brain} label="DSA practice" value={`${dsaSolved}`} sub="Problems solved" tone="slate" />
+          )}
+        </div>
       )}
     </div>
   );
@@ -466,12 +501,14 @@ export default function DashboardModule() {
                 >
                   {t.title}
                 </button>
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: PRIORITY_META[t.priority].color }}
-                  aria-hidden="true"
-                  title={PRIORITY_META[t.priority].label}
-                />
+                <span className="flex shrink-0 items-center gap-1 rounded-full border border-border/60 px-1.5 py-0.5 text-[10px] text-muted-foreground max-sm:hidden">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: PRIORITY_META[t.priority].color }}
+                    aria-hidden="true"
+                  />
+                  {PRIORITY_META[t.priority].label}
+                </span>
                 {t.dueDate && (
                   <Badge
                     variant="outline"
@@ -525,24 +562,63 @@ export default function DashboardModule() {
     </div>
   );
 
-  const renderWeekly = () => (
-    <ChartCard
-      title="Last 7 days"
-      subtitle="Total focused minutes per day"
-      option={weeklyOption}
-      csv={{ name: 'last-7-days-study', rows: weekData.map(({ day, minutes }) => ({ day, minutes })) }}
-    />
-  );
+  const renderCharts = () => {
+    const hasLogged = weekMin > 0;
+    const open = chartsPreference ?? hasLogged;
 
-  const renderDonut = () =>
-    donutData.total === 0 ? (
-      <div className="glass rounded-2xl p-4">
-        <h3 className="text-sm font-semibold tracking-tight">7-day allocation</h3>
-        <EmptyState icon={CalendarDays} title="No study time logged" hint="Log a session to see your category split." />
+    return (
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold tracking-tight">Charts</h3>
+            <p className="text-xs text-muted-foreground">
+              {open
+                ? 'Minutes studied per day, and how they split by subject category.'
+                : 'Log study time and your charts will appear here.'}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1 text-xs"
+            aria-expanded={open}
+            onClick={() => setChartsPreference(!open)}
+          >
+            <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} aria-hidden="true" />
+            {open ? 'Hide charts' : 'Show charts'}
+          </Button>
+        </div>
+
+        {open && (
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+            <ChartCard
+              title="Last 7 days"
+              subtitle="Total focused minutes per day"
+              option={weeklyOption}
+              csv={{ name: 'last-7-days-study', rows: weekData.map(({ day, minutes }) => ({ day, minutes })) }}
+            />
+            {donutData.total === 0 ? (
+              <div className="glass rounded-2xl p-4">
+                <h3 className="text-sm font-semibold tracking-tight">7-day allocation</h3>
+                <EmptyState
+                  icon={CalendarDays}
+                  title="No study time logged"
+                  hint="Once you log a session, this shows how your minutes split by subject category."
+                />
+              </div>
+            ) : (
+              <ChartCard
+                title="7-day allocation"
+                subtitle="Minutes by subject category"
+                option={donutOption}
+                height={300}
+              />
+            )}
+          </div>
+        )}
       </div>
-    ) : (
-      <ChartCard title="7-day allocation" subtitle="Minutes by subject category" option={donutOption} height={300} />
     );
+  };
 
   const renderExams = () => (
     <div className="glass rounded-2xl p-4">
@@ -579,11 +655,11 @@ export default function DashboardModule() {
   const renderWidget = (id: string): ReactNode => {
     switch (id) {
       case 'hero': return renderHero();
+      case 'starthere': return <StartHere />;
       case 'kpis': return renderKpis();
       case 'focus': return renderFocus();
       case 'habits': return renderHabits();
-      case 'weekly': return renderWeekly();
-      case 'donut': return renderDonut();
+      case 'weekly': return renderCharts();
       case 'exams': return renderExams();
       default: return null;
     }
@@ -593,8 +669,8 @@ export default function DashboardModule() {
     <div className="space-y-6">
       <ModuleHeader
         icon={LayoutDashboard}
-        title="Overview Dashboard"
-        subtitle={`${profile.university} · Semester ${profile.semester}`}
+        title={moduleMeta('dashboard').label}
+        subtitle={moduleMeta('dashboard').blurb}
         actions={
           <Popover>
             <PopoverTrigger asChild>

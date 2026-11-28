@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import type { EChartsOption } from 'echarts';
 import type { Project, Skill } from '@/lib/nexus/types';
 import { useNexus } from '@/lib/nexus/store';
+import { moduleMeta } from '@/lib/nexus/constants';
 import {
   addDays, dateKey, eachDayKeys, fmtDayFull, fmtDayNum, round1, startOfWeek, sum, todayKey,
 } from '@/lib/nexus/utils';
@@ -440,7 +441,7 @@ export default function RoadmapModule() {
 
   return (
     <div className="space-y-6">
-      <ModuleHeader icon={Map} title="Coding Roadmap" subtitle="Skills & projects tracking" />
+      <ModuleHeader icon={Map} title={moduleMeta('roadmap').label} subtitle={moduleMeta('roadmap').blurb} />
 
       {/* Skills */}
       <section className="space-y-3">
@@ -449,7 +450,9 @@ export default function RoadmapModule() {
           <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{skills.length}</span>
         </h2>
         {skills.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-xs text-muted-foreground">No skills yet — edit them into existence once seeded.</p>
+          <p className="rounded-2xl border border-dashed border-border/70 p-6 text-center text-xs text-muted-foreground">
+            No skills yet — add the skill you want to build and set a weekly hours goal.
+          </p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {skills.map((sk) => (

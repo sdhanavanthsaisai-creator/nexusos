@@ -157,10 +157,12 @@ export default function SessionDialog({ open, onOpenChange, session }: SessionDi
           <div className="space-y-1.5">
             <Label className="text-xs">Concentration</Label>
             <StarRating value={concentration} onChange={setConcentration} />
+            <p className="text-[11px] text-muted-foreground">How focused you were, 1–5.</p>
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Energy</Label>
             <StarRating value={energy} onChange={setEnergy} />
+            <p className="text-[11px] text-muted-foreground">How you felt during it, 1–5.</p>
           </div>
         </div>
 

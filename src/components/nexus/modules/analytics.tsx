@@ -9,7 +9,9 @@ import {
   addDays, avg, dateKey, fmtDayFull, minutesToHM, minutesToLabel, rangeStartEnd, sum,
   todayKey, type RangeKey,
 } from '@/lib/nexus/utils';
+import { moduleMeta } from '@/lib/nexus/constants';
 import { KpiCard, ModuleHeader, RangeFilter } from '../ui-bits';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { dailyMinutes, sessionsInDays, type RangeWindow } from './analytics/helpers';
 import {
   CollegeVsCodingChart, CumulativeHoursChart, DailyMinutesChart, EnergyTrendChart,
@@ -59,7 +61,11 @@ export default function AnalyticsModule() {
 
   return (
     <div className="space-y-5">
-      <ModuleHeader icon={BarChart3} title="Analytics Suite" subtitle="22 interactive visualizations" />
+      <ModuleHeader
+        icon={BarChart3}
+        title={moduleMeta('analytics').label}
+        subtitle={moduleMeta('analytics').blurb}
+      />
 
       <RangeFilter
         value={range} onChange={setRange}
@@ -91,30 +97,48 @@ export default function AnalyticsModule() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {/* 1 */} <DailyMinutesChart range={win} />
-        {/* 2 */} <WeeklyTotalsChart />
-        {/* 3 */} <SubjectDistributionChart />
-        {/* 4 */} <CollegeVsCodingChart range={win} />
-        {/* 5 */} <StudyHeatmapChart />
-        {/* 6 */} <WeeklyFocusByCategoryChart />
-        {/* 15 */} <TimeAllocationChart range={win} />
-        {/* 16 */} <CumulativeHoursChart range={win} />
-        {/* 17 */} <ForecastTrackingChart range={win} />
-        {/* 7 */} <TaskCompletionTrendChart />
-        {/* 13 */} <TaskBurndownChart />
-        {/* 8 */} <HabitConsistencyHeatmapChart />
-        {/* 9 */} <SleepVsStudyChart range={win} />
-        {/* 10 */} <SessionDurationChart range={win} />
-        {/* 11 */} <CodingHoursChart />
-        {/* 14 */} <SubjectBalanceRadarChart />
-        {/* 18 */} <EnergyTrendChart range={win} />
-        {/* 19 */} <ConcentrationVsDurationChart range={win} />
-        {/* 20 */} <CollegeVsWeekendChart range={win} />
-        {/* 21 */} <TopTagsChart range={win} />
-        {/* 12 */} <SemesterGoalProgress />
-        {/* 22 */} <BiologicalPrimeTimeChart range={win} />
-      </div>
+      <Tabs defaultValue="time">
+        <TabsList className="grid w-full grid-cols-2 sm:inline-grid sm:w-auto sm:grid-cols-4">
+          <TabsTrigger value="time" className="text-xs">Time</TabsTrigger>
+          <TabsTrigger value="subjects" className="text-xs">Subjects</TabsTrigger>
+          <TabsTrigger value="consistency" className="text-xs">Consistency</TabsTrigger>
+          <TabsTrigger value="tasks" className="text-xs">Tasks &amp; habits</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="time" className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <DailyMinutesChart range={win} />
+          <WeeklyTotalsChart />
+          <StudyHeatmapChart />
+          <CumulativeHoursChart range={win} />
+          <ForecastTrackingChart range={win} />
+          <EnergyTrendChart range={win} />
+          <SemesterGoalProgress />
+        </TabsContent>
+
+        <TabsContent value="subjects" className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <SubjectDistributionChart />
+          <WeeklyFocusByCategoryChart />
+          <CollegeVsCodingChart range={win} />
+          <TimeAllocationChart range={win} />
+          <SubjectBalanceRadarChart />
+          <CodingHoursChart />
+          <TopTagsChart range={win} />
+        </TabsContent>
+
+        <TabsContent value="consistency" className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <CollegeVsWeekendChart range={win} />
+          <SleepVsStudyChart range={win} />
+          <SessionDurationChart range={win} />
+          <BiologicalPrimeTimeChart range={win} />
+          <ConcentrationVsDurationChart range={win} />
+        </TabsContent>
+
+        <TabsContent value="tasks" className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-2">
+          <TaskCompletionTrendChart />
+          <TaskBurndownChart />
+          <HabitConsistencyHeatmapChart />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

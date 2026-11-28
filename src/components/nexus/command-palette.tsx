@@ -8,6 +8,7 @@ import {
 import { useNexus, useUI } from '@/lib/nexus/store';
 import type { ThemeId } from '@/lib/nexus/types';
 import { MODULE_NAV } from '@/lib/nexus/constants';
+import { NAV_ICONS } from './nav-icons';
 import { downloadJSON } from '@/lib/nexus/utils';
 import {
   CommandDialog, CommandEmpty, CommandGroup, CommandInput,
@@ -99,13 +100,15 @@ export default function CommandPalette() {
         <CommandSeparator />
 
         <CommandGroup heading="Navigate">
-          {MODULE_NAV.map((m) => (
-            <CommandItem key={m.id} value={`${m.label} ${m.desc}`} onSelect={() => { setActiveModule(m.id); close(); }}>
-              <Search className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              <span>{m.label}</span>
-              <span className="ml-auto text-[11px] text-muted-foreground">{m.desc}</span>
-            </CommandItem>
-          ))}
+          {MODULE_NAV.map((m) => {
+            const NavIcon = NAV_ICONS[m.id];
+            return (
+              <CommandItem key={m.id} value={`${m.label} ${m.blurb}`} onSelect={() => { setActiveModule(m.id); close(); }}>
+                <NavIcon className="mr-2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <span>{m.label}</span>
+              </CommandItem>
+            );
+          })}
         </CommandGroup>
         <CommandSeparator />
 

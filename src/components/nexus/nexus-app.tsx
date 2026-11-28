@@ -14,6 +14,7 @@ import StatusBar from './status-bar';
 import MobileTabBar from './mobile-tabbar';
 import CommandPalette from './command-palette';
 import AIDrawer from './ai-drawer';
+import HelpSheet from './help-sheet';
 
 import DashboardModule from './modules/dashboard';
 import DailyTrackerModule from './modules/daily-tracker';
@@ -134,6 +135,7 @@ export default function NexusApp() {
       <MobileTabBar />
 
       <CommandPalette />
+      <HelpSheet />
       <AIDrawer />
       <DynamicIsland />
       <Toaster position="bottom-right" richColors closeButton theme={DARK_THEMES.includes(theme) ? 'dark' : 'light'} />

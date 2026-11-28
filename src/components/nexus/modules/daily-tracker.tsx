@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { EmptyState, ModuleHeader, RingProgress, Segmented, StarRating } from '../ui-bits';
 import { useNexus } from '@/lib/nexus/store';
-import { CATEGORY_META } from '@/lib/nexus/constants';
+import { CATEGORY_META, moduleMeta } from '@/lib/nexus/constants';
 import type { DayType, Subject, SubjectCategory } from '@/lib/nexus/types';
 import {
   addDays, addDaysKey, clamp, dayTotalMinutes, eachDayKeys, fmtDayFull, minutesToHM,
@@ -118,8 +118,8 @@ export default function DailyTrackerModule() {
     <div className="space-y-5">
       <ModuleHeader
         icon={CalendarCheck2}
-        title="Daily Study Tracker"
-        subtitle="One record per day — auto-saved"
+        title={moduleMeta('tracker').label}
+        subtitle={moduleMeta('tracker').blurb}
         actions={
           <>
             <Button variant="outline" size="icon" className="h-8 w-8" aria-label="Previous day" onClick={() => setSelectedDate((d) => addDaysKey(d, -1))}>
@@ -171,6 +171,9 @@ export default function DailyTrackerModule() {
                 value={log?.dayType ?? defaultDayType}
                 onChange={(v) => patchLog({ dayType: v })}
               />
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                College days and weekends are compared separately in Analytics.
+              </p>
             </div>
 
             <div>

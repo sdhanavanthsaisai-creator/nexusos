@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/select';
 import { ChartCard, EmptyState, ModuleHeader } from '../ui-bits';
 import { baseTooltip, useChartTheme } from '../echarts-wrapper';
-import { INK_VARS } from '@/lib/nexus/constants';
+import { INK_VARS, moduleMeta } from '@/lib/nexus/constants';
 import { useNexus } from '@/lib/nexus/store';
 import { addDays, clamp, dateKey, fmtDayNum, startOfWeek, todayKey } from '@/lib/nexus/utils';
 import type { EChartsOption } from 'echarts';
@@ -286,8 +286,8 @@ export default function HabitsModule() {
     <div className="space-y-5">
       <ModuleHeader
         icon={Flame}
-        title="Habit Tracker"
-        subtitle="Streaks, heatmaps and weekly consistency"
+        title={moduleMeta('habits').label}
+        subtitle={moduleMeta('habits').blurb}
         actions={
           <Button onClick={openAdd} className="gap-1.5">
             <Plus className="h-4 w-4" aria-hidden="true" /> Add habit

@@ -76,21 +76,64 @@ export const EXAM_TYPE_META: Record<string, { label: string; color: string }> = 
 };
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
-export const MODULE_NAV: { id: ModuleId; label: string; desc: string; group: 'core' | 'plan' | 'data' }[] = [
-  { id: 'dashboard', label: 'Dashboard', desc: 'Overview & live KPIs', group: 'core' },
-  { id: 'tracker', label: 'Daily Tracker', desc: 'Log today\u2019s study', group: 'core' },
-  { id: 'sessions', label: 'Sessions', desc: 'Focus timer & session log', group: 'core' },
-  { id: 'tasks', label: 'Tasks', desc: 'Kanban, calendar & focus', group: 'core' },
-  { id: 'habits', label: 'Habits', desc: 'Streaks & consistency', group: 'core' },
-  { id: 'analytics', label: 'Analytics', desc: '20+ interactive charts', group: 'data' },
-  { id: 'calendar', label: 'Calendar', desc: 'Unified timeline', group: 'plan' },
-  { id: 'timetable', label: 'Timetable', desc: 'Editable weekly class grid', group: 'plan' },
-  { id: 'roadmap', label: 'Roadmap', desc: 'Skills & projects', group: 'plan' },
-  { id: 'dsa', label: 'DSA Plan', desc: 'Locked until Sem 1 ends', group: 'plan' },
-  { id: 'notes', label: 'Notes', desc: 'Markdown & resources', group: 'plan' },
-  { id: 'reports', label: 'Reports', desc: 'Summaries & export', group: 'data' },
-  { id: 'settings', label: 'Settings', desc: 'Profile, themes & AI', group: 'data' },
+// Single source of truth for every module name in the product. The sidebar, the
+// mobile tab bar, the command palette, each page heading and the Help sheet all
+// read this list, so a feature can never be called two different things.
+export type ModuleGroup = 'today' | 'plan' | 'progress';
+
+export interface ModuleNavEntry {
+  id: ModuleId;
+  /** Canonical name: page heading, sidebar, palette. */
+  label: string;
+  /** Compact form for tight surfaces (mobile tab bar). */
+  shortLabel: string;
+  /** One instructional sentence: why you would open this. */
+  blurb: string;
+  group: ModuleGroup;
+}
+
+export const MODULE_GROUPS: { key: ModuleGroup; label: string }[] = [
+  { key: 'today', label: 'Today' },
+  { key: 'plan', label: 'Plan' },
+  { key: 'progress', label: 'Progress' },
 ];
+
+export const MODULE_NAV: ModuleNavEntry[] = [
+  { id: 'dashboard', label: 'Home', shortLabel: 'Home', group: 'today',
+    blurb: 'Your day at a glance \u2014 what needs doing next, and how the week is going.' },
+  { id: 'tracker', label: 'Daily Tracker', shortLabel: 'Log', group: 'today',
+    blurb: 'Record how long you studied each subject today \u2014 one record per day.' },
+  { id: 'sessions', label: 'Focus Sessions', shortLabel: 'Focus', group: 'today',
+    blurb: 'Start a timer for a subject, or log a session you already finished.' },
+  { id: 'tasks', label: 'Tasks', shortLabel: 'Tasks', group: 'today',
+    blurb: 'Everything you have to do, grouped by when it is due.' },
+  { id: 'habits', label: 'Habits', shortLabel: 'Habits', group: 'today',
+    blurb: 'The routines you want to repeat, and how many days in a row you kept them.' },
+  { id: 'timetable', label: 'Timetable', shortLabel: 'Timetable', group: 'plan',
+    blurb: 'Your weekly class schedule \u2014 tap any empty slot to add a class, tap a class to edit it.' },
+  { id: 'calendar', label: 'Calendar', shortLabel: 'Calendar', group: 'plan',
+    blurb: 'One month view of deadlines, exams and the study time you logged.' },
+  { id: 'roadmap', label: 'Roadmap', shortLabel: 'Roadmap', group: 'plan',
+    blurb: 'The skills and projects you are building, with weekly hours against each.' },
+  { id: 'notes', label: 'Notes', shortLabel: 'Notes', group: 'plan',
+    blurb: 'Your markdown notes, and the links you want to keep.' },
+  { id: 'analytics', label: 'Analytics', shortLabel: 'Analytics', group: 'progress',
+    blurb: 'Charts that answer \u201chow am I actually doing this month?\u201d' },
+  { id: 'reports', label: 'Reports', shortLabel: 'Reports', group: 'progress',
+    blurb: 'A weekly or monthly summary you can copy, download or print.' },
+  { id: 'dsa', label: 'DSA Plan', shortLabel: 'DSA', group: 'progress',
+    blurb: 'Practice problems per topic \u2014 off until you turn it on in Settings \u2192 DSA tracking.' },
+  { id: 'settings', label: 'Settings', shortLabel: 'Settings', group: 'progress',
+    blurb: 'Your profile, subjects, study targets, appearance and data.' },
+];
+
+/** Nav entry for a module; falls back to Home so a heading is never blank. */
+export function moduleMeta(id: ModuleId): ModuleNavEntry {
+  return MODULE_NAV.find((m) => m.id === id) ?? MODULE_NAV[0];
+}
+
+/** Modules shown in the sidebar list (Settings lives in the sidebar footer). */
+export const NAV_MODULES = MODULE_NAV.filter((m) => m.id !== 'settings');
 
 // ─── Seed content ─────────────────────────────────────────────────────────────
 export const SUBJECT_SEED: Subject[] = [
@@ -187,7 +230,7 @@ export const TIMETABLE_STATUS_META: Record<TimetableStatus, { label: string; hin
 };
 
 export const DASHBOARD_WIDGETS_DEFAULT = [
-  'hero', 'kpis', 'focus', 'habits', 'weekly', 'donut', 'exams',
+  'hero', 'starthere', 'kpis', 'focus', 'habits', 'weekly', 'exams',
 ];
 
 export const DEFAULT_PROFILE = {

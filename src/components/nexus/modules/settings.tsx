@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from 'react';
 import {
-  Braces, Eye, EyeOff, FileText, GraduationCap, Loader2, Palette, Pencil, PlugZap, Plus, RotateCcw,
-  Settings2, SlidersHorizontal, Sparkles, Trash2, TriangleAlert, User,
+  ArrowRight, Braces, CircleHelp, Eye, EyeOff, FileText, GraduationCap, Loader2, Palette, Pencil, PlugZap,
+  Plus, RotateCcw, Settings2, SlidersHorizontal, Sparkles, Trash2, TriangleAlert, User,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Settings, Subject, SubjectCategory, ThemeId } from '@/lib/nexus/types';
-import { useNexus } from '@/lib/nexus/store';
-import { CATEGORY_META, INK_VARS } from '@/lib/nexus/constants';
+import { useNexus, useUI } from '@/lib/nexus/store';
+import { CATEGORY_META, INK_VARS, moduleMeta } from '@/lib/nexus/constants';
 import { buildAiStats } from '@/lib/nexus/ai-context';
 import { clamp } from '@/lib/nexus/utils';
 import { ModuleHeader } from '../ui-bits';
@@ -614,17 +614,39 @@ function DangerCard() {
   );
 }
 
+// ─── Help ─────────────────────────────────────────────────────────────────────
+function HelpCard() {
+  const setHelpOpen = useUI((s) => s.setHelpOpen);
+
+  return (
+    <CardShell icon={CircleHelp} title="Help" hint="Plain-language guide">
+      <Button variant="outline" size="sm" className="w-full justify-between" onClick={() => setHelpOpen(true)}>
+        How Study Hall works
+        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+      </Button>
+      <p className="text-[11px] leading-relaxed text-muted-foreground">
+        What each module is for, where to record different kinds of work, and what the jargon means.
+      </p>
+    </CardShell>
+  );
+}
+
 // ─── Module ───────────────────────────────────────────────────────────────────
 export default function SettingsModule() {
   return (
     <div className="space-y-6">
-      <ModuleHeader icon={Settings2} title="Settings" subtitle="Profile · appearance · AI · data" />
+      <ModuleHeader
+        icon={Settings2}
+        title={moduleMeta('settings').label}
+        subtitle={moduleMeta('settings').blurb}
+      />
       <div className="grid gap-4 lg:grid-cols-2">
         <ProfileCard />
         <AppearanceCard />
         <PreferencesCard />
         <AiCard />
         <DsaCard />
+        <HelpCard />
         <LegalCard />
       </div>
       <SubjectsCard />

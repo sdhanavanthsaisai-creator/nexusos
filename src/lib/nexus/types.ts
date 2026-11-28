@@ -211,6 +211,7 @@ export interface Settings {
   geminiKey: string;
   geminiModel: string;
   dashboardWidgets: string[]; // ordered widget ids, controls visibility+order on dashboard
+  guideDismissed: boolean; // the "Start here" card was dismissed or completed
 }
 
 /** The full persisted data shape. */

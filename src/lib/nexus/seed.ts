@@ -293,6 +293,7 @@ export function buildSeed(): NexusData {
       geminiKey: '',
       geminiModel: 'gemini-2.0-flash',
       dashboardWidgets: [...DASHBOARD_WIDGETS_DEFAULT],
+      guideDismissed: false,
     },
     subjects: SUBJECT_SEED.map((s) => ({ ...s })),
     skills,

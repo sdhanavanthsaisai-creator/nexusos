@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import type { EChartsOption } from 'echarts';
 import type { DailyLog, SubjectCategory } from '@/lib/nexus/types';
 import { useNexus } from '@/lib/nexus/store';
-import { CATEGORY_META } from '@/lib/nexus/constants';
+import { CATEGORY_META, moduleMeta } from '@/lib/nexus/constants';
 import {
   avg, computeStreak, dateKey, dayTotalMinutes, downloadCSV, downloadFile, downloadJSON,
   eachDayKeys, fmtDayFull, isOverdue, minutesToHM, pct, round1, startOfWeek, sum, todayKey,
@@ -374,8 +374,8 @@ export default function ReportsModule() {
     <div className="space-y-6">
       <ModuleHeader
         icon={FileBarChart2}
-        title="Reports & Export"
-        subtitle="Period summaries, markdown reports & full data portability"
+        title={moduleMeta('reports').label}
+        subtitle={moduleMeta('reports').blurb}
         actions={
           <>
             <Segmented

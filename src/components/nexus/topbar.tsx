@@ -3,13 +3,13 @@
 import { useMemo } from 'react';
 import {
   Search, Bell, Sparkles, Flame, Menu, Sun, Moon, MonitorSmartphone,
-  Palette, AlertTriangle, CalendarClock, type LucideIcon,
+  Palette, AlertTriangle, CalendarClock, CircleHelp, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useNexus, useUI } from '@/lib/nexus/store';
 import type { ThemeId } from '@/lib/nexus/types';
-import { MODULE_NAV } from '@/lib/nexus/constants';
+import { moduleMeta } from '@/lib/nexus/constants';
 import { todayKey, fmtDayFull, isOverdue, computeStreak } from '@/lib/nexus/utils';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -37,6 +37,7 @@ export default function Topbar() {
   const setActiveModule = useUI((s) => s.setActiveModule);
   const setPaletteOpen = useUI((s) => s.setPaletteOpen);
   const setAiOpen = useUI((s) => s.setAiOpen);
+  const setHelpOpen = useUI((s) => s.setHelpOpen);
   const mobileNavOpen = useUI((s) => s.mobileNavOpen);
   const setMobileNavOpen = useUI((s) => s.setMobileNavOpen);
   const activeModule = useUI((s) => s.activeModule);
@@ -64,7 +65,7 @@ export default function Topbar() {
     return list;
   }, [tasks, exams]);
 
-  const moduleLabel = MODULE_NAV.find((m) => m.id === activeModule)?.label ?? 'Dashboard';
+  const moduleLabel = moduleMeta(activeModule).label;
 
   return (
     <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-0 px-3 md:glass md:border-x-0 md:border-t-0 md:px-5 max-md:pt-[env(safe-area-inset-top,0px)]">
@@ -100,11 +101,17 @@ export default function Topbar() {
       </div>
 
       {/* Top center intentionally left empty — the Dynamic Island floats there (fixed, z-60) */}
-      <Button variant="ghost" size="icon" className="ml-auto inline-flex" onClick={() => setPaletteOpen(true)} aria-label="Search and commands">
-        <Search className="h-4.5 w-4.5" aria-hidden="true" />
-      </Button>
+      {/* Phones get one search button here; from sm up the ⌘K chip below replaces it. */}
+      <div className="ml-auto flex items-center gap-1 sm:hidden">
+        <Button variant="ghost" size="icon" onClick={() => setPaletteOpen(true)} aria-label="Search and commands">
+          <Search className="h-4.5 w-4.5" aria-hidden="true" />
+        </Button>
+      </div>
 
-      <div className="ml-auto flex items-center gap-1 max-sm:hidden">
+      <div className="flex items-center gap-1 max-sm:hidden">
+        <Button variant="ghost" size="icon" onClick={() => setHelpOpen(true)} aria-label="How Study Hall works">
+          <CircleHelp className="h-4.5 w-4.5" aria-hidden="true" />
+        </Button>
         {/* Compact glass search trigger (sm+) */}
         <motion.button
           onClick={() => setPaletteOpen(true)}

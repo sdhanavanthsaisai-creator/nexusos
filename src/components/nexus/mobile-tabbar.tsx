@@ -9,47 +9,26 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  BarChart3, BookOpenCheck, CalendarDays, Braces, CalendarRange, Flame,
-  Home, LayoutDashboard, ListChecks, Map, MoreHorizontal, Plus, NotebookPen,
-  FileBarChart2, Settings2, Sparkles, Timer, X, Lock, type LucideIcon,
+  BookOpenCheck, Flame, LayoutDashboard, ListChecks, Lock, MoreHorizontal,
+  Plus, Sparkles, Timer, X, type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useNexus, useUI } from '@/lib/nexus/store';
 import type { ModuleId } from '@/lib/nexus/types';
+import { MODULE_GROUPS, NAV_MODULES, moduleMeta } from '@/lib/nexus/constants';
+import { NAV_ICONS } from './nav-icons';
 
-interface TabDef {
-  id: ModuleId;
-  label: string;
-  icon: LucideIcon;
-}
+const TAB_IDS: ModuleId[] = ['dashboard', 'tracker', 'tasks', 'analytics'];
 
-const TABS: TabDef[] = [
-  { id: 'dashboard', label: 'Home', icon: Home },
-  { id: 'tracker', label: 'Track', icon: BookOpenCheck },
-  { id: 'tasks', label: 'Tasks', icon: ListChecks },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-];
+const TABS: { id: ModuleId; label: string; icon: LucideIcon }[] = TAB_IDS.map((id) => ({
+  id,
+  label: moduleMeta(id).shortLabel,
+  icon: NAV_ICONS[id],
+}));
 
-interface MoreDest {
-  id: ModuleId;
-  label: string;
-  desc: string;
-  icon: LucideIcon;
-  locked?: boolean;
-}
-
-const MORE_DEST: MoreDest[] = [
-  { id: 'sessions', label: 'Sessions', desc: 'Focus timer & log', icon: Timer },
-  { id: 'habits', label: 'Habits', desc: 'Streaks & consistency', icon: Flame },
-  { id: 'calendar', label: 'Calendar', desc: 'Unified timeline', icon: CalendarDays },
-  { id: 'timetable', label: 'Timetable', desc: 'Editable weekly grid', icon: CalendarRange },
-  { id: 'roadmap', label: 'Roadmap', desc: 'Skills & projects', icon: Map },
-  { id: 'dsa', label: 'DSA Plan', desc: 'Unlocks after Semester 1', icon: Braces, locked: true },
-  { id: 'notes', label: 'Notes', desc: 'Markdown & resources', icon: NotebookPen },
-  { id: 'reports', label: 'Reports', desc: 'Summaries & export', icon: FileBarChart2 },
-  { id: 'settings', label: 'Settings', desc: 'Profile, themes & AI', icon: Settings2 },
-];
+/** Every module that is not already a tab, plus Settings. Names come from MODULE_NAV. */
+const MORE_DEST = [...NAV_MODULES.filter((m) => !TAB_IDS.includes(m.id)), moduleMeta('settings')];
 
 export default function MobileTabBar() {
   const active = useUI((s) => s.activeModule);
@@ -196,8 +175,8 @@ export default function MobileTabBar() {
               </div>
               <ul className="grid grid-cols-3 gap-2 p-3">
                 {MORE_DEST.map((m) => {
-                  const Icon = m.icon;
-                  const locked = m.locked && !dsaActive;
+                  const Icon = NAV_ICONS[m.id];
+                  const locked = m.id === 'dsa' && !dsaActive;
                   const isActive = active === m.id;
                   return (
                     <li key={m.id}>
@@ -205,7 +184,7 @@ export default function MobileTabBar() {
                         type="button"
                         onClick={() => {
                           if (locked) {
-                            toast.info('DSA Plan unlocks after Semester 1', { description: 'Toggle it on in Settings → Semester progress.' });
+                            toast.info('DSA Plan is off', { description: 'Turn it on in Settings → DSA tracking.' });
                             return;
                           }
                           setActive(m.id);
@@ -213,7 +192,7 @@ export default function MobileTabBar() {
                         }}
                         whileTap={{ scale: 0.95 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 26 }}
-                        aria-label={`${m.label} — ${m.desc}`}
+                        aria-label={`${m.label} — ${m.blurb}`}
                         className={cn(
                           'glass flex min-h-[72px] w-full flex-col items-center justify-center gap-1 rounded-2xl px-2 py-3 text-center',
                           isActive && 'ring-1 ring-primary/50',
@@ -221,7 +200,9 @@ export default function MobileTabBar() {
                       >
                         {locked ? <Lock className="h-5 w-5 text-muted-foreground" aria-hidden="true" /> : <Icon className="h-5 w-5" aria-hidden="true" />}
                         <span className="text-[11px] font-medium leading-tight">{m.label}</span>
-                        <span className="text-[9px] leading-tight text-muted-foreground">{locked ? 'Sem 2' : m.desc}</span>
+                        <span className="text-[9px] leading-tight text-muted-foreground">
+                          {locked ? 'Turn on in Settings' : MODULE_GROUPS.find((g) => g.key === m.group)?.label}
+                        </span>
                       </motion.button>
                     </li>
                   );

@@ -22,7 +22,7 @@ import {
 import { EmptyState, KpiCard, ModuleHeader, RingProgress, Segmented, StarRating } from '../ui-bits';
 import SessionDialog from './sessions/session-dialog';
 import { useNexus, useUI, useTimerTick } from '@/lib/nexus/store';
-import { CATEGORY_META } from '@/lib/nexus/constants';
+import { CATEGORY_META, moduleMeta } from '@/lib/nexus/constants';
 import type { StudySession, SubjectCategory } from '@/lib/nexus/types';
 import {
   addDays, addDaysKey, avg, dayTotalMinutes, eachDayKeys, fmtDayFull, minutesToHM,
@@ -147,8 +147,8 @@ export default function SessionsModule() {
     <div className="space-y-5">
       <ModuleHeader
         icon={Timer}
-        title="Study Sessions"
-        subtitle="Focus timer and session log — every minute accounted for"
+        title={moduleMeta('sessions').label}
+        subtitle={moduleMeta('sessions').blurb}
         actions={
           <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={openCreate}>
             <Plus className="h-3.5 w-3.5" /> Log session

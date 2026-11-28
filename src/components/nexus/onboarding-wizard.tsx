@@ -11,7 +11,10 @@ import { Slider } from '@/components/ui/slider';
 import { useNexus, useUI } from '@/lib/nexus/store';
 import { saveWorkspaceProfile } from '@/lib/account/bootstrap';
 import { AccountError, friendlyAccountError } from '@/lib/account/messages';
-import { CATEGORY_META, HABIT_SEED, INK_VARS, SKILL_SEED } from '@/lib/nexus/constants';
+import {
+  CATEGORY_META, HABIT_SEED, INK_VARS, MODULE_GROUPS, NAV_MODULES, SKILL_SEED,
+} from '@/lib/nexus/constants';
+import { NAV_ICONS } from './nav-icons';
 import type { Habit, Skill, Subject, SubjectCategory } from '@/lib/nexus/types';
 import { uid } from '@/lib/nexus/utils';
 
@@ -201,8 +204,68 @@ function ToggleCard({ checked, onToggle, title, detail }: { checked: boolean; on
   );
 }
 
+/** Final, non-blocking screen: name what was just built so the sidebar is not a surprise. */
+function WorkspaceReady({ dsaActive, onDone }: { dsaActive: boolean; onDone: () => void }) {
+  return (
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-8 text-foreground">
+      <section className="glass-strong relative z-10 w-full max-w-2xl rounded-[28px] border border-border/60 p-5 shadow-2xl sm:p-8">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Setup complete</p>
+        <h1 className="mt-1 text-xl font-semibold tracking-tight">Here&apos;s what you now have</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Your sidebar is organised into three groups. Nothing here is shared with anyone else.
+        </p>
+
+        <div className="mt-5 space-y-4">
+          {MODULE_GROUPS.map((group) => (
+            <div key={group.key}>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {group.label}
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {NAV_MODULES.filter((m) => m.group === group.key).map((m) => {
+                  const Icon = NAV_ICONS[m.id];
+                  return (
+                    <span
+                      key={m.id}
+                      className="flex items-center gap-1.5 rounded-full border border-border/60 bg-background/40 px-2.5 py-1 text-[11px]"
+                    >
+                      <Icon className="h-3 w-3" aria-hidden="true" />
+                      {m.label}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-border/60 bg-background/35 p-4">
+          <p className="text-sm font-medium">Begin with the “Start here” card on Home</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Three steps: log today&apos;s study time, add a few tasks, and set your daily target. Once they are done the
+            card removes itself.
+          </p>
+        </div>
+
+        <p className="mt-4 text-xs text-muted-foreground">
+          {dsaActive
+            ? 'DSA practice is on — count solved problems per topic in DSA Plan.'
+            : 'DSA practice stays off until you turn it on in Settings → DSA tracking.'}
+        </p>
+
+        <div className="mt-6 flex justify-end border-t border-border/50 pt-5">
+          <Button type="button" onClick={onDone} className="rounded-xl">
+            Open my workspace <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 export default function OnboardingWizard({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);
+  const [built, setBuilt] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -444,8 +507,7 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
         if (rowFailure) throw rowFailure;
       }
 
-      useUI.getState().setActiveModule('dashboard');
-      onComplete();
+      setBuilt(true);
     } catch (cause) {
       setError(cause instanceof AccountError ? cause.userMessage : friendlyAccountError(cause));
     } finally {
@@ -457,6 +519,18 @@ export default function OnboardingWizard({ onComplete }: { onComplete: () => voi
   const StepIcon = current.icon;
   const summary = `${subjects.length} subject${subjects.length === 1 ? '' : 's'} · ${selectedSkills.length + customSkills.length} skill${selectedSkills.length + customSkills.length === 1 ? '' : 's'} · ${habits.length} habit${habits.length === 1 ? '' : 's'}`;
   const canFinish = useMemo(() => Boolean(profileName.trim() && subjects.length && !duplicateSubjects && !saving), [profileName, subjects.length, duplicateSubjects, saving]);
+
+  if (built) {
+    return (
+      <WorkspaceReady
+        dsaActive={dsaActive}
+        onDone={() => {
+          useUI.getState().setActiveModule('dashboard');
+          onComplete();
+        }}
+      />
+    );
+  }
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-8 text-foreground">

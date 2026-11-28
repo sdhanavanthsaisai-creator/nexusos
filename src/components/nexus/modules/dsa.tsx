@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import type { EChartsOption } from 'echarts';
 import type { DsaTopic } from '@/lib/nexus/types';
 import { useNexus } from '@/lib/nexus/store';
+import { moduleMeta } from '@/lib/nexus/constants';
 import { pct, sum } from '@/lib/nexus/utils';
 import { baseTooltip, ChartCard, EmptyState, KpiCard, ModuleHeader, RingProgress, useChartTheme } from '../ui-bits';
 import { cn } from '@/lib/utils';
@@ -56,9 +57,9 @@ function LockedState() {
             <Badge variant="outline" className="border-foreground/25 bg-foreground/[0.06] text-foreground/80">
               Semester {profile.semester}
             </Badge>
-            <h2 className="text-xl font-semibold tracking-tight">DSA Module — Locked</h2>
+            <h2 className="text-xl font-semibold tracking-tight">DSA practice is off</h2>
             <p className="max-w-xl text-sm text-muted-foreground">
-              {`The Data Structures & Algorithms track unlocks after Semester 1. You're currently in Semester ${profile.semester} — finish strong, then level up.`}
+              {`This track is optional — nothing is locked by your semester (you are in Semester ${profile.semester}). Turn it on whenever you want to count practice problems per topic.`}
             </p>
             <div className="pt-1">
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">What&apos;s waiting for you</p>
@@ -99,8 +100,8 @@ function LockedState() {
       {/* Unlock card */}
       <div className="glass flex flex-wrap items-center justify-between gap-4 rounded-2xl p-5">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">Unlock DSA mode now</p>
-          <p className="text-xs text-muted-foreground">You can also toggle this later in Settings → DSA.</p>
+          <p className="text-sm font-semibold">Turn on DSA practice</p>
+          <p className="text-xs text-muted-foreground">You can switch it off again anytime in Settings → DSA tracking.</p>
         </div>
         <Switch
           checked={false}
@@ -221,7 +222,11 @@ function ActiveState() {
         </div>
 
         {dsaTopics.length === 0 ? (
-          <EmptyState icon={ListChecks} title="No DSA topics" hint="Import a backup or reset to sample data to load the 13-topic curriculum." />
+          <EmptyState
+            icon={ListChecks}
+            title="No topics loaded"
+            hint="Turn DSA tracking on in Settings → DSA tracking to load the topic list."
+          />
         ) : (
           <div className="grid content-start gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {dsaTopics.map((t) => {
@@ -284,8 +289,12 @@ export default function DsaModule() {
     <div className="space-y-6">
       <ModuleHeader
         icon={Braces}
-        title="DSA Future Plan"
-        subtitle={dsaActive ? 'Grind mode engaged — track every problem' : 'Locked until Semester 1 wraps up'}
+        title={moduleMeta('dsa').label}
+        subtitle={
+          dsaActive
+            ? 'Count the problems you solve per topic — mastery and difficulty split update as you go.'
+            : moduleMeta('dsa').blurb
+        }
         actions={
           dsaActive ? (
             <Button

@@ -10,7 +10,7 @@ import type {
   TimetableEvent, TimetableSettings, UserProfile,
 } from './types';
 import { buildSeed, buildTimetableSeed } from './seed';
-import { INK_VARS } from './constants';
+import { INK_VARS, DASHBOARD_WIDGETS_DEFAULT } from './constants';
 import { parseTimetableImport } from './timetable';
 import { addDays, addDaysKey, dateKey, todayKey, uid } from './utils';
 
@@ -85,7 +85,8 @@ const emptyState: NexusData = {
   settings: {
     theme: 'dark', confettiEnabled: true, reduce3d: false,
     aiProvider: 'nexus', geminiKey: '', geminiModel: 'gemini-2.0-flash',
-    dashboardWidgets: ['hero', 'kpis', 'focus', 'habits', 'weekly', 'donut', 'exams'],
+    dashboardWidgets: [...DASHBOARD_WIDGETS_DEFAULT],
+    guideDismissed: false,
   },
   subjects: [], skills: [], dailyLogs: {}, sessions: [], tasks: [],
   habits: [], habitRecords: {}, projects: [], notes: [], resources: [],
@@ -513,7 +514,7 @@ export const useNexus = create<NexusStore>()(
     {
       name: STORAGE_KEY,
       storage: createJSONStorage(() => localStorage),
-      version: 3,
+      version: 4,
       migrate: (persisted, version) => {
         const s = persisted as NexusStore;
         if (version < 2) {
@@ -526,6 +527,19 @@ export const useNexus = create<NexusStore>()(
         }
         if (!s.timetable) {
           s.timetable = buildTimetableSeed();
+        }
+        if (version < 4) {
+          // v4 — the "Start here" guide has never been seen by an existing user.
+          s.settings = { ...s.settings, guideDismissed: s.settings?.guideDismissed ?? false };
+          const widgets = s.settings.dashboardWidgets;
+          if (!Array.isArray(widgets) || widgets.length === 0) {
+            s.settings.dashboardWidgets = [...DASHBOARD_WIDGETS_DEFAULT];
+          } else if (!widgets.includes('starthere')) {
+            const next = [...widgets];
+            const heroAt = next.indexOf('hero');
+            next.splice(heroAt >= 0 ? heroAt + 1 : 0, 0, 'starthere');
+            s.settings.dashboardWidgets = next;
+          }
         }
         return s;
       },
@@ -563,12 +577,14 @@ interface UIStore {
   mobileNavOpen: boolean;
   paletteOpen: boolean;
   aiOpen: boolean;
+  helpOpen: boolean;
   timer: TimerState;
   setActiveModule: (m: UIStore['activeModule']) => void;
   toggleSidebar: () => void;
   setMobileNavOpen: (v: boolean) => void;
   setPaletteOpen: (v: boolean) => void;
   setAiOpen: (v: boolean) => void;
+  setHelpOpen: (v: boolean) => void;
   startTimer: (subjectId: ID) => void;
   pauseTimer: () => void;
   resumeTimer: () => void;
@@ -587,12 +603,14 @@ export const useUI = create<UIStore>((set, get) => ({
   mobileNavOpen: false,
   paletteOpen: false,
   aiOpen: false,
+  helpOpen: false,
   timer: initialTimer,
   setActiveModule: (m) => set({ activeModule: m, mobileNavOpen: false }),
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
   setMobileNavOpen: (v) => set({ mobileNavOpen: v }),
   setPaletteOpen: (v) => set({ paletteOpen: v }),
   setAiOpen: (v) => set({ aiOpen: v }),
+  setHelpOpen: (v) => set({ helpOpen: v }),
   startTimer: (subjectId) =>
     set({ timer: { running: true, subjectId, startedAt: Date.now(), accumulatedMs: 0, startedWallClock: new Date().toTimeString().slice(0, 5) } }),
   pauseTimer: () =>

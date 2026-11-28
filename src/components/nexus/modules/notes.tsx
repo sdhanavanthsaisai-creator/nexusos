@@ -9,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Note, Resource } from '@/lib/nexus/types';
 import { useNexus } from '@/lib/nexus/store';
+import { moduleMeta } from '@/lib/nexus/constants';
 import { ModuleHeader, EmptyState } from '../ui-bits';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -231,8 +232,8 @@ export default function NotesModule() {
     <div className="space-y-6">
       <ModuleHeader
         icon={NotebookPen}
-        title="Notes & Resources"
-        subtitle="Markdown knowledge base & learning links"
+        title={moduleMeta('notes').label}
+        subtitle={moduleMeta('notes').blurb}
         actions={
           <Button size="sm" onClick={handleNewNote}>
             <Plus className="h-3.5 w-3.5" /> New Note

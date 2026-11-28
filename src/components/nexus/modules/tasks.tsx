@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/select';
 import { ModuleHeader, Segmented } from '../ui-bits';
 import { useNexus } from '@/lib/nexus/store';
-import { AREA_META, PRIORITY_META } from '@/lib/nexus/constants';
+import { AREA_META, PRIORITY_META, moduleMeta } from '@/lib/nexus/constants';
 import { isOverdue } from '@/lib/nexus/utils';
 import type { ID, TaskArea, TaskPriority } from '@/lib/nexus/types';
 import TaskDialog from './tasks/task-dialog';
@@ -97,8 +97,8 @@ export default function TasksModule() {
     <div className="space-y-5">
       <ModuleHeader
         icon={ListChecks}
-        title="Advanced Task Manager"
-        subtitle={`${openCount} open · ${overdueCount} overdue · Kanban, list, calendar & focus`}
+        title={moduleMeta('tasks').label}
+        subtitle={`${moduleMeta('tasks').blurb} ${openCount} open · ${overdueCount} overdue.`}
         actions={
           <Button onClick={() => openCreate()} className="gap-1.5">
             <Plus className="h-4 w-4" aria-hidden="true" /> New Task
